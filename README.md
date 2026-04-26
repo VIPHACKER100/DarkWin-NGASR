@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🌌 DARKWIN — Next-Gen Automated Security Research
 
 ### Developed by ARYAN AHIRWAR (VIPHACKER.100)
@@ -135,7 +134,3 @@ This tool is provided for **educational and authorized security testing purposes
 ## License
 
 MIT License — © 2026 **ARYAN AHIRWAR (VIPHACKER.100)**
-=======
-# DarkWin-NGASRP
-DARKWIN is a comprehensive,modular security research automation platform featuring 500+ scan modules,AI-powered vulnerability classification,distributed scanning, and a full-featured web dashboard. It orchestrates reconnaissance,web scanning,vulnerability detection,fuzzing,network analysis, cloud security audits, and exploit research into ......
->>>>>>> 24c73b987e3ce8512bbd5ebcdb71f508832ac2dd
