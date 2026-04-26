@@ -25,10 +25,12 @@ dependencies = [
     "httpx>=0.25.2",
     "openai>=1.6.0",
     "pyyaml>=6.0.1",
+    "pyjwt>=2.8.0",
+    "shodan>=1.31.0",
 ]
 
 [project.scripts]
-darkwin = "core.darkwin:cli"
+darkwin = "core.darkwin:main"
 
 [tool.setuptools.packages.find]
 include = ["core*", "modules*", "pipelines*", "ai*", "automation*", "integrations*", "dashboards*"]

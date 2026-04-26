@@ -1,0 +1,15 @@
+{
+  "authorized_domains": [
+    "example.com",
+    "*.testfire.net",
+    "vulnerable-site.org"
+  ],
+  "authorized_ips": [
+    "127.0.0.1",
+    "192.168.1.100"
+  ],
+  "excluded_paths": [
+    "/admin/config",
+    "/api/v1/delete"
+  ]
+}
