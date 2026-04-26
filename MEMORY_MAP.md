@@ -1,59 +1,66 @@
-# 🧠 DARKWIN Memory Map (Source of Truth)
+# 🧠 DARKWIN Memory Map (Master Source of Truth)
 **Developer**: ARYAN AHIRWAR (VIPHACKER.100)
 **Project**: DARKWIN — Next-Gen Automated Security Research Platform
-**Version**: 1.0.0 (Elite Upgrade v2.0)
+**Version**: 1.0.1 (Phase 2: Recon Expansion)
 
 ---
 
-## 🏗️ Architecture Overview
-DARKWIN is designed as a modular, pipeline-driven security OS. It uses a core engine to orchestrate specialized modules across various security domains.
+## 🏗️ Master Roadmap Tracking (150 Steps)
 
-### 1. Core Engine (`core/`)
-- `darkwin.py`: Main entry point with Banner and Legal check.
-- `command_router.py`: Click-based CLI handling.
-- `pipeline_engine.py`: Manages the execution flow of modules.
-- `database.py` & `models.py`: SQLAlchemy-based persistence (PostgreSQL/SQLite).
-- `config_manager.py`: Pydantic-based configuration and validation.
+### Phase 0: Scaffolding [✅ 90%]
+- [x] Step 1-5: Root structure, Git, `.gitignore`, README, LEGAL.md
+- [x] Step 6-7: `requirements.txt`, `pyproject.toml`
+- [ ] Step 8-9: `docker-compose.yml`, `Makefile` (UPCOMING)
+- [x] Step 10: `setup.sh`
 
-### 2. Module Ecosystem (`modules/`)
-- **Reconnaissance**: Subdomain, DNS, Whois, Search Engine dorking.
-- **Attack Surface**: Asset mapping and API detection.
-- **Vulnerability Engine**:
-    - **Injection**: SQL, NoSQL (Blind), GraphQL, SSTI.
-    - **Cloud**: AWS IAM, Azure Blob, Lambda misconfigs.
-- **Reporting**: HTML, Markdown, HackerOne, Bugcrowd, and **Attack Graph Generator** (Mermaid).
+### Phase 1: Core Engine [✅ 80%]
+- [x] Step 11-13: `config_manager.py` & `config.yaml`
+- [x] Step 14-16: `logging_system.py`
+- [x] Step 17-19: `database.py`, `models.py`, `init_db.py`
+- [ ] Step 20-22: `module_loader.py` (Dynamic discovery logic)
+- [x] Step 23-26: `command_router.py` & `darkwin.py` (CLI & Legal check)
+- [x] Step 27-29: `pipeline_engine.py` (Sequential execution)
+- [ ] Step 30-32: `scheduler.py` (Celery/Redis integration)
 
-### 3. Pipeline Definitions (`pipelines/`)
-- `recon_pipeline.py`: Discovery phase.
-- `scan_pipeline.py`: Vulnerability detection phase.
-- `full_attack_surface_pipeline.py`: End-to-end automation.
+### Phase 2: Reconnaissance [🏗️ 40%]
+- [x] Step 33-37: Subdomain tools (Subfinder, Amass, Bruteforce)
+- [x] Step 38-41: DNS, Whois, ASN lookup
+- [ ] Step 42-43: CT Monitor, Dork Engine
+- [x] Step 44-46: Asset Mapper, Service ID, API Detector
 
----
+### Phase 3: Web Scanning [🏗️ 50%]
+- [x] Step 47-50: Crawler, JS Analyzer, Param/Endpoint discovery
 
-## 🛡️ Active Modules List (≈70+)
-| Category | High-Impact Modules | Status |
-| :--- | :--- | :--- |
-| **Recon** | `subdomain_enum`, `dns_resolver`, `whois_lookup` | ✅ Active |
-| **Injection** | `blind_nosql`, `graphql_tester`, `ssti_optimizer` | ✅ Active |
-| **Cloud** | `aws_iam_scanner`, `azure_blob_brute`, `lambda_audit` | ✅ Active |
-| **Automation** | `pipeline_engine`, `command_router` | ✅ Active |
-| **Reporting** | `attack_graph_generator`, `hackerone_format` | ✅ Active |
+### Phase 4: Vulnerability Engine [🏗️ 30%]
+- [x] Step 51-55: SQLi, NoSQLi, CMDi, SSTI, XSS
+- [ ] Step 56-62: CSRF, Clickjacking, Redirect, LFI, RFI, Upload Bypass, RCE
+- [x] Step 63-65: Cloud (S3, Azure, GCP buckets)
 
----
+### Phase 5-8: Fuzzing, Network, Exploit, Cloud Security [⏳ Queue]
+- [ ] 66-82: Port scanning, Service enum, CVE matching, Metasploit bridge
 
-## 🚀 ROADMAP: The "Elite 500" Goal
-- [ ] **Distributed Scanning**: Implement Celery workers for multi-node tasking.
-- [ ] **Continuous Monitoring**: Build the `darkwin watch` command.
-- [ ] **Exploit Search**: Match technology stacks directly with CVE databases.
-- [ ] **Web Dashboard**: Full React/Flask integration for real-time visualization.
+### Phase 9: AI Engine [🏗️ 20%]
+- [ ] 83-86: Vulnerability Classifier, False Positive Filter, AI Payloads
+
+### Phase 10-18: Automation, Dashboards, Testing, Deployment [⏳ Queue]
+- [ ] 87-150: Distributed nodes, React Dashboard, Full Testing Suite
 
 ---
 
-## 🔐 Security & Ethics
-- **LEGAL.md**: Hardcoded acknowledgement required for first run.
-- **Scope Enforcer**: `scope.json` validation before any network activity.
-- **Developer Attribution**: "ARYAN AHIRWAR (VIPHACKER.100)" must be present in all outputs.
+## 🛠️ Current Development Focus
+**Current Phase**: Phase 0/1 Cleanup & Phase 2 Expansion.
+**Immediate Tasks**:
+1. Implement `core/module_loader.py` for dynamic module discovery (Step 20).
+2. Create `docker-compose.yml` for infrastructure (Step 8).
+3. Implement `core/scheduler.py` for Celery/Redis tasks (Step 30).
 
 ---
 
-*This Memory Map is updated automatically to preserve project integrity.*
+## 🛡️ Security Guardrails
+- **Scope Verification**: Target must exist in `scope.json`.
+- **Legal Gate**: `.acknowledged` file must exist.
+- **Attribution**: All modules must credit **ARYAN AHIRWAR (VIPHACKER.100)**.
+
+---
+
+*This Memory Map is the official ledger for the 150-step implementation roadmap.*
