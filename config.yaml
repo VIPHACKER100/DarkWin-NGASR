@@ -1,0 +1,44 @@
+# DARKWIN Configuration
+# Developed by ARYAN AHIRWAR (VIPHACKER.100)
+
+app:
+  name: "DARKWIN"
+  version: "1.0.0"
+  author: "ARYAN AHIRWAR (VIPHACKER.100)"
+
+database:
+  url: "postgresql://darkwin:darkwin_secret@localhost:5432/darkwin"
+
+redis:
+  url: "redis://localhost:6379/0"
+
+ai:
+  openai_api_key: ""
+  openai_model: "gpt-4-turbo-preview"
+  local_llm_url: "http://localhost:11434/v1" # For Ollama or similar
+
+tools:
+  nmap: "/usr/bin/nmap"
+  subfinder: "subfinder"
+  httpx: "httpx"
+  nuclei: "nuclei"
+  ffuf: "ffuf"
+  amass: "amass"
+  katana: "katana"
+  sqlmap: "sqlmap"
+  dalfox: "dalfox"
+  masscan: "masscan"
+
+scans:
+  output_dir: "reports"
+  log_dir: "logs"
+  max_threads: 20
+  timeout: 3600
+  rate_limit: 10 # requests per second
+
+api_keys:
+  shodan: ""
+  censys_id: ""
+  censys_secret: ""
+  virustotal: ""
+  github_token: ""

