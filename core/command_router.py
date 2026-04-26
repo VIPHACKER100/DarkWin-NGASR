@@ -134,3 +134,44 @@ def dashboard():
     """Launch web dashboard"""
     logger.info("Launching DARKWIN Dashboard...")
     # Will start the Flask app
+
+@cli.command()
+@click.argument('target')
+@click.option('--scope-file', help='Path to JSON scope file')
+def fuzz(target, scope_file):
+    """Run fuzzing modules"""
+    if not verify_scope(target, scope_file):
+        logger.critical(f"Target '{target}' is NOT in scope! Aborting.")
+        sys.exit(1)
+    logger.info(f"Starting fuzzing on {target}")
+
+@cli.command()
+@click.argument('target')
+def exploit(target):
+    """Search for exploits (suggestions only)"""
+    logger.info(f"Searching for exploits matching {target}")
+
+@cli.command()
+@click.argument('target')
+@click.option('--scope-file', help='Path to JSON scope file')
+def cloud(target, scope_file):
+    """Run cloud security checks"""
+    if not verify_scope(target, scope_file):
+        logger.critical(f"Target '{target}' is NOT in scope! Aborting.")
+        sys.exit(1)
+    logger.info(f"Starting cloud security scan on {target}")
+
+@cli.command()
+@click.argument('target')
+def watch(target):
+    """Continuous monitoring"""
+    logger.info(f"Starting continuous monitoring on {target}")
+    from automation.auto_bug_hunter.hunter import watch_target
+    watch_target(target)
+
+@cli.command()
+@click.argument('scan_id')
+def report(scan_id):
+    """Generate reports"""
+    logger.info(f"Generating reports for Scan ID: {scan_id}")
+
