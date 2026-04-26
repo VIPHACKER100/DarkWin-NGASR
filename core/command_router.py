@@ -2,9 +2,16 @@ import click
 import json
 import os
 import sys
+import uuid
+import datetime
 from rich.console import Console
 from core.config_manager import validate_config, get_config
 from core.logging_system import get_logger
+from core.database import SessionLocal
+from core.models import Target, Scan
+from pipelines.recon_pipeline import get_recon_pipeline
+from pipelines.web_vuln_pipeline import get_web_vuln_pipeline
+from pipelines.full_hunt_pipeline import get_full_hunt_pipeline
 
 console = Console()
 logger = get_logger("CLI")
@@ -56,8 +63,27 @@ def recon(target, scope_file):
     if not verify_scope(target, scope_file):
         logger.critical(f"Target '{target}' is NOT in scope! Aborting.")
         sys.exit(1)
-    logger.info(f"Starting reconnaissance on {target}")
-    # Implementation will call pipeline_engine later
+    
+    config = get_config()
+    scan_id = str(uuid.uuid4())
+    
+    with SessionLocal() as db:
+        # Ensure target exists
+        target_obj = db.query(Target).filter(Target.domain == target).first()
+        if not target_obj:
+            target_obj = Target(domain=target, scope_confirmed=True)
+            db.add(target_obj)
+            db.commit()
+            db.refresh(target_obj)
+            
+        # Create scan entry
+        new_scan = Scan(id=scan_id, target_id=target_obj.id, status="starting")
+        db.add(new_scan)
+        db.commit()
+
+    logger.info(f"Starting reconnaissance on {target} (Scan ID: {scan_id})")
+    pipeline = get_recon_pipeline(target, scan_id, config.dict())
+    pipeline.run(target, scan_id)
 
 @cli.command()
 @click.argument('target')
@@ -67,7 +93,25 @@ def scan(target, scope_file):
     if not verify_scope(target, scope_file):
         logger.critical(f"Target '{target}' is NOT in scope! Aborting.")
         sys.exit(1)
-    logger.info(f"Starting vulnerability scan on {target}")
+    
+    config = get_config()
+    scan_id = str(uuid.uuid4())
+    
+    with SessionLocal() as db:
+        target_obj = db.query(Target).filter(Target.domain == target).first()
+        if not target_obj:
+            target_obj = Target(domain=target, scope_confirmed=True)
+            db.add(target_obj)
+            db.commit()
+            db.refresh(target_obj)
+            
+        new_scan = Scan(id=scan_id, target_id=target_obj.id, status="starting")
+        db.add(new_scan)
+        db.commit()
+
+    logger.info(f"Starting vulnerability scan on {target} (Scan ID: {scan_id})")
+    pipeline = get_web_vuln_pipeline(target, scan_id, config.dict())
+    pipeline.run(target, scan_id)
 
 @cli.command()
 @click.argument('target')

@@ -46,7 +46,25 @@ class Pipeline:
                         # For now, we assume module_fn is the entry point
                         result = step.module_fn(*step.args, **step.kwargs)
                         
-                        # Persist results if needed (module specific)
+                        # Persist results if module returned findings
+                        if isinstance(result, list):
+                            from core.models import Finding
+                            for f_data in result:
+                                try:
+                                    finding = Finding(
+                                        scan_id=scan_id,
+                                        vuln_type=f_data.get("vuln_type", f_data.get("type", "unknown")),
+                                        severity=f_data.get("severity", "Info"),
+                                        description=f_data.get("description", f_data.get("detail", "")),
+                                        endpoint=f_data.get("endpoint", target),
+                                        payload=f_data.get("payload", ""),
+                                        remediation=f_data.get("remediation", "")
+                                    )
+                                    db.add(finding)
+                                except Exception as fe:
+                                    self.logger.error(f"Failed to save finding: {fe}")
+                            db.commit()
+                        
                         self.logger.info(f"Step '{step.name}' completed in {time.time() - step_start_time:.2f}s")
                         
                     except Exception as e:
