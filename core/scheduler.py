@@ -1,9 +1,7 @@
 from celery import Celery
 from core.config_manager import get_config
-from core.logging_system import get_logger
 
 config = get_config()
-logger = get_logger("Scheduler")
 
 # Initialize Celery
 app = Celery(
@@ -20,31 +18,46 @@ app.conf.update(
     enable_utc=True,
 )
 
-@app.task(name="darkwin.run_scan")
-def run_scan_task(target: str, pipeline_name: str, scan_id: str):
+@app.task(name="darkwin.run_module")
+def run_module_task(module_name, target, scan_id, args=None, kwargs=None):
     """
-    Celery task to run a specific pipeline.
+    Celery task to run a specific module.
+    Used for distributed scanning nodes.
     """
-    logger.info(f"Worker received scan task: {scan_id} for {target} ({pipeline_name})")
+    from core.module_loader import get_module
+    from core.database import SessionLocal
+    from core.models import Finding
     
-    # Dynamic import to avoid circular dependencies
-    from core.pipeline_engine import Pipeline
-    # In a real implementation, we would fetch the pipeline configuration by name
-    # and instantiate the Pipeline object here.
+    args = args or []
+    kwargs = kwargs or {}
     
-    # Placeholder for actual pipeline execution
-    logger.info(f"Executing {pipeline_name} on {target}...")
+    try:
+        module = get_module(module_name)
+        # We pass a simple dict config to the module to avoid Pydantic serialization issues in Celery
+        results = module.run(target, scan_id, {})
+        
+        if isinstance(results, list):
+            db = SessionLocal()
+            for r in results:
+                finding = Finding(
+                    scan_id=scan_id,
+                    vuln_type=r.get("vuln_type", "unknown"),
+                    severity=r.get("severity", "Info"),
+                    endpoint=r.get("endpoint", target),
+                    payload=r.get("payload", ""),
+                    description=r.get("description", "")
+                )
+                db.add(finding)
+            db.commit()
+            db.close()
+            
+        return {"status": "success", "findings_count": len(results)}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 def schedule_recurring(target, pipeline_name, interval_minutes):
     """
-    Registers a periodic task with Celery Beat.
+    Placeholder for periodic task scheduling (Step 31).
+    Requires celery-beat to be configured.
     """
-    # This usually requires configuring celery_beat_schedule in settings
-    logger.info(f"Scheduling recurring scan for {target} every {interval_minutes} minutes")
-
-def cancel_schedule(target):
-    """
-    Cancels all pending tasks for a given target.
-    """
-    logger.info(f"Cancelling all scheduled scans for {target}")
-    # Implementation would use app.control.revoke
+    pass

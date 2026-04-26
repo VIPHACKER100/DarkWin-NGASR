@@ -1,64 +1,66 @@
 import importlib
-import os
 import pkgutil
-from typing import Dict, List, Any
+import os
 from rich.table import Table
 from rich.console import Console
 
-class ModuleLoader:
-    def __init__(self, modules_path: str = "modules"):
-        self.modules_path = modules_path
-        self.loaded_modules: Dict[str, Any] = {}
+console = Console()
 
-    def discover_modules(self):
-        """Dynamically discover and import all modules under the modules/ directory."""
-        self.loaded_modules = {}
-        # Iterate through all packages in the modules directory
-        for loader, module_name, is_pkg in pkgutil.walk_packages([self.modules_path], prefix="modules."):
-            if not is_pkg:
-                try:
-                    module = importlib.import_module(module_name)
-                    if hasattr(module, "MODULE_META"):
-                        # Use the module's simple name (last part) as the key
-                        short_name = module_name.split(".")[-1]
-                        self.loaded_modules[short_name] = module
-                except Exception as e:
-                    # Logging would be good here, but keeping it simple for now
-                    pass
+def list_modules():
+    """
+    Dynamically discovers and lists all modules under the 'modules' directory.
+    """
+    table = Table(title="DARKWIN Loaded Modules")
+    table.add_column("Category", style="cyan")
+    table.add_column("Name", style="green")
+    table.add_column("Description", style="white")
+    table.add_column("Version", style="dim")
 
-    def list_modules(self) -> Table:
-        """Returns a formatted rich Table of all loaded modules."""
-        table = Table(title="DARKWIN Modules", show_header=True, header_style="bold magenta")
-        table.add_column("Category", style="dim")
-        table.add_column("Name", style="bold cyan")
-        table.add_column("Version", justify="right")
-        table.add_column("Description")
+    modules_path = os.path.join(os.getcwd(), "modules")
+    
+    # Grouping by category
+    module_data = []
 
-        # Group by category from MODULE_META
-        sorted_modules = sorted(self.loaded_modules.values(), key=lambda m: (m.MODULE_META.get("category", "unknown"), m.MODULE_META.get("name", "")))
-        
-        for module in sorted_modules:
-            meta = module.MODULE_META
-            table.add_row(
-                meta.get("category", "N/A"),
-                meta.get("name", "N/A"),
-                meta.get("version", "N/A"),
-                meta.get("description", "No description available")
-            )
-        
-        return table
+    for loader, module_name, is_pkg in pkgutil.walk_packages([modules_path], prefix="modules."):
+        if is_pkg:
+            continue
+            
+        try:
+            module = importlib.import_module(module_name)
+            meta = getattr(module, "MODULE_META", None)
+            if meta:
+                module_data.append({
+                    "category": meta.get("category", "General"),
+                    "name": meta.get("name", module_name),
+                    "description": meta.get("description", "No description"),
+                    "version": meta.get("version", "1.0.0")
+                })
+        except Exception:
+            continue
 
-    def get_module(self, name: str) -> Any:
-        """Returns the module object by name."""
-        if not self.loaded_modules:
-            self.discover_modules()
-        
-        if name in self.loaded_modules:
-            return self.loaded_modules[name]
-        raise ModuleNotFoundError(f"Module '{name}' not found.")
+    # Sort and add to table
+    for m in sorted(module_data, key=lambda x: x['category']):
+        table.add_row(m['category'], m['name'], m['description'], m['version'])
 
-def list_all_modules():
-    loader = ModuleLoader()
-    loader.discover_modules()
-    console = Console()
-    console.print(loader.list_modules())
+    return table
+
+def get_module(name: str):
+    """
+    Retrieves a module by its metadata name or import path.
+    """
+    modules_path = os.path.join(os.getcwd(), "modules")
+    for loader, module_name, is_pkg in pkgutil.walk_packages([modules_path], prefix="modules."):
+        if is_pkg:
+            continue
+        try:
+            module = importlib.import_module(module_name)
+            meta = getattr(module, "MODULE_META", None)
+            if meta and (meta.get("name") == name or module_name == name):
+                return module
+        except Exception:
+            continue
+    
+    raise ModuleNotFoundError(f"Module '{name}' not found in DARKWIN library.")
+
+if __name__ == "__main__":
+    console.print(list_modules())

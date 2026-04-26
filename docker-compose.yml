@@ -1,19 +1,19 @@
-version: "3.9"
+version: '3.8'
 
 services:
   postgres:
-    image: postgres:15
+    image: postgres:15-alpine
     container_name: darkwin-postgres
     environment:
-      POSTGRES_DB: darkwin
-      POSTGRES_USER: darkwin
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-darkwin_secret}
+      POSTGRES_USER: ${DB_USER:-darkwin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-darkwin_pass}
+      POSTGRES_DB: ${DB_NAME:-darkwin_db}
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U darkwin"]
+      test: ["CMD-SHELL", "pg_isready -U darkwin -d darkwin_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -37,25 +37,17 @@ services:
     ports:
       - "5000:5000"
     environment:
-      DATABASE_URL: postgresql://darkwin:${POSTGRES_PASSWORD:-darkwin_secret}@postgres:5432/darkwin
-      REDIS_URL: redis://redis:6379/0
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-in-production}
-      FLASK_ENV: ${FLASK_ENV:-production}
-    volumes:
-      - ./wordlists:/app/wordlists:ro
-      - ./payloads:/app/payloads:ro
-      - ./reports:/app/reports
-      - ./logs:/app/logs
+      - DATABASE_URL=postgresql://${DB_USER:-darkwin}:${DB_PASSWORD:-darkwin_pass}@postgres:5432/${DB_NAME:-darkwin_db}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-darkwin_secret_key}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/healthz"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    volumes:
+      - ./reports:/app/reports
+      - ./logs:/app/logs
 
   darkwin-worker:
     build:
@@ -64,27 +56,13 @@ services:
     container_name: darkwin-worker
     command: celery -A core.scheduler worker --loglevel=info
     environment:
-      DATABASE_URL: postgresql://darkwin:${POSTGRES_PASSWORD:-darkwin_secret}@postgres:5432/darkwin
-      REDIS_URL: redis://redis:6379/0
-    volumes:
-      - ./wordlists:/app/wordlists:ro
-      - ./payloads:/app/payloads:ro
-      - ./reports:/app/reports
-      - ./logs:/app/logs
+      - DATABASE_URL=postgresql://${DB_USER:-darkwin}:${DB_PASSWORD:-darkwin_pass}@postgres:5432/${DB_NAME:-darkwin_db}
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  flower:
-    image: mher/flower:2.0
-    container_name: darkwin-flower
-    command: celery --broker=redis://redis:6379/0 flower --port=5555
-    ports:
-      - "5555:5555"
-    depends_on:
+      - postgres
       - redis
+    volumes:
+      - .:/app
 
 volumes:
-  pgdata:
+  postgres_data:

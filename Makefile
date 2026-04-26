@@ -1,28 +1,31 @@
-.PHONY: install dev test lint docker-up docker-down
+# DARKWIN Makefile
+# Developed by ARYAN AHIRWAR (VIPHACKER.100)
+
+.PHONY: install dev test lint docker-up docker-down init-db
 
 install:
 	pip install -r requirements.txt
 	pip install -e .
 
 dev:
-	flask --app dashboards.backend.app run --debug --port 5000
+	python core/darkwin.py
 
 test:
-	pytest tests/ -v --tb=short
+	pytest tests/
 
 lint:
-	python -m py_compile core/darkwin.py
-	python -m py_compile core/config_manager.py
-	python -m py_compile core/database.py
-	python -m py_compile core/models.py
+	flake8 core/ modules/ pipelines/ ai/
 
 docker-up:
-	docker-compose up -d --build
+	docker-compose up -d
 
 docker-down:
 	docker-compose down
 
+init-db:
+	python core/migrations/init_db.py
+
 clean:
-	rm -rf logs/*.log reports/* __pycache__
-	find . -type d -name __pycache__ -exec rm -rf {} +
-	find . -name "*.pyc" -delete
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	rm -rf *.egg-info
+	rm -f .acknowledged
