@@ -1,66 +1,134 @@
 #!/usr/bin/env bash
-# DARKWIN — Tool & Environment Setup Script
-# Developed by ARYAN AHIRWAR (VIPHACKER.100)
+# ============================================================================
+# DARKWIN — Environment & Tool Setup Script
+# ============================================================================
+# Purpose: Initialize DARKWIN environment with Python, dependencies, and
+#          external security tools.
+# Author: ARYAN AHIRWAR (VIPHACKER.100)
+# License: See LICENSE file
+# Usage: ./setup.sh
+# ============================================================================
 
+# Strict mode: exit on error (-e), undefined vars (-u), pipe failures (-o pipefail)
 set -euo pipefail
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Color definitions for terminal output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly NC='\033[0m'  # No Color
+
+# Minimum required Python version
+readonly MIN_PYTHON_VERSION="3.11"
+
+# External security tools required
+readonly SECURITY_TOOLS=(nmap subfinder httpx nuclei ffuf amass katana sqlmap dalfox masscan)
+
+# Project directories
+readonly PROJECT_DIRS=(core modules pipelines ai automation integrations dashboards wordlists payloads logs reports)
+
+# ============================================================================
+# Output Functions
+# ============================================================================
 
 info()    { echo -e "${BLUE}[INFO]${NC}  $*"; }
 success() { echo -e "${GREEN}[SUCCESS]${NC} $*"; }
 warn()    { echo -e "${YELLOW}[WARN]${NC}  $*"; }
 error()   { echo -e "${RED}[ERROR]${NC} $*"; }
 
+# ============================================================================
+# Tool Verification
+# ============================================================================
+
 check_tool() {
-    if command -v "$1" >/dev/null 2>&1; then
+    """Check if a command-line tool is installed and available in PATH."""
+    if command -v "$1" > /dev/null 2>&1; then
         success "$1 is installed"
     else
         warn "$1 is NOT installed. Please install it manually."
     fi
 }
 
+# ============================================================================
+# Setup Execution
+# ============================================================================
+
 info "Starting DARKWIN setup..."
+info ""
 
 # 1. Check Python Version
+info "Checking Python version..."
 PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
-if [[ $(echo -e "3.11\n$PYTHON_VERSION" | sort -V | head -n1) == "3.11" ]]; then
+
+if [[ "$(printf '%s\n' "$MIN_PYTHON_VERSION" "$PYTHON_VERSION" | sort -V | head -n1)" == "$MIN_PYTHON_VERSION" ]]; then
     success "Python $PYTHON_VERSION detected"
 else
-    error "Python 3.11+ is required. Detected: $PYTHON_VERSION"
+    error "Python $MIN_PYTHON_VERSION+ is required. Detected: $PYTHON_VERSION"
     exit 1
 fi
 
-# 2. Install Python dependencies
-info "Installing Python dependencies..."
-pip install -r requirements.txt
-pip install -e .
+info ""
 
-# 3. Check for external tools
+# 2. Install Python Dependencies
+info "Installing Python dependencies from requirements.txt..."
+if pip install -q -r requirements.txt; then
+    success "Dependencies installed successfully"
+else
+    error "Failed to install dependencies"
+    exit 1
+fi
+
+# Install package in editable mode for development
+if pip install -q -e .; then
+    success "Package installed in editable mode"
+else
+    warn "Failed to install package in editable mode (non-fatal)"
+fi
+
+info ""
+
+# 3. Check External Security Tools
 info "Checking for external security tools..."
-TOOLS=(nmap subfinder httpx nuclei ffuf amass katana sqlmap dalfox masscan)
-for tool in "${TOOLS[@]}"; do
+for tool in "${SECURITY_TOOLS[@]}"; do
     check_tool "$tool"
 done
 
-# 4. Create directory structure
-info "Ensuring directory structure exists..."
-DIRS=(core modules pipelines ai automation integrations dashboards wordlists payloads logs reports)
-for dir in "${DIRS[@]}"; do
-    mkdir -p "$dir"
-    touch "$dir/.gitkeep"
+info ""
+
+# 4. Create Directory Structure
+info "Creating/validating project directory structure..."
+for dir in "${PROJECT_DIRS[@]}"; do
+    if mkdir -p "$dir"; then
+        touch "${dir}/.gitkeep"
+        success "Directory ready: $dir"
+    else
+        error "Failed to create directory: $dir"
+        exit 1
+    fi
 done
 
-# 5. Check for Legal Acknowledgement
-if [ ! -f .acknowledged ]; then
-    warn "LEGAL.md has not been acknowledged yet."
+info ""
+
+# 5. Check Legal Acknowledgement Status
+info "Checking legal acknowledgement status..."
+if [ -f .acknowledged ]; then
+    success "Legal terms have been acknowledged"
+else
+    warn "Legal terms have NOT been acknowledged yet"
+    warn "Run 'darkwin' or 'python core/darkwin.py' to complete acknowledgement"
 fi
 
+info ""
+
+# 6. Display Next Steps
 success "DARKWIN setup completed successfully!"
+info ""
 info "Next steps:"
-info "1. Acknowledge LEGAL.md by running 'darkwin' for the first time."
-info "2. Configure config.yaml."
-info "3. Initialize database with 'python core/migrations/init_db.py'."
+info "  1. Acknowledge LEGAL.md by running: python core/darkwin.py"
+info "  2. Configure settings: cp config.yaml.example config.yaml"
+info "  3. Initialize database: python core/migrations/init_db.py"
+info "  4. Start dashboard: python dashboards/backend/app.py"
+info ""
+info "For more information, see: README.md"
+info ""

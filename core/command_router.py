@@ -1,10 +1,22 @@
-import click
+"""DARKWIN CLI Command Router
+
+Provides click-based CLI interface for security scanning operations.
+Includes scope verification, pipeline orchestration, and module management.
+
+Author: ARYAN AHIRWAR (VIPHACKER.100)
+License: See LICENSE file
+"""
+
 import json
-import os
 import sys
 import uuid
-import datetime
+from datetime import datetime
+from pathlib import Path
+from typing import Optional, Dict, Any
+
+import click
 from rich.console import Console
+
 from core.config_manager import validate_config, get_config
 from core.logging_system import get_logger
 from core.database import SessionLocal
@@ -13,41 +25,62 @@ from pipelines.recon_pipeline import get_recon_pipeline
 from pipelines.web_vuln_pipeline import get_web_vuln_pipeline
 from pipelines.full_hunt_pipeline import get_full_hunt_pipeline
 
-console = Console()
+console: Console = Console()
 logger = get_logger("CLI")
 
-def verify_scope(target: str, scope_file: str = None) -> bool:
-    """
-    Verify if the target is within the authorized scope.
+def verify_scope(target: str, scope_file: Optional[str] = None) -> bool:
+    """Verify if the target is within authorized scope.
+    
+    Checks target against authorized domains and IPs from scope file.
+    Supports wildcard domain matching (e.g., *.example.com).
+    
+    Args:
+        target: Target domain or IP address to verify.
+        scope_file: Optional path to JSON scope file with authorized targets.
+    
+    Returns:
+        True if target is in scope, False otherwise.
+    
+    Raises:
+        None (logs errors instead of raising).
     """
     if not scope_file:
-        # If no scope file, we require manual confirmation or assume out-of-scope for now
-        # In a real tool, we might check a database or default allowed list
+        # No scope file provided - require explicit authorization
+        logger.warning(
+            f"No scope file provided. Target '{target}' cannot be verified. "
+            "Skipping scope check (provide --scope-file for verification)."
+        )
+        return False
+    
+    scope_path = Path(scope_file)
+    
+    if not scope_path.exists():
+        logger.error(f"Scope file not found: {scope_file}")
         return False
     
     try:
-        if not os.path.exists(scope_file):
-            logger.error(f"Scope file not found: {scope_file}")
-            return False
-            
-        with open(scope_file, 'r') as f:
-            scope_data = json.load(f)
-            authorized_domains = scope_data.get("authorized_domains", [])
-            authorized_ips = scope_data.get("authorized_ips", [])
-            
-            if target in authorized_domains or target in authorized_ips:
-                return True
-                
-            # Basic wildcard check (e.g., example.com matches *.example.com)
-            for domain in authorized_domains:
-                if domain.startswith("*."):
-                    base_domain = domain[2:]
-                    if target == base_domain or target.endswith("." + base_domain):
-                        return True
+        scope_data: Dict[str, Any] = json.loads(scope_path.read_text())
+        authorized_domains: list = scope_data.get("authorized_domains", [])
+        authorized_ips: list = scope_data.get("authorized_ips", [])
+        
+        # Direct match
+        if target in authorized_domains or target in authorized_ips:
+            return True
+        
+        # Wildcard domain matching (e.g., *.example.com matches sub.example.com)
+        for domain in authorized_domains:
+            if domain.startswith("*."):
+                base_domain: str = domain[2:]
+                if target == base_domain or target.endswith("." + base_domain):
+                    return True
         
         return False
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON in scope file: {e}")
+        return False
     except Exception as e:
-        logger.error(f"Error reading scope file: {e}")
+        logger.error(f"Error reading scope file: {e}", exc_info=True)
         return False
 
 @click.group()

@@ -1,73 +1,132 @@
+"""DARKWIN Logging System Configuration
+
+Provides centralized logging with both console (Rich) and file output.
+Supports scan-specific logging and rotating file handlers for log management.
+
+Features:
+    - Rich console output with syntax highlighting
+    - Rotating file handlers to prevent disk space issues
+    - Scan-specific log files for detailed per-scan tracking
+    - Configurable log levels and formatting
+    
+Author: ARYAN AHIRWAR (VIPHACKER.100)
+License: See LICENSE file
+"""
+
 import logging
-import os
+from pathlib import Path
 from logging.handlers import RotatingFileHandler
-from rich.logging import RichHandler
 from typing import Optional
 
+from rich.logging import RichHandler
+
+# Constants
+LOG_DIR: Path = Path("logs")
+SCAN_LOG_DIR: Path = LOG_DIR / "scans"
+MAIN_LOG_FILE: Path = LOG_DIR / "darkwin.log"
+MAX_LOG_SIZE: int = 10 * 1024 * 1024  # 10 MB
+LOG_BACKUP_COUNT: int = 5
+LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+
 def get_logger(name: str, scan_id: Optional[str] = None) -> logging.Logger:
+    """Get a configured logger with console and file output.
+    
+    Creates or retrieves a logger with Rich console handler and rotating
+    file handler. If scan_id provided, also creates scan-specific log file.
+    
+    Args:
+        name: Logger name (typically __name__ or module name).
+        scan_id: Optional scan ID for per-scan log files.
+        
+    Returns:
+        Configured logging.Logger instance.
+        
+    Note:
+        Logger is cached after first creation. Subsequent calls return
+        existing logger to avoid duplicate handlers.
     """
-    Get a logger with console (Rich) and file output.
-    If scan_id is provided, logs are also written to a scan-specific file.
-    """
-    logger = logging.getLogger(name)
+    logger: logging.Logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
-    # Prevent duplicate handlers if logger is already configured
+    # Skip if already configured (prevent duplicate handlers)
     if logger.handlers:
         return logger
 
-    # Console Handler (Rich)
-    console_handler = RichHandler(rich_tracebacks=True, markup=True)
+    # Console Handler (Rich for pretty output)
+    console_handler: RichHandler = RichHandler(
+        rich_tracebacks=True,
+        markup=True,
+        show_time=True,
+        show_path=False,
+    )
     console_handler.setLevel(logging.INFO)
     logger.addHandler(console_handler)
 
-    # Base Log Directory
-    log_dir = "logs"
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    # Create log directory if needed
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
 
     # Main Log File (Rotating)
-    main_log_file = os.path.join(log_dir, "darkwin.log")
-    file_handler = RotatingFileHandler(
-        main_log_file, maxBytes=10*1024*1024, backupCount=5
+    file_handler: RotatingFileHandler = RotatingFileHandler(
+        MAIN_LOG_FILE,
+        maxBytes=MAX_LOG_SIZE,
+        backupCount=LOG_BACKUP_COUNT,
     )
-    file_formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    file_formatter: logging.Formatter = logging.Formatter(LOG_FORMAT)
     file_handler.setFormatter(file_formatter)
     file_handler.setLevel(logging.DEBUG)
     logger.addHandler(file_handler)
 
-    # Scan-specific logger
+    # Scan-specific logger (if scan_id provided)
     if scan_id:
-        scan_log_dir = os.path.join(log_dir, "scans")
-        if not os.path.exists(scan_log_dir):
-            os.makedirs(scan_log_dir)
+        SCAN_LOG_DIR.mkdir(parents=True, exist_ok=True)
         
-        scan_log_file = os.path.join(scan_log_dir, f"{scan_id}.log")
-        scan_handler = logging.FileHandler(scan_log_file)
+        scan_log_file: Path = SCAN_LOG_DIR / f"{scan_id}.log"
+        scan_handler: logging.FileHandler = logging.FileHandler(scan_log_file)
         scan_handler.setFormatter(file_formatter)
         scan_handler.setLevel(logging.DEBUG)
         logger.addHandler(scan_handler)
 
     return logger
 
+
 class ScanLogger:
-    def __init__(self, scan_id: str, name: str = "DARKWIN"):
-        self.logger = get_logger(f"{name}.{scan_id}", scan_id=scan_id)
-        self.scan_id = scan_id
+    """Wrapper for scan-specific logging with convenience methods.
+    
+    Provides a simple interface for logging during scan execution.
+    All log entries are automatically associated with the scan ID.
+    
+    Attributes:
+        logger: Underlying logging.Logger instance.
+        scan_id: Associated scan ID for this logger.
+    """
+    
+    def __init__(self, scan_id: str, name: str = "DARKWIN") -> None:
+        """Initialize scan logger.
+        
+        Args:
+            scan_id: Unique scan identifier.
+            name: Logger name prefix (default: "DARKWIN").
+        """
+        self.logger: logging.Logger = get_logger(f"{name}.{scan_id}", scan_id=scan_id)
+        self.scan_id: str = scan_id
 
-    def info(self, msg):
-        self.logger.info(msg)
-
-    def debug(self, msg):
+    def debug(self, msg: str) -> None:
+        """Log debug message."""
         self.logger.debug(msg)
 
-    def warning(self, msg):
+    def info(self, msg: str) -> None:
+        """Log info message."""
+        self.logger.info(msg)
+
+    def warning(self, msg: str) -> None:
+        """Log warning message."""
         self.logger.warning(msg)
 
-    def error(self, msg):
+    def error(self, msg: str) -> None:
+        """Log error message."""
         self.logger.error(msg)
 
-    def critical(self, msg):
+    def critical(self, msg: str) -> None:
+        """Log critical message."""
         self.logger.critical(msg)
