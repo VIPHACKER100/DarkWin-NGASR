@@ -127,12 +127,18 @@ info ""
 info "Creating/validating project directory structure..."
 PROJECT_DIRS+=(dashboards/frontend-next/public/reports)
 for dir in "${PROJECT_DIRS[@]}"; do
-    if mkdir -p "$dir"; then
-        touch "${dir}/.gitkeep"
+    if mkdir -p "$dir" 2>/dev/null; then
+        # Use || true to prevent script exit on touch permission errors
+        touch "${dir}/.gitkeep" 2>/dev/null || true
         success "Directory ready: $dir"
     else
-        error "Failed to create directory: $dir"
-        exit 1
+        # If mkdir fails but directory exists, we might still be okay
+        if [ -d "$dir" ]; then
+            success "Directory already exists: $dir"
+        else
+            error "Failed to create directory: $dir"
+            exit 1
+        fi
     fi
 done
 
