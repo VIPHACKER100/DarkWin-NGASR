@@ -1,5 +1,7 @@
 # 🌌 DARKWIN — Next-Gen Automated Security Research
 
+# 🌌 DARKWIN — Next-Gen Automated Security Research
+
 ### Developed by ARYAN AHIRWAR (VIPHACKER.100)
 
 **Version 1.0.0 — FULL RELEASE**
@@ -10,28 +12,33 @@ DARKWIN is an elite, fully autonomous security research platform designed for bu
 
 ## 🚀 Get Started
 
-1. **Installation**:
-
+1.  **Installation & Diagnosis**:
     ```bash
     bash setup.sh
+    # Verify environment and fix missing dependencies
+    python core/darkwin.py doctor --fix
     ```
 
-2. **Initialize Database**:
+2.  **Configuration**:
+    ```bash
+    # Run interactive setup wizard
+    python core/darkwin.py setup
+    ```
 
+3.  **Initialize Database**:
     ```bash
     python core/migrations/init_db.py
     ```
 
-3. **Configure API Keys**:
-    Edit `config.yaml` to add your Shodan, Censys, and OpenAI/Local LLM keys.
-4. **Launch Dashboard**:
-
+4.  **Launch Dashboard**:
     ```bash
+    # Start the API backend
     cd dashboards/backend && python app.py
+    # Start the Next.js frontend
+    cd dashboards/frontend-next && npm run dev
     ```
 
-5. **Run Your First Scan**:
-
+5.  **Run Your First Scan**:
     ```bash
     darkwin recon example.com --scope-file scope.json
     ```
@@ -40,7 +47,11 @@ DARKWIN is an elite, fully autonomous security research platform designed for bu
 
 ## 🛠️ Platform Features
 
-> ⚠️ **AUTHORIZED USE ONLY** — This platform is designed strictly for ethical security research, authorized penetration testing, and bug-bounty-scoped targets. Unauthorized use is illegal. See [LEGAL.md](LEGAL.md).
+*   **System Doctor**: Automated environment self-healing with `doctor --fix`.
+*   **Async Pipeline Engine**: High-performance parallel execution of scanning modules.
+*   **Next.js Dashboard**: Premium, real-time web interface for scan management.
+*   **AI Integration**: Autonomous vulnerability classification and payload generation.
+*   **117+ Specialized Modules**: Covering reconnaissance, fuzzing, and exploit research.
 
 ---
 
@@ -102,7 +113,7 @@ DARKWIN/
 ├── ai/                    # LLM-powered vuln classification & payload generation
 ├── automation/            # Auto hunter, distributed scanning
 ├── integrations/          # Shodan, Censys, VirusTotal, GitHub
-├── dashboards/            # Flask backend + React frontend
+├── dashboards/            # Flask backend + React/Next.js frontend
 ├── wordlists/             # Subdomain, directory, parameter wordlists
 ├── payloads/              # XSS, SQLi, LFI, SSTI, fuzzing payloads
 ├── logs/                  # Scan and system logs
@@ -113,21 +124,20 @@ DARKWIN/
 ## CLI Commands
 
 ```bash
-darkwin recon <target>           # Run reconnaissance pipeline
+darkwin setup                    # Run interactive configuration wizard
+darkwin doctor                   # Run system diagnostics (--fix to repair)
+darkwin recon <target>           # Run reconnaissance pipeline (Async)
 darkwin scan <target>            # Run vulnerability scan pipeline
-darkwin fuzz <target>            # Run fuzzing modules
-darkwin exploit <target>         # Search for exploits (suggestions only)
-darkwin cloud <target>           # Run cloud security checks
-darkwin hunt <target>            # Full bug bounty pipeline
-darkwin report <scan_id>         # Generate reports
-darkwin watch <target>           # Continuous monitoring
+darkwin hunt <target>            # Full bug bounty pipeline (Orchestrated)
+darkwin report <scan_id>         # Generate findings reports
 darkwin modules                  # List all available modules
-darkwin dashboard                # Launch web dashboard
 ```
+
+---
 
 ## Legal Disclaimer
 
-This tool is provided for **educational and authorized security testing purposes only**. The authors are not responsible for any misuse. Always obtain explicit written authorization before testing any system.
+This tool is provided for **educational and authorized security testing purposes only**. The authors are not responsible for any misuse. Always obtain explicit written authorization before testing any system. See [LEGAL.md](LEGAL.md) for full terms.
 
 ---
 
