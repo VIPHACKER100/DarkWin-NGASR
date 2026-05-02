@@ -85,7 +85,10 @@ else
 fi
 
 # Install package in editable mode for development
-if pip install -q -e .; then
+info "Ensuring package structure and installing in editable mode..."
+find . -type d \( -name "core" -o -name "modules" -o -name "pipelines" -o -name "ai" -o -name "automation" -o -name "integrations" -o -name "dashboards" \) -exec touch {}/__init__.py \;
+
+if python3 -m pip install -e .; then
     success "Package installed in editable mode"
 else
     warn "Failed to install package in editable mode (non-fatal)"
