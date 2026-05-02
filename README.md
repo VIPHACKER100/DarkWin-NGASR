@@ -131,10 +131,15 @@ darkwin [COMMAND] [OPTIONS]
 | `shell` | — | Interactive REPL with auto-completion |
 | `targets` | `--add` / `--remove` | Add, remove, or list the target scope |
 | `history` | `--limit N` | View recent scan history with status |
+| `wordlists` | — | Manage and download security wordlists |
+| `payloads` | `--type T` | View and manage exploit payloads |
+| `screenshots` | `--scan-id ID` | View and manage captured evidence |
 | `mesh` | — | View distributed scanning nodes |
 | `proxy` | — | View proxy pool |
 | `modules` | — | List all available scan modules |
 | `report` | `<scan_id>` `--format` | Generate AI-synthesized reports (pdf/html/md) |
+| `schedule` | `--add` / `--list` | Manage periodic security scan tasks |
+| `config` | `--view` / `--edit` | View or edit platform configuration |
 | `doctor` | `--fix` | System diagnostics + self-healing |
 | `test` | — | Run core unit tests |
 | `update` | — | Pull latest changes from GitHub |

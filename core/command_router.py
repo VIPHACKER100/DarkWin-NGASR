@@ -276,6 +276,303 @@ def targets(add_target, remove_target):
 
 
 @cli.command()
+@click.option('--download', is_flag=True, help='Download recommended wordlists')
+def wordlists(download):
+    """View and manage local security wordlists"""
+    import os
+    import requests
+    from rich.table import Table
+    
+    wordlists_dir = "wordlists"
+    os.makedirs(wordlists_dir, exist_ok=True)
+    
+    recommended = {
+        "subdomains.txt": "https://raw.githubusercontent.com/rbsec/dnscan/master/subdomains-10000.txt",
+        "directories.txt": "https://raw.githubusercontent.com/maurosoria/dirsearch/master/db/dicc.txt",
+        "parameters.txt": "https://raw.githubusercontent.com/projectdiscovery/fuzz-bores/main/wordlists/parameters.txt"
+    }
+    
+    if download:
+        console.print("[bold cyan]📥 Downloading recommended wordlists...[/bold cyan]")
+        for name, url in recommended.items():
+            path = os.path.join(wordlists_dir, name)
+            if os.path.exists(path):
+                console.print(f"  [yellow]![/yellow] {name} already exists. Skipping.")
+                continue
+            try:
+                console.print(f"  [blue]→[/blue] Downloading {name}...")
+                r = requests.get(url, timeout=30)
+                with open(path, "wb") as f:
+                    f.write(r.content)
+                console.print(f"  [green]✔[/green] {name} saved.")
+            except Exception as e:
+                console.print(f"  [red]✘[/red] Failed to download {name}: {e}")
+        return
+
+    # List local wordlists
+    files = [f for f in os.listdir(wordlists_dir) if os.path.isfile(os.path.join(wordlists_dir, f))]
+    
+    table = Table(title="📁 Local Wordlists", border_style="cyan")
+    table.add_column("Filename", style="bold white")
+    table.add_column("Size", justify="right")
+    table.add_column("Status", justify="center")
+    
+    for name in recommended.keys():
+        path = os.path.join(wordlists_dir, name)
+        exists = os.path.exists(path)
+        size = f"{os.path.getsize(path) / 1024:.1f} KB" if exists else "—"
+        status = "[green]Ready[/green]" if exists else "[red]Missing[/red]"
+        table.add_row(name, size, status)
+        
+    for f in files:
+        if f not in recommended:
+            path = os.path.join(wordlists_dir, f)
+            size = f"{os.path.getsize(path) / 1024:.1f} KB"
+            table.add_row(f, size, "[white]Custom[/white]")
+            
+    console.print(table)
+    if not any(os.path.exists(os.path.join(wordlists_dir, n)) for n in recommended.keys()):
+        console.print("\n[yellow]💡 Tip: Run 'darkwin wordlists --download' to get started.[/yellow]")
+
+@cli.command()
+@click.option('--type', 'payload_type', help='Filter payloads by type (xss, sqli, lfi, etc.)')
+def payloads(payload_type):
+    """View and manage exploit payloads"""
+    import os
+    from rich.table import Table
+    from rich.tree import Tree
+    
+    payloads_dir = "payloads"
+    os.makedirs(payloads_dir, exist_ok=True)
+    
+    # Categorized payloads (Examples)
+    categories = {
+        "xss": ["<script>alert(1)</script>", "javascript:alert(1)", "<img src=x onerror=alert(1)>"],
+        "sqli": ["' OR '1'='1", "' UNION SELECT NULL--", "admin'--"],
+        "lfi": ["../../../../etc/passwd", "..\\..\\..\\..\\windows\\win.ini", "/etc/hosts"],
+        "rce": ["; id", "`id`", "| id", "$(id)"]
+    }
+    
+    # Ensure local files exist for these categories if not already present
+    for cat, items in categories.items():
+        cat_dir = os.path.join(payloads_dir, cat)
+        os.makedirs(cat_dir, exist_ok=True)
+        default_file = os.path.join(cat_dir, "default.txt")
+        if not os.path.exists(default_file):
+            with open(default_file, "w") as f:
+                f.write("\n".join(items))
+
+    if payload_type:
+        cat_path = os.path.join(payloads_dir, payload_type)
+        if not os.path.exists(cat_path):
+            console.print(f"[bold red]✘ Category '{payload_type}' not found.[/bold red]")
+            return
+        
+        table = Table(title=f"🔥 {payload_type.upper()} Payloads", border_style="red")
+        table.add_column("Payload", style="bold white")
+        
+        for root, _, files in os.walk(cat_path):
+            for file in files:
+                with open(os.path.join(root, file), "r") as f:
+                    for line in f.readlines():
+                        if line.strip():
+                            table.add_row(line.strip())
+        console.print(table)
+        return
+
+    # Tree view of all payloads
+    tree = Tree("📂 [bold]Payloads Repository[/bold]", guide_style="bold red")
+    
+    for cat in os.listdir(payloads_dir):
+        cat_path = os.path.join(payloads_dir, cat)
+        if os.path.isdir(cat_path):
+            cat_node = tree.add(f"[bold yellow]{cat.upper()}[/bold yellow]")
+            for file in os.listdir(cat_path):
+                file_path = os.path.join(cat_path, file)
+                if os.path.isfile(file_path):
+                    count = sum(1 for line in open(file_path) if line.strip())
+                    cat_node.add(f"{file} ([dim]{count} payloads[/dim])")
+    
+    console.print(tree)
+    console.print("\n[yellow]💡 Tip: Use 'darkwin payloads --type <name>' to view specific strings.[/yellow]")
+
+@cli.command()
+@click.option('--scan-id', help='Filter screenshots by Scan ID')
+@click.option('--open', 'open_img', is_flag=True, help='Open the latest screenshot')
+def screenshots(scan_id, open_img):
+    """View and manage captured evidence screenshots"""
+    import os
+    import subprocess
+    from rich.table import Table
+    from core.database import SessionLocal
+    from core.models import Screenshot
+    
+    with SessionLocal() as db:
+        query = db.query(Screenshot)
+        if scan_id:
+            query = query.filter(Screenshot.scan_id == scan_id)
+        
+        results = query.order_by(Screenshot.created_at.desc()).all()
+
+    if not results:
+        console.print("[yellow]No screenshots found in the database.[/yellow]")
+        return
+
+    if open_img:
+        latest = results[0]
+        console.print(f"[bold cyan]🖼️ Opening latest screenshot: {latest.filename}[/bold cyan]")
+        try:
+            if os.name == 'nt':
+                os.startfile(latest.filepath)
+            else:
+                subprocess.run(['xdg-open', latest.filepath], check=True)
+        except Exception as e:
+            console.print(f"[bold red]❌ Failed to open screenshot: {e}[/bold red]")
+        return
+
+    table = Table(title="📸 Captured Evidence", border_style="magenta")
+    table.add_column("Scan ID", style="dim")
+    table.add_column("Filename", style="bold white")
+    table.add_column("URL", style="blue")
+    table.add_column("Captured At", style="dim")
+    
+    for s in results:
+        table.add_row(
+            s.scan_id[:8] + "...",
+            s.filename,
+            s.url or "—",
+            s.created_at.strftime("%Y-%m-%d %H:%M")
+        )
+    
+    console.print(table)
+    console.print(f"\n[bold green]Total Screenshots: {len(results)}[/bold green]")
+    console.print("[yellow]💡 Tip: Use 'darkwin screenshots --open' to view the latest capture.[/yellow]")
+
+@cli.command()
+@click.option('--edit', is_flag=True, help='Open config.yaml in default editor')
+@click.option('--view', is_flag=True, help='View current configuration (masked)')
+def config(edit, view):
+    """View or edit platform configuration"""
+    import os
+    import subprocess
+    import yaml
+    from rich.syntax import Syntax
+    
+    config_path = "config.yaml"
+    
+    if edit:
+        console.print(f"[bold cyan]📝 Opening {config_path} for editing...[/bold cyan]")
+        try:
+            if os.name == 'nt':
+                os.startfile(config_path)
+            else:
+                editor = os.environ.get('EDITOR', 'nano')
+                subprocess.run([editor, config_path], check=True)
+        except Exception as e:
+            console.print(f"[bold red]❌ Failed to open editor: {e}[/bold red]")
+        return
+
+    if view:
+        if not os.path.exists(config_path):
+            console.print(f"[bold red]❌ {config_path} not found![/bold red]")
+            return
+            
+        with open(config_path, 'r') as f:
+            data = yaml.safe_load(f)
+            
+        # Mask sensitive keys
+        def mask_recursive(d):
+            if not isinstance(d, dict): return
+            for k, v in d.items():
+                if any(word in k.lower() for word in ['api_key', 'secret', 'password', 'token', 'webhook']):
+                    d[k] = "********"
+                elif isinstance(v, dict):
+                    mask_recursive(v)
+        
+        mask_recursive(data)
+        masked_yaml = yaml.dump(data, default_flow_style=False)
+        
+        syntax = Syntax(masked_yaml, "yaml", theme="monokai", line_numbers=True)
+        console.print(Panel(syntax, title=f"⚙️ {config_path} (Masked)", border_style="cyan"))
+        return
+
+    # Default: Show info
+    console.print(f"[bold cyan]DARKWIN Configuration Management[/bold cyan]")
+    console.print(f"Path: [bold]{os.path.abspath(config_path)}[/bold]")
+    console.print("\nAvailable options:")
+    console.print("  --view : View the current configuration with masked secrets")
+    console.print("  --edit : Open the configuration file in your default editor")
+
+@cli.command()
+@click.option('--add', 'add_task', help='Schedule a new task (e.g. "hunt example.com weekly")')
+@click.option('--list', 'list_tasks', is_flag=True, help='List all scheduled tasks')
+@click.option('--remove', 'remove_id', help='Remove a scheduled task by ID')
+def schedule(add_task, list_tasks, remove_id):
+    """Manage periodic security scans and tasks"""
+    import os
+    import json
+    from rich.table import Table
+    
+    schedule_file = "logs/schedule.json"
+    os.makedirs("logs", exist_ok=True)
+    
+    def load_schedule():
+        if os.path.exists(schedule_file):
+            with open(schedule_file, "r") as f:
+                return json.load(f)
+        return []
+
+    def save_schedule(tasks):
+        with open(schedule_file, "w") as f:
+            json.dump(tasks, f, indent=4)
+
+    tasks = load_schedule()
+
+    if add_task:
+        import uuid
+        from datetime import datetime
+        parts = add_task.split()
+        if len(parts) < 2:
+            console.print("[bold red]❌ Invalid format. Use: 'hunt <target> <frequency>'[/bold red]")
+            return
+        
+        new_task = {
+            "id": str(uuid.uuid4())[:8],
+            "command": parts[0],
+            "target": parts[1],
+            "frequency": parts[2] if len(parts) > 2 else "daily",
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "status": "active"
+        }
+        tasks.append(new_task)
+        save_schedule(tasks)
+        console.print(f"[bold green]✔ Task scheduled successfully (ID: {new_task['id']})[/bold green]")
+        return
+
+    if remove_id:
+        new_tasks = [t for t in tasks if t['id'] != remove_id]
+        if len(new_tasks) < len(tasks):
+            save_schedule(new_tasks)
+            console.print(f"[bold green]✔ Task {remove_id} removed.[/bold green]")
+        else:
+            console.print(f"[bold red]❌ Task {remove_id} not found.[/bold red]")
+        return
+
+    # List tasks
+    table = Table(title="📅 Scheduled Tasks", border_style="yellow")
+    table.add_column("ID", style="dim")
+    table.add_column("Command", style="bold white")
+    table.add_column("Target", style="cyan")
+    table.add_column("Frequency", style="magenta")
+    table.add_column("Created At", style="dim")
+    
+    for t in tasks:
+        table.add_row(t['id'], t['command'], t['target'], t['frequency'], t['created_at'])
+        
+    console.print(table)
+    console.print("\n[yellow]Note: Scheduling requires the Celery Beat worker to be running.[/yellow]")
+
+@cli.command()
 def modules():
     """List all available modules"""
     from core.module_loader import list_all_modules
