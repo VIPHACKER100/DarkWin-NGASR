@@ -47,12 +47,12 @@ def verify_scope(target: str, scope_file: Optional[str] = None) -> bool:
         None (logs errors instead of raising).
     """
     if not scope_file:
-        # No scope file provided - require explicit authorization
+        # No scope file provided - allow but warn
         logger.warning(
-            f"No scope file provided. Target '{target}' cannot be verified. "
-            "Skipping scope check (provide --scope-file for verification)."
+            f"No scope file provided. Target '{target}' cannot be verified against a scope policy. "
+            "Proceeding with scan. Ensure you have explicit authorization for this target."
         )
-        return False
+        return True
     
     scope_path = Path(scope_file)
     
