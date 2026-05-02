@@ -64,5 +64,18 @@ services:
     volumes:
       - .:/app
 
+  darkwin-dashboard:
+    build:
+      context: ./dashboards/frontend-next
+      dockerfile: Dockerfile
+    container_name: darkwin-dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+      - NEXT_PUBLIC_WS_URL=http://localhost:5000
+    depends_on:
+      - darkwin-api
+
 volumes:
   postgres_data:

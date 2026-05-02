@@ -99,6 +99,22 @@ def check_redis() -> Tuple[bool, str]:
     except Exception as e:
         return False, str(e)
 
+def check_node_version() -> Tuple[bool, str]:
+    """Check if Node.js is installed (required for dashboard)."""
+    try:
+        res = subprocess.run(["node", "--version"], capture_output=True, text=True)
+        return True, res.stdout.strip()
+    except Exception:
+        return False, "Not Found"
+
+def check_docker() -> Tuple[bool, str]:
+    """Check if Docker is installed (required for orchestration)."""
+    try:
+        res = subprocess.run(["docker", "--version"], capture_output=True, text=True)
+        return True, res.stdout.strip()
+    except Exception:
+        return False, "Not Found"
+
 def run_doctor(fix: bool = False) -> None:
     """Run all system diagnostics and optionally fix issues."""
     console.print(Panel.fit("[bold cyan]DARKWIN System Diagnostic (Doctor)[/bold cyan]"))
@@ -136,10 +152,14 @@ def run_doctor(fix: bool = False) -> None:
     # 4. Services
     db_ok, db_msg = check_database()
     redis_ok, redis_msg = check_redis()
+    node_ok, node_ver = check_node_version()
+    docker_ok, docker_ver = check_docker()
     
-    console.print("\n[bold]System Services:[/bold]")
+    console.print("\n[bold]System Services & Environment:[/bold]")
     console.print(f"  Database: {db_msg} [{'green]OK[/green]' if db_ok else '[red]FAIL[/red]'}]")
     console.print(f"  Redis:    {redis_msg} [{'green]OK[/green]' if redis_ok else '[red]FAIL[/red]'}]")
+    console.print(f"  Node.js:  {node_ver} [{'green]OK[/green]' if node_ok else '[red]FAIL[/red]'}]")
+    console.print(f"  Docker:   {docker_ver} [{'green]OK[/green]' if docker_ok else '[red]FAIL[/red]'}]")
     
     # 5. Fix Logic
     if fix:
