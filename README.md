@@ -69,6 +69,7 @@ docker-compose up -d --build
 | `doctor`| Run system diagnostics and self-healing fixes |
 | `test`  | Execute core unit tests to verify stability |
 | `update`| Pull latest changes and update the ecosystem |
+| `update-templates` | Synchronize latest vulnerability templates |
 | `about` | Display project branding and author info |
 
 ---

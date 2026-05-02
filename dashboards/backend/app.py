@@ -51,7 +51,37 @@ def create_app() -> tuple[Flask, SocketIO]:
     
     @app.route("/health")
     def health():
-        return jsonify({"status": "healthy", "platform": "DARKWIN", "websocket": "enabled"})
+        """Consolidated health check for external monitoring."""
+        status = {
+            "status": "healthy",
+            "services": {
+                "database": "ok",
+                "redis": "ok",
+                "websocket": "enabled"
+            }
+        }
+        
+        # 1. Database Check
+        try:
+            from core.database import engine
+            from sqlalchemy import text
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+        except Exception:
+            status["services"]["database"] = "fail"
+            status["status"] = "degraded"
+
+        # 2. Redis Check
+        try:
+            from core.cache_manager import global_cache
+            if not global_cache.redis or not global_cache.redis.ping():
+                status["services"]["redis"] = "fail"
+                status["status"] = "degraded"
+        except Exception:
+            status["services"]["redis"] = "error"
+            status["status"] = "degraded"
+
+        return jsonify(status), 200 if status["status"] == "healthy" else 500
     
     @socketio.on("connect")
     def handle_connect():

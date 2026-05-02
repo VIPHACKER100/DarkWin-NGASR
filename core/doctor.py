@@ -17,6 +17,22 @@ from typing import List, Tuple
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
+import importlib.util
+
+def check_pydantic_health() -> Tuple[bool, str]:
+    """Check for typing_extensions shadowing issues."""
+    try:
+        import typing_extensions
+        if not hasattr(typing_extensions, 'Sentinel'):
+             return False, "typing_extensions version is too old (missing Sentinel). Shadowed by system?"
+        import pydantic
+        return True, "Healthy"
+    except ImportError as e:
+        return False, str(e)
+    except Exception as e:
+        return False, str(e)
+
+console: Console = Console()
 
 from core.config_manager import get_config
 from core.database import engine
@@ -154,12 +170,14 @@ def run_doctor(fix: bool = False) -> None:
     redis_ok, redis_msg = check_redis()
     node_ok, node_ver = check_node_version()
     docker_ok, docker_ver = check_docker()
+    pydantic_ok, pydantic_msg = check_pydantic_health()
     
     console.print("\n[bold]System Services & Environment:[/bold]")
     console.print(f"  Database: {db_msg} [{'green]OK[/green]' if db_ok else '[red]FAIL[/red]'}]")
     console.print(f"  Redis:    {redis_msg} [{'green]OK[/green]' if redis_ok else '[red]FAIL[/red]'}]")
     console.print(f"  Node.js:  {node_ver} [{'green]OK[/green]' if node_ok else '[red]FAIL[/red]'}]")
     console.print(f"  Docker:   {docker_ver} [{'green]OK[/green]' if docker_ok else '[red]FAIL[/red]'}]")
+    console.print(f"  Pydantic: {pydantic_msg} [{'green]OK[/green]' if pydantic_ok else '[red]FAIL[/red]'}]")
     
     # 5. Fix Logic
     if fix:
@@ -169,10 +187,9 @@ def run_doctor(fix: bool = False) -> None:
             console.print(f"Installing missing Python packages: {', '.join(missing_pip)}...")
             subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
         
-        if missing_tools:
-            console.print("[bold yellow]Note:[/bold yellow] Automatic installation of external tools is partially supported.")
-            console.print("Please install missing tools manually or use specialized setup scripts.")
-            # We could add more automated installation logic here (e.g. go install ...)
+        if not pydantic_ok:
+            console.print("[bold yellow]Fixing Pydantic health (typing-extensions shadowing)...[/bold yellow]")
+            subprocess.run([sys.executable, "-m", "pip", "install", "--user", "--upgrade", "typing-extensions>=4.11.0", "pydantic-core>=2.18.0"])
         
         console.print("[bold green]Fixes attempted. Please run doctor again to verify.[/bold green]")
     elif missing_pip or missing_tools or not db_ok or not redis_ok:

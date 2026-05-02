@@ -26,7 +26,7 @@ readonly MIN_PYTHON_VERSION="3.11"
 readonly SECURITY_TOOLS=(nmap subfinder httpx nuclei ffuf amass katana sqlmap dalfox masscan)
 
 # Project directories
-readonly PROJECT_DIRS=(core modules pipelines ai automation integrations dashboards wordlists payloads logs reports)
+PROJECT_DIRS=(core modules pipelines ai automation integrations dashboards wordlists payloads logs reports)
 
 # ============================================================================
 # Output Functions
@@ -71,8 +71,10 @@ fi
 info ""
 
 # 2. Install Python Dependencies
-info "Installing Python dependencies from requirements.txt..."
-# Try standard install first
+info "Installing Python dependencies..."
+# Pre-install critical dependencies to avoid shadowing issues
+pip install --user --upgrade "typing-extensions>=4.11.0" "pydantic-core>=2.18.0"
+
 if pip install --user --upgrade -r requirements.txt; then
     success "Dependencies installed successfully"
 elif pip install --user --upgrade --break-system-packages -r requirements.txt 2>/dev/null; then

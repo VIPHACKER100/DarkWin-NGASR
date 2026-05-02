@@ -323,6 +323,21 @@ def test():
     run_tests()
 
 @cli.command()
+def update_templates():
+    """Update Nuclei vulnerability templates"""
+    import subprocess
+    from core.config_manager import get_config
+    config = get_config()
+    nuclei_bin = config.tools.nuclei
+    
+    console.print(f"[bold cyan]🔄 Updating {nuclei_bin} templates...[/bold cyan]")
+    try:
+        subprocess.run([nuclei_bin, "-ut"], check=True)
+        console.print("[bold green]✨ Templates updated successfully![/bold green]")
+    except Exception as e:
+        console.print(f"[bold red]❌ Template update failed: {e}[/bold red]")
+
+@cli.command()
 def update():
     """Pull latest changes and update the ecosystem"""
     import subprocess
