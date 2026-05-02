@@ -623,6 +623,167 @@ def logs(tail, follow, search):
     console.print(Panel("\n".join([l.strip() for l in lines]), title=f"📋 Last {tail} logs", border_style="dim"))
 
 @cli.command()
+@click.option('--check', is_flag=True, help='Run a quick diagnostic check')
+def troubleshoot(check):
+    """Interactive troubleshooting wizard for common issues"""
+    from rich.panel import Panel
+    from rich.console import Console
+    from rich.table import Table
+    
+    if check:
+        from core.doctor import run_diagnostics
+        run_diagnostics()
+        return
+
+    console.print(Panel.fit(
+        "[bold cyan]🛠️ DARKWIN Troubleshooting Wizard[/bold cyan]",
+        border_style="cyan"
+    ))
+
+    table = Table(show_header=True, header_style="bold magenta", border_style="dim")
+    table.add_column("Issue", style="cyan", width=30)
+    table.add_column("Solution", style="white")
+
+    table.add_row(
+        "ModuleNotFoundError",
+        "Run [bold green]source .venv/bin/activate[/bold green] before execution."
+    )
+    table.add_row(
+        "Permission Denied (logs)",
+        "Run [bold green]sudo chown -R $USER:$USER logs/ && sudo chmod -R 775 logs/[/bold green]"
+    )
+    table.add_row(
+        "ImportError: Sentinel",
+        "Run [bold green]. /setup.sh[/bold green] to rebuild the virtual environment."
+    )
+    table.add_row(
+        "Redis Connection Refused",
+        "Ensure Redis is running: [bold green]docker-compose up -d redis[/bold green]"
+    )
+    table.add_row(
+        "Database Locked",
+        "Restart the backend: [bold green]docker-compose restart db[/bold green]"
+    )
+    table.add_row(
+        "CLI Command Not Found",
+        "Re-install in editable mode: [bold green]pip install -e .[/bold green]"
+    )
+
+    console.print(table)
+    console.print("\n[bold yellow]Still having trouble?[/bold yellow]")
+    console.print("1. Check [bold white]TROUBLESHOOTING.md[/bold white] in the root directory.")
+    console.print("2. Run [bold white]darkwin doctor --fix[/bold white] for automated healing.")
+    console.print("3. Check the logs: [bold white]darkwin logs --tail 50[/bold white]")
+
+@cli.command()
+@click.option('--changelog', is_flag=True, help='Show full version history')
+def release(changelog):
+    """View current version and release history"""
+    import os
+    from rich.panel import Panel
+    from rich.markdown import Markdown
+    
+    version = "1.0.13"
+    codename = "Zenith"
+    
+    if changelog:
+        changelog_path = "CHANGELOG.md"
+        if not os.path.exists(changelog_path):
+            console.print(f"[bold red]❌ {changelog_path} not found.[/bold red]")
+            return
+            
+        with open(changelog_path, 'r') as f:
+            md = Markdown(f.read())
+        console.print(md)
+        return
+
+    # Default: Show current version info
+    info = f"""
+[bold cyan]DARKWIN-NGASR[/bold cyan]
+[bold white]Version:[/bold white] {version}
+[bold white]Codename:[/bold white] {codename}
+[bold white]Status:[/bold white] [green]Stable / Production-Ready[/green]
+
+[dim]Run 'darkwin release --changelog' to see full history.[/dim]
+"""
+    console.print(Panel.fit(info, border_style="cyan"))
+
+@cli.command()
+@click.option('--logs', is_flag=True, help='Purge all system logs')
+@click.option('--screenshots', is_flag=True, help='Purge all captured evidence')
+@click.option('--temp', is_flag=True, help='Purge temporary cache and files')
+@click.option('--all', 'purge_all', is_flag=True, help='Purge EVERYTHING (logs, images, temp)')
+def clean(logs, screenshots, temp, purge_all):
+    """Platform maintenance and data purging"""
+    import os
+    import shutil
+    from core.database import SessionLocal
+    from core.models import Screenshot
+    
+    if not (logs or screenshots or temp or purge_all):
+        console.print("[yellow]⚠️ Please specify what to clean (e.g. --logs, --temp, --all).[/yellow]")
+        return
+
+    if logs or purge_all:
+        log_dir = "logs"
+        if os.path.exists(log_dir):
+            for f in os.listdir(log_dir):
+                if f != ".gitkeep":
+                    path = os.path.join(log_dir, f)
+                    if os.path.isfile(path): os.remove(path)
+                    elif os.path.isdir(path): shutil.rmtree(path)
+            console.print("[green]✔ System logs purged.[/green]")
+
+    if screenshots or purge_all:
+        img_dir = "screenshots"
+        if os.path.exists(img_dir):
+            shutil.rmtree(img_dir)
+            os.makedirs(img_dir)
+            with open(os.path.join(img_dir, ".gitkeep"), "w") as f: f.write("")
+        
+        with SessionLocal() as db:
+            db.query(Screenshot).delete()
+            db.commit()
+        console.print("[green]✔ Captured evidence purged.[/green]")
+
+    if temp or purge_all:
+        temp_dirs = [".pytest_cache", "__pycache__", "core/__pycache__", "ai/__pycache__"]
+        for d in temp_dirs:
+            if os.path.exists(d):
+                shutil.rmtree(d)
+        console.print("[green]✔ Temporary files and cache purged.[/green]")
+
+@cli.command()
+def sysinfo():
+    """Display system hardware and environment details"""
+    import os
+    import platform
+    import psutil
+    from rich.table import Table
+    
+    table = Table(title="💻 System Information", border_style="blue")
+    table.add_column("Property", style="cyan")
+    table.add_column("Value", style="white")
+    
+    table.add_row("OS", f"{platform.system()} {platform.release()}")
+    table.add_row("Architecture", platform.machine())
+    table.add_row("Python Version", platform.python_version())
+    table.add_row("CPU Cores", str(psutil.cpu_count(logical=True)))
+    table.add_row("RAM Total", f"{psutil.virtual_memory().total / (1024**3):.2f} GB")
+    table.add_row("RAM Available", f"{psutil.virtual_memory().available / (1024**3):.2f} GB")
+    
+    # Disk info
+    usage = psutil.disk_usage('/')
+    table.add_row("Disk Total", f"{usage.total / (1024**3):.2f} GB")
+    table.add_row("Disk Free", f"{usage.free / (1024**3):.2f} GB")
+    
+    # Platform specific
+    if hasattr(os, 'getloadavg'):
+        table.add_row("Load Average", str(os.getloadavg()))
+    
+    console.print(table)
+
+@cli.command()
 def modules():
     """List all available modules"""
     from core.module_loader import list_all_modules

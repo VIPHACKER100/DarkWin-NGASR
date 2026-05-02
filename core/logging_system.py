@@ -67,15 +67,22 @@ def get_logger(name: str, scan_id: Optional[str] = None) -> logging.Logger:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
 
     # Main Log File (Rotating)
-    file_handler: RotatingFileHandler = RotatingFileHandler(
-        MAIN_LOG_FILE,
-        maxBytes=MAX_LOG_SIZE,
-        backupCount=LOG_BACKUP_COUNT,
-    )
-    file_formatter: logging.Formatter = logging.Formatter(LOG_FORMAT)
-    file_handler.setFormatter(file_formatter)
-    file_handler.setLevel(logging.DEBUG)
-    logger.addHandler(file_handler)
+    try:
+        file_handler: RotatingFileHandler = RotatingFileHandler(
+            MAIN_LOG_FILE,
+            maxBytes=MAX_LOG_SIZE,
+            backupCount=LOG_BACKUP_COUNT,
+        )
+        file_formatter: logging.Formatter = logging.Formatter(LOG_FORMAT)
+        file_handler.setFormatter(file_formatter)
+        file_handler.setLevel(logging.DEBUG)
+        logger.addHandler(file_handler)
+    except PermissionError:
+        print(f"[bold red]❌ CRITICAL: Permission denied on {MAIN_LOG_FILE}[/bold red]")
+        print("[yellow]Please fix log permissions by running:[/yellow]")
+        print(f"sudo chown -R $USER:$USER {LOG_DIR}")
+        print(f"sudo chmod -R 775 {LOG_DIR}")
+        # We continue without file logging rather than crashing
 
     # Scan-specific logger (if scan_id provided)
     if scan_id:

@@ -1,19 +1,108 @@
-# DARKWIN Troubleshooting Guide
-## Developed by ARYAN AHIRWAR (VIPHACKER.100)
+# 🛠️ DARKWIN-NGASR Troubleshooting Guide
 
-### Common Issues
-
-#### 1. Database Connection Failed
-- Ensure PostgreSQL is running: `docker-compose ps`
-- Check `config.yaml` database URL.
-
-#### 2. Celery Worker Not Receiving Tasks
-- Ensure Redis is running.
-- Restart worker: `celery -A core.scheduler worker --loglevel=info`
-
-#### 3. Tool Not Found (nmap, ffuf, etc.)
-- Run `bash setup.sh` to check for missing binaries.
-- Ensure binaries are in your PATH or configured in `config.yaml`.
+This guide provides solutions for common issues encountered during the setup and operation of the DARKWIN-NGASR platform.
 
 ---
-© 2026 ARYAN AHIRWAR (VIPHACKER.100)
+
+## 🚀 Quick Fix: The Doctor Utility
+Before manual troubleshooting, always try the automated self-healing tool:
+```bash
+darkwin doctor --fix
+```
+
+---
+
+## 📂 Common Environment Issues
+
+### 1. `ModuleNotFoundError: No module named 'core'`
+**Cause:** Running the script outside of the project root or without the virtual environment active.
+**Fix:**
+```bash
+# Ensure you are in the project root
+cd ~/Desktop/DarkWin-NGASR
+# Activate the environment
+source .venv/bin/activate
+# Run the command
+darkwin --help
+```
+
+### 2. `PermissionError: [Errno 13] Permission denied`
+**Cause:** Log files or directories were created by a different user (e.g., via `sudo`).
+**Fix:**
+```bash
+sudo chown -R $USER:$USER logs/ screenshots/
+sudo chmod -R 775 logs/ screenshots/
+```
+
+### 3. `ImportError: cannot import name 'Sentinel' from 'typing_extensions'`
+**Cause:** Your system Python has an outdated version of `typing_extensions` that is shadowing the one in your virtual environment.
+**Fix:**
+```bash
+# Rebuild the virtual environment
+rm -rf .venv
+./setup.sh
+source .venv/bin/activate
+```
+
+---
+
+## 🌐 Connectivity & Services
+
+### 4. `redis.exceptions.ConnectionError`
+**Cause:** The Redis service is not running or the port is blocked.
+**Fix:**
+```bash
+# Start Redis via Docker
+docker-compose up -d redis
+# Or check local service
+sudo systemctl status redis
+```
+
+### 5. `psycopg2.OperationalError: connection to server at "localhost" failed`
+**Cause:** PostgreSQL database is offline.
+**Fix:**
+```bash
+docker-compose up -d db
+```
+
+---
+
+## 🎨 Dashboard & UI
+
+### 6. Dashboard not loading at `http://localhost:3000`
+**Cause:** Node.js dependencies missing or port conflict.
+**Fix:**
+```bash
+cd dashboards/frontend
+npm install
+npm run dev
+```
+
+### 7. 3D Neural Map is empty
+**Cause:** No scan data exists in the database or the backend API is offline.
+**Fix:**
+1. Run a hunt: `darkwin hunt example.com`
+2. Ensure backend is up: `docker-compose up -d backend`
+
+---
+
+## 🕵️ Stealth & Proxying
+
+### 8. `GhostMode` failing to rotate IPs
+**Cause:** Proxy pool is empty or provided proxies are dead.
+**Fix:**
+1. Update your proxy list: `nano proxies.txt`
+2. Run `darkwin proxy` to check health.
+
+---
+
+## 🆘 Still Stuck?
+If none of the above works:
+1. **Check Logs:** `darkwin logs --tail 100`
+2. **Reset Platform:** `darkwin clean --all`
+3. **Reinstall:** Delete the folder and clone fresh.
+
+---
+<div align="center">
+<b>DARKWIN-NGASR | Autonomous · Distributed · Stealthy</b>
+</div>

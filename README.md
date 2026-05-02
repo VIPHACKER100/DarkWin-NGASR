@@ -140,6 +140,10 @@ darkwin [COMMAND] [OPTIONS]
 | `report` | `<scan_id>` `--format` | Generate AI-synthesized reports (pdf/html/md) |
 | `schedule` | `--add` / `--list` | Manage periodic security scan tasks |
 | `logs` | `--tail` / `--search` | View and search system logs |
+| `troubleshoot` | — | Interactive guide for common issues |
+| `release` | `--changelog` | View version and release history |
+| `sysinfo` | — | Display system hardware and OS details |
+| `clean` | `--logs` / `--all` | Platform maintenance and data purging |
 | `config` | `--view` / `--edit` | View or edit platform configuration |
 | `doctor` | `--fix` | System diagnostics + self-healing |
 | `test` | — | Run core unit tests |
