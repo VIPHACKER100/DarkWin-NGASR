@@ -72,8 +72,11 @@ docker-compose up -d --build
 |---------|-------------|
 | `hunt` | Start an autonomous agentic research loop |
 | `shell` | Launch the high-fidelity interactive REPL |
+| `targets` | Add, remove, or list targets in the database |
+| `history` | View recent scan history with status |
 | `mesh` | View and manage distributed scanning nodes |
 | `proxy` | View available proxies in the rotation pool |
+| `modules` | List all available scan modules |
 | `report`| Generate executive AI-synthesized reports |
 | `doctor`| Run system diagnostics and self-healing fixes |
 | `test`  | Execute core unit tests to verify stability |

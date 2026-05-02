@@ -180,6 +180,102 @@ def hunt(target, scope_file, max_steps):
     asyncio.run(loop.run())
 
 @cli.command()
+@click.option('--limit', default=20, help='Number of recent scans to show')
+def history(limit):
+    """View recent scan history from the database"""
+    from rich.table import Table
+
+    with SessionLocal() as db:
+        scans = (
+            db.query(Scan)
+            .order_by(Scan.started_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    if not scans:
+        console.print("[yellow]No scan history found.[/yellow]")
+        return
+
+    table = Table(title=f"📋 Scan History (last {limit})", border_style="cyan")
+    table.add_column("Scan ID", style="dim", max_width=18)
+    table.add_column("Target", style="bold white")
+    table.add_column("Type", style="cyan")
+    table.add_column("Status", justify="center")
+    table.add_column("Started", style="dim")
+
+    status_colors = {
+        "completed": "[green]completed[/green]",
+        "running":   "[bold cyan]running[/bold cyan]",
+        "failed":    "[red]failed[/red]",
+        "starting":  "[yellow]starting[/yellow]",
+    }
+
+    for s in scans:
+        target_domain = s.target.domain if s.target else "unknown"
+        started = s.started_at.strftime("%Y-%m-%d %H:%M") if s.started_at else "—"
+        status_str = status_colors.get(s.status, s.status)
+        table.add_row(str(s.id)[:16] + "..", target_domain, s.scan_type or "—", status_str, started)
+
+    console.print(table)
+
+
+@cli.command()
+@click.option('--add', 'add_target', default=None, help='Add a new target domain')
+@click.option('--remove', 'remove_target', default=None, help='Remove a target domain')
+def targets(add_target, remove_target):
+    """Manage the target list in the database"""
+    from rich.table import Table
+
+    with SessionLocal() as db:
+        if add_target:
+            existing = db.query(Target).filter(Target.domain == add_target).first()
+            if existing:
+                console.print(f"[yellow]Target '{add_target}' already exists.[/yellow]")
+            else:
+                db.add(Target(domain=add_target, scope_confirmed=True))
+                db.commit()
+                console.print(f"[green]✅ Target '{add_target}' added.[/green]")
+            return
+
+        if remove_target:
+            t = db.query(Target).filter(Target.domain == remove_target).first()
+            if t:
+                db.delete(t)
+                db.commit()
+                console.print(f"[green]✅ Target '{remove_target}' removed.[/green]")
+            else:
+                console.print(f"[red]Target '{remove_target}' not found.[/red]")
+            return
+
+        # Default: list all targets
+        all_targets = db.query(Target).order_by(Target.created_at.desc()).all()
+
+    if not all_targets:
+        console.print("[yellow]No targets found. Use --add <domain> to add one.[/yellow]")
+        return
+
+    table = Table(title="🎯 Target Scope List", border_style="magenta")
+    table.add_column("ID", style="dim")
+    table.add_column("Domain", style="bold white")
+    table.add_column("Scope", justify="center")
+    table.add_column("Scans", justify="right")
+    table.add_column("Added", style="dim")
+
+    for t in all_targets:
+        scope = "[green]✔ Confirmed[/green]" if t.scope_confirmed else "[red]✖ Not Confirmed[/red]"
+        table.add_row(
+            str(t.id),
+            t.domain,
+            scope,
+            str(len(t.scans)),
+            t.created_at.strftime("%Y-%m-%d"),
+        )
+
+    console.print(table)
+
+
+@cli.command()
 def modules():
     """List all available modules"""
     from core.module_loader import list_all_modules

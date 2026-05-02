@@ -23,10 +23,16 @@ class DarkWinShell:
     def __init__(self):
         self.commands = {
             "hunt": "Start autonomous scan",
+            "targets": "Manage target scope list",
+            "history": "View recent scan history",
             "mesh": "View distributed nodes",
             "proxy": "Manage proxy pool",
             "report": "Generate AI reports",
+            "modules": "List all scan modules",
             "doctor": "Run diagnostics",
+            "test": "Run core unit tests",
+            "update": "Update ecosystem from GitHub",
+            "update-templates": "Sync Nuclei templates",
             "about": "Project info",
             "clear": "Clear screen",
             "exit": "Exit shell"
