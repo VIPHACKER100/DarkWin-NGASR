@@ -139,6 +139,7 @@ darkwin [COMMAND] [OPTIONS]
 | `modules` | — | List all available scan modules |
 | `report` | `<scan_id>` `--format` | Generate AI-synthesized reports (pdf/html/md) |
 | `schedule` | `--add` / `--list` | Manage periodic security scan tasks |
+| `logs` | `--tail` / `--search` | View and search system logs |
 | `config` | `--view` / `--edit` | View or edit platform configuration |
 | `doctor` | `--fix` | System diagnostics + self-healing |
 | `test` | — | Run core unit tests |

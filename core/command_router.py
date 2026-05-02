@@ -573,6 +573,56 @@ def schedule(add_task, list_tasks, remove_id):
     console.print("\n[yellow]Note: Scheduling requires the Celery Beat worker to be running.[/yellow]")
 
 @cli.command()
+@click.option('--tail', default=20, help='Number of lines to show')
+@click.option('--follow', is_flag=True, help='Follow log output in real-time')
+@click.option('--search', help='Search logs for a specific keyword')
+def logs(tail, follow, search):
+    """View and search system logs"""
+    import os
+    import time
+    from rich.live import Live
+    
+    log_file = "logs/darkwin.log"
+    if not os.path.exists(log_file):
+        console.print(f"[bold red]❌ Log file not found: {log_file}[/bold red]")
+        return
+
+    def get_lines(n):
+        with open(log_file, "r") as f:
+            lines = f.readlines()
+            return lines[-n:]
+
+    if search:
+        console.print(f"[bold cyan]🔍 Searching logs for: '{search}'...[/bold cyan]")
+        with open(log_file, "r") as f:
+            count = 0
+            for line in f:
+                if search.lower() in line.lower():
+                    console.print(line.strip())
+                    count += 1
+            console.print(f"\n[bold green]Found {count} matches.[/bold green]")
+        return
+
+    if follow:
+        console.print(f"[bold cyan]👀 Tailing logs (Ctrl+C to stop):[/bold cyan]")
+        try:
+            with open(log_file, "r") as f:
+                f.seek(0, 2)  # Go to end
+                while True:
+                    line = f.readline()
+                    if not line:
+                        time.sleep(0.1)
+                        continue
+                    console.print(line.strip())
+        except KeyboardInterrupt:
+            console.print("\n[yellow]Stopped tailing logs.[/yellow]")
+        return
+
+    # Default: Show tail
+    lines = get_lines(tail)
+    console.print(Panel("\n".join([l.strip() for l in lines]), title=f"📋 Last {tail} logs", border_style="dim"))
+
+@cli.command()
 def modules():
     """List all available modules"""
     from core.module_loader import list_all_modules

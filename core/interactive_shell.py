@@ -32,6 +32,7 @@ class DarkWinShell:
             "proxy": "Manage proxy pool",
             "report": "Generate AI reports",
             "schedule": "Manage periodic tasks",
+            "logs": "View system logs",
             "config": "View/edit configuration",
             "modules": "List all scan modules",
             "doctor": "Run diagnostics",
