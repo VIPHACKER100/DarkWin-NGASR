@@ -70,29 +70,47 @@ fi
 
 info ""
 
-# 2. Install Python Dependencies
-info "Installing Python dependencies..."
-# Pre-install critical dependencies to avoid shadowing issues
-pip install --user --upgrade "typing-extensions>=4.11.0" "pydantic-core>=2.18.0"
-
-if pip install --user --upgrade -r requirements.txt; then
-    success "Dependencies installed successfully"
-elif pip install --user --upgrade --break-system-packages -r requirements.txt 2>/dev/null; then
-    success "Dependencies installed successfully (using --break-system-packages)"
+# 2. Setup Virtual Environment
+VENV_DIR=".venv"
+info "Setting up virtual environment at ${VENV_DIR}..."
+if [ ! -d "${VENV_DIR}" ]; then
+    python3 -m venv "${VENV_DIR}"
+    success "Virtual environment created"
 else
-    error "Failed to install dependencies. Please try: pip install --user --upgrade typing-extensions>=4.11.0"
+    success "Virtual environment already exists"
+fi
+
+# Activate the venv for this script session
+source "${VENV_DIR}/bin/activate"
+success "Virtual environment activated"
+
+# 3. Install Python Dependencies inside venv (isolated from system)
+info "Installing Python dependencies inside venv..."
+pip install --upgrade pip setuptools wheel
+pip install --upgrade "typing-extensions>=4.11.0" "pydantic-core>=2.18.0"
+
+if pip install -r requirements.txt; then
+    success "Dependencies installed successfully"
+else
+    error "Failed to install dependencies."
     exit 1
 fi
 
-# Install package in editable mode for development
-info "Ensuring package structure and installing in editable mode..."
+# Ensure __init__.py files exist
+info "Ensuring package structure..."
 find . -type d \( -name "core" -o -name "modules" -o -name "pipelines" -o -name "ai" -o -name "automation" -o -name "integrations" -o -name "dashboards" \) -exec touch {}/__init__.py \;
 
-if python3 -m pip install -e .; then
+# Install package in editable mode
+if pip install -e .; then
     success "Package installed in editable mode"
 else
     warn "Failed to install package in editable mode (non-fatal)"
 fi
+
+info ""
+info "⚡ IMPORTANT: To use DARKWIN, activate the venv first:"
+info "   source .venv/bin/activate"
+info "   darkwin --help"
 
 info ""
 

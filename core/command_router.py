@@ -190,26 +190,25 @@ def about():
     """Display information about DARKWIN-NGASR."""
     from rich.panel import Panel
     from rich.text import Text
-    
-    logo = """
-   ________    ____  _______       _______ _   __
-  / ____/ /   / __ \/ ____/ |     / /  _/ | / /
- / /   / /   / / / / __/  | | /| / // / /  |/ / 
-/ /___/ /___/ /_/ / /___  | |/ |/ // / / /|  /  
-\____/_____/\____/_____/  |__/|__/___/_/ |_/   
-                                                
-        NEXT GEN AUTONOMOUS SECURITY RESEARCHER
-        """
-        
-        info_text = Text.from_markup(
-            "\n[bold cyan]Version:[/bold cyan] 1.0.0 (Zenith Phase)\n"
-            "[bold cyan]Author:[/bold cyan] ARYAN AHIRWAR (VIPHACKER.100)\n"
-            "[bold cyan]Status:[/bold cyan] Production Ready\n\n"
-            "[italic white]An autonomous, distributed, and stealthy ecosystem for\n"
-            "proactive security reconnaissance and vulnerability intelligence.[/italic white]\n\n"
-            "Use [bold]darkwin update[/bold] to keep your ecosystem synchronized."
-        )
-    
+
+    logo = (
+        "\n   ________    ____  _______       _______ _   __\n"
+        "  / ____/ /   / __ // ____/ |     / /  _/ | / /\n"
+        " / /   / /   / / / / __/  | | /| / // / /  |/ /\n"
+        "/ /___/ /___/ /_/ / /___  | |/ |/ // / / /|  /\n"
+        "\\____/_____/\\____/_____/  |__/|__/___/_/ |_/\n\n"
+        "   NEXT GEN AUTONOMOUS SECURITY RESEARCHER"
+    )
+
+    info_text = Text.from_markup(
+        "\n[bold cyan]Version:[/bold cyan] 1.0.0 (Zenith Phase)\n"
+        "[bold cyan]Author:[/bold cyan] ARYAN AHIRWAR (VIPHACKER.100)\n"
+        "[bold cyan]Status:[/bold cyan] Production Ready\n\n"
+        "[italic white]An autonomous, distributed, and stealthy ecosystem for\n"
+        "proactive security reconnaissance and vulnerability intelligence.[/italic white]\n\n"
+        "Use [bold]darkwin update[/bold] to keep your ecosystem synchronized."
+    )
+
     console.print(Panel(Text(logo, style="bold magenta"), border_style="magenta"))
     console.print(Panel(info_text, border_style="cyan", title="Project Status"))
 

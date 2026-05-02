@@ -38,19 +38,28 @@
 ```bash
 git clone https://github.com/VIPHACKER100/DarkWin-NGASR.git
 cd DarkWin-NGASR
-sudo bash setup.sh
+./setup.sh
 ```
 
-### 2. Autonomous Launch
+### 2. Activate the Virtual Environment
+> ⚡ Always activate before using DARKWIN to avoid system Python conflicts.
 ```bash
-# Enter the interactive shell
-python core/darkwin.py shell
-
-# Start a hunt
-darkwin > hunt example.com
+source .venv/bin/activate
 ```
 
-### 3. Orchestration (Docker)
+### 3. Launch the Platform
+```bash
+# Check system health
+darkwin doctor
+
+# Enter the interactive shell
+darkwin shell
+
+# Or run directly
+darkwin hunt example.com
+```
+
+### 4. Orchestration (Docker)
 ```bash
 docker-compose up -d --build
 ```

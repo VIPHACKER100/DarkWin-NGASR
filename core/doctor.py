@@ -182,17 +182,25 @@ def run_doctor(fix: bool = False) -> None:
     # 5. Fix Logic
     if fix:
         console.print("\n[bold yellow]Attempting to fix issues...[/bold yellow]")
-        
+
+        if not pydantic_ok:
+            console.print("[bold yellow]⚠ Pydantic/typing_extensions shadowing detected.[/bold yellow]")
+            console.print("[bold cyan]Best Fix — Use the project virtual environment:[/bold cyan]")
+            console.print("  Run [green]./setup.sh[/green] then [green]source .venv/bin/activate[/green]")
+            console.print("  Then retry: [green]darkwin --help[/green]\n")
+            subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade",
+                            "typing-extensions>=4.11.0", "pydantic-core>=2.18.0"], check=False)
+
         if missing_pip:
             console.print(f"Installing missing Python packages: {', '.join(missing_pip)}...")
             subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
-        
-        if not pydantic_ok:
-            console.print("[bold yellow]Fixing Pydantic health (typing-extensions shadowing)...[/bold yellow]")
-            subprocess.run([sys.executable, "-m", "pip", "install", "--user", "--upgrade", "typing-extensions>=4.11.0", "pydantic-core>=2.18.0"])
-        
-        console.print("[bold green]Fixes attempted. Please run doctor again to verify.[/bold green]")
+
+        console.print("[bold green]Fixes attempted. Activate your venv and run doctor again.[/bold green]")
+
+    elif not pydantic_ok:
+        console.print("\n[bold red]Pydantic issue detected![/bold red]")
+        console.print("Fix: [bold cyan]./setup.sh[/bold cyan] then [bold cyan]source .venv/bin/activate[/bold cyan]")
     elif missing_pip or missing_tools or not db_ok or not redis_ok:
         console.print("\n[bold red]Issues detected![/bold red] Run [bold]darkwin doctor --fix[/bold] or install missing components manually.")
     else:
-        console.print("\n[bold green]System is healthy! All components ready.[/bold green]")
+        console.print("\n[bold green]✅ System is healthy! All components ready.[/bold green]")
