@@ -38,7 +38,7 @@
 ```bash
 git clone https://github.com/VIPHACKER100/DarkWin-NGASR.git
 cd DarkWin-NGASR
-./setup.sh
+sudo bash setup.sh
 ```
 
 ### 2. Autonomous Launch
