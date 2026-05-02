@@ -22,7 +22,7 @@ from core.command_router import cli
 console: Console = Console()
 logger = get_logger("Main")
 
-BANNER = """
+BANNER = r"""
 [bold cyan]
   _____            _____  _  ___          _______ _   _ 
  |  __ \     /\   |  __ \| |/ \ \        / /_   _| \ | |

@@ -18,7 +18,7 @@ from datetime import datetime
 from typing import Optional, List
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Float, JSON
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from core.database import Base
 
@@ -35,13 +35,13 @@ class Target(Base):
     """
     __tablename__ = "targets"
 
-    id: int = Column(Integer, primary_key=True, index=True)
-    domain: str = Column(String, unique=True, index=True, nullable=False)
-    scope_confirmed: bool = Column(Boolean, default=False)
-    created_at: datetime = Column(DateTime, default=datetime.utcnow)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    domain: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    scope_confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    scans: List['Scan'] = relationship("Scan", back_populates="target")
+    scans: Mapped[List['Scan']] = relationship("Scan", back_populates="target")
 
 
 class Scan(Base):
@@ -60,17 +60,17 @@ class Scan(Base):
     """
     __tablename__ = "scans"
 
-    id: str = Column(String, primary_key=True, index=True)
-    target_id: int = Column(Integer, ForeignKey("targets.id"), nullable=False)
-    scan_type: Optional[str] = Column(String, nullable=True)
-    status: str = Column(String, default="pending", index=True)
-    started_at: datetime = Column(DateTime, default=datetime.utcnow)
-    finished_at: Optional[datetime] = Column(DateTime, nullable=True)
+    id: Mapped[str] = mapped_column(String, primary_key=True, index=True)
+    target_id: Mapped[int] = mapped_column(Integer, ForeignKey("targets.id"), nullable=False)
+    scan_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    status: Mapped[str] = mapped_column(String, default="pending", index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Relationships
-    target: Target = relationship("Target", back_populates="scans")
-    findings: List['Finding'] = relationship("Finding", back_populates="scan")
-    screenshots: List['Screenshot'] = relationship("Screenshot", back_populates="scan")
+    target: Mapped[Target] = relationship("Target", back_populates="scans")
+    findings: Mapped[List['Finding']] = relationship("Finding", back_populates="scan")
+    screenshots: Mapped[List['Screenshot']] = relationship("Screenshot", back_populates="scan")
 
 
 class Finding(Base):
@@ -91,19 +91,19 @@ class Finding(Base):
     """
     __tablename__ = "findings"
 
-    id: int = Column(Integer, primary_key=True, index=True)
-    scan_id: str = Column(String, ForeignKey("scans.id"), nullable=False, index=True)
-    vuln_type: str = Column(String, nullable=False, index=True)
-    severity: str = Column(String, nullable=False, index=True)
-    endpoint: str = Column(String, nullable=True)
-    payload: str = Column(String, nullable=True)
-    description: str = Column(String, nullable=True)
-    cvss_score: Optional[float] = Column(Float, nullable=True)
-    false_positive: bool = Column(Boolean, default=False)
-    created_at: datetime = Column(DateTime, default=datetime.utcnow, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    scan_id: Mapped[str] = mapped_column(String, ForeignKey("scans.id"), nullable=False, index=True)
+    vuln_type: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    severity: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    endpoint: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    payload: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    cvss_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    false_positive: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
     # Relationships
-    scan: Scan = relationship("Scan", back_populates="findings")
+    scan: Mapped[Scan] = relationship("Scan", back_populates="findings")
 
 
 class Screenshot(Base):
@@ -119,14 +119,14 @@ class Screenshot(Base):
     """
     __tablename__ = "screenshots"
 
-    id: int = Column(Integer, primary_key=True, index=True)
-    scan_id: str = Column(String, ForeignKey("scans.id"), nullable=False, index=True)
-    url: str = Column(String, nullable=False)
-    filepath: str = Column(String, nullable=False)
-    created_at: datetime = Column(DateTime, default=datetime.utcnow)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    scan_id: Mapped[str] = mapped_column(String, ForeignKey("scans.id"), nullable=False, index=True)
+    url: Mapped[str] = mapped_column(String, nullable=False)
+    filepath: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    scan: Scan = relationship("Scan", back_populates="screenshots")
+    scan: Mapped[Scan] = relationship("Scan", back_populates="screenshots")
 
 
 class Report(Base):
@@ -141,8 +141,8 @@ class Report(Base):
     """
     __tablename__ = "reports"
 
-    id: int = Column(Integer, primary_key=True, index=True)
-    scan_id: str = Column(String, ForeignKey("scans.id"), nullable=False, index=True)
-    format: str = Column(String, nullable=False)
-    filepath: str = Column(String, nullable=False)
-    generated_at: datetime = Column(DateTime, default=datetime.utcnow)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    scan_id: Mapped[str] = mapped_column(String, ForeignKey("scans.id"), nullable=False, index=True)
+    format: Mapped[str] = mapped_column(String, nullable=False)
+    filepath: Mapped[str] = mapped_column(String, nullable=False)
+    generated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

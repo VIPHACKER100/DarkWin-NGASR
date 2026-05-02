@@ -15,7 +15,7 @@ License: See LICENSE file
 
 from typing import Generator
 from sqlalchemy import create_engine, Engine
-from sqlalchemy.orm import sessionmaker, Session, declarative_base
+from sqlalchemy.orm import sessionmaker, Session, DeclarativeBase
 
 from core.config_manager import get_config
 from core.logging_system import get_logger
@@ -42,7 +42,13 @@ SessionLocal: sessionmaker = sessionmaker(
 )
 
 # Declarative Base for ORM Models
-Base = declarative_base()
+class Base(DeclarativeBase):
+    """Base class for all DARKWIN ORM models.
+    
+    Includes __allow_unmapped__=True to support legacy annotations
+    if necessary, though modern Mapped[] annotations are preferred.
+    """
+    __allow_unmapped__ = True
 
 
 def get_db() -> Generator[Session, None, None]:

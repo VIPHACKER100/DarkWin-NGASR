@@ -42,7 +42,7 @@ error()   { echo -e "${RED}[ERROR]${NC} $*"; }
 # ============================================================================
 
 check_tool() {
-    """Check if a command-line tool is installed and available in PATH."""
+    # Check if a command-line tool is installed and available in PATH.
     if command -v "$1" > /dev/null 2>&1; then
         success "$1 is installed"
     else
