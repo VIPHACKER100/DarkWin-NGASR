@@ -1,79 +1,74 @@
 # 🛡️ DARKWIN-NGASR (Next Gen Autonomous Security Researcher)
 
+[![Version](https://img.shields.io/badge/version-1.0.0-magenta.svg)](https://github.com/VIPHACKER100/DarkWin-NGASR)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Platform: Kali/Debian](https://img.shields.io/badge/Platform-Kali%2FDebian-lightgrey.svg)](https://www.kali.org/)
 
-**DARKWIN-NGASR** is a state-of-the-art, autonomous security research ecosystem designed for proactive reconnaissance and vulnerability intelligence. It transitions traditional scanning into an agentic reasoning process, capable of self-planning and executing research tasks.
+**DARKWIN-NGASR** is a state-of-the-art, autonomous security research ecosystem. It transforms traditional scanning into an agentic reasoning process, capable of self-planning, executing research tasks, verifying vulnerabilities, and providing real-time telemetry across a distributed mesh.
 
 ---
 
-## 🌟 Zenith Phase Features
+## 🌟 Zenith Phase Ecosystem
 
-### 🤖 Autonomous Intelligence
-- **Agentic Reasoning Loop**: AI-driven tactical decisions for module execution.
-- **Structured Tactical Planning**: Dynamic research plans generated in real-time.
-- **`darkwin hunt <target>`**: Single command for autonomous research.
+### 🧠 Autonomous Intelligence
+- **Agentic Reasoning Loop**: AI-driven tactical decisions using LLMs.
+- **Vulnerability Verification**: Automated false-positive reduction via `VulnVerifier`.
+- **`darkwin hunt <target>`**: Fully autonomous research from reconnaissance to verified exploitation.
 
-### 🌐 Global Infrastructure
-- **Distributed Mesh Scanning**: Multi-node coordination via Redis registry.
-- **Proxy Rotation Pool**: Automated IP rotation to bypass WAF and IP bans.
-- **Global Rate Limiter**: Centralized intensity control across the entire mesh.
+### 🌐 Distributed Mesh & Stealth
+- **Mesh Registry**: Multi-node coordination via Redis.
+- **Ghost Mode**: Advanced evasion with randomized fingerprints and Adaptive Jitter.
+- **Proxy Rotation**: Automated IP rotation pool to bypass WAFs and IP bans.
 
-### 🧠 3D Neural Dashboard
-- **Neural Map**: Interactive 3D force-graph visualization of your attack surface.
-- **Live Stream Logs**: Real-time WebSocket bridge from scanning engines to UI.
-- **Executive AI Reports**: LLM-synthesized risk assessments (PDF/HTML/MD).
+### 🎨 Visual & Interactive Telemetry
+- **3D Neural Map**: Interactive attack surface visualization in Next.js.
+- **Terminal UI (TUI)**: Real-time CLI telemetry dashboard.
+- **Interactive Shell (REPL)**: High-fidelity interactive session with auto-completion.
 
-### 🕵️ Ghost Mode (Stealth)
-- **Advanced Fingerprinting**: Randomized TLS, User-Agents, and HTTP headers.
-- **Adaptive Jitter**: Mimics human behavior to avoid behavioral detection.
+### 🔔 Remote Operations
+- **Multichannel Notifications**: Real-time alerts for verified breaches via Discord and Slack.
+- **Enterprise Reporting**: AI-synthesized PDF, HTML, and Markdown reports.
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
-### 1. Requirements
-- Python 3.11+
-- Redis & PostgreSQL
-- Node.js & Docker (for Dashboard & Orchestration)
-
-### 2. Installation
+### 1. Installation
 ```bash
 git clone https://github.com/VIPHACKER100/DarkWin-NGASR.git
 cd DarkWin-NGASR
-chmod +x setup.sh
 ./setup.sh
 ```
 
-### 3. Self-Healing Environment
+### 2. Autonomous Launch
 ```bash
-python core/darkwin.py doctor --fix
+# Enter the interactive shell
+python core/darkwin.py shell
+
+# Start a hunt
+darkwin > hunt example.com
 ```
 
-### 4. Launching the Ecosystem
+### 3. Orchestration (Docker)
 ```bash
 docker-compose up -d --build
 ```
 
 ---
 
-## 🛠️ Usage
+## 🛠️ CLI Reference
 
-### Autonomous Hunt
-```bash
-python core/darkwin.py hunt example.com --max-steps 10
-```
-
-### View Mesh Nodes
-```bash
-python core/darkwin.py mesh
-```
-
-### Generate AI Report
-```bash
-python core/darkwin.py report <scan_id> --format pdf
-```
+| Command | Description |
+|---------|-------------|
+| `hunt` | Start an autonomous agentic research loop |
+| `shell` | Launch the high-fidelity interactive REPL |
+| `mesh` | View and manage distributed scanning nodes |
+| `proxy` | View available proxies in the rotation pool |
+| `report`| Generate executive AI-synthesized reports |
+| `doctor`| Run system diagnostics and self-healing fixes |
+| `update`| Pull latest changes and update the ecosystem |
+| `about` | Display project branding and author info |
 
 ---
 
@@ -84,11 +79,12 @@ graph TD
     A[Agentic Controller] --> B[Reasoning Engine]
     B --> C[Mesh Node A]
     B --> D[Mesh Node B]
-    C --> E[Module Runner]
-    D --> E[Module Runner]
-    E --> F[Vulnerability DB]
+    C --> E[Ghost Stealth Engine]
+    D --> E[Ghost Stealth Engine]
+    E --> F[Vulnerability Verifier]
     F --> G[Next.js Dashboard]
     G --> H[3D Neural Map]
+    F --> I[Discord/Slack Alerts]
 ```
 
 ---

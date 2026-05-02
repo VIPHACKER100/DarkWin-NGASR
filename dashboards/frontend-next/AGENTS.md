@@ -23,3 +23,16 @@ The DARKWIN dashboard utilizes a multi-agent orchestration pattern to visualize 
 *   **Role**: Anonymity & Evasion.
 *   **Location**: `core/stealth.py`
 *   **Function**: Obfuscates scanning signatures via fingerprinting and proxy rotation.
+
+### 5. The Sentinel (Vulnerability Verifier)
+*   **Role**: Quality Control & Verification.
+*   **Location**: `core/vuln_verifier.py`
+*   **Function**: Automatically verifies discovered vulnerabilities to eliminate false positives.
+
+---
+
+## Maintenance
+Keep your agents up to date with the latest tactical definitions:
+```bash
+python core/darkwin.py update
+```

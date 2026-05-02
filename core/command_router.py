@@ -198,16 +198,17 @@ def about():
 / /___/ /___/ /_/ / /___  | |/ |/ // / / /|  /  
 \____/_____/\____/_____/  |__/|__/___/_/ |_/   
                                                 
-    NEXT GEN AUTONOMOUS SECURITY RESEARCHER
-    """
-    
-    info_text = Text.from_markup(
-        "\n[bold cyan]Version:[/bold cyan] 1.0.0 (Zenith Phase)\n"
-        "[bold cyan]Author:[/bold cyan] ARYAN AHIRWAR (VIPHACKER.100)\n"
-        "[bold cyan]License:[/bold cyan] MIT\n\n"
-        "[italic white]An autonomous, distributed, and stealthy ecosystem for\n"
-        "proactive security reconnaissance and vulnerability intelligence.[/italic white]"
-    )
+        NEXT GEN AUTONOMOUS SECURITY RESEARCHER
+        """
+        
+        info_text = Text.from_markup(
+            "\n[bold cyan]Version:[/bold cyan] 1.0.0 (Zenith Phase)\n"
+            "[bold cyan]Author:[/bold cyan] ARYAN AHIRWAR (VIPHACKER.100)\n"
+            "[bold cyan]Status:[/bold cyan] Production Ready\n\n"
+            "[italic white]An autonomous, distributed, and stealthy ecosystem for\n"
+            "proactive security reconnaissance and vulnerability intelligence.[/italic white]\n\n"
+            "Use [bold]darkwin update[/bold] to keep your ecosystem synchronized."
+        )
     
     console.print(Panel(Text(logo, style="bold magenta"), border_style="magenta"))
     console.print(Panel(info_text, border_style="cyan", title="Project Status"))
@@ -313,6 +314,29 @@ def proxy():
     click.echo(f"🌐 Found {len(proxies)} proxies in pool:")
     for p in proxies:
         click.echo(f" - {p}")
+
+@cli.command()
+def update():
+    """Pull latest changes and update the ecosystem"""
+    import subprocess
+    console.print("[bold cyan]🔄 Updating DARKWIN-NGASR...[/bold cyan]")
+    
+    try:
+        # 1. Git Pull
+        console.print("📥 Fetching latest changes from GitHub...")
+        subprocess.run(["git", "pull", "origin", "main"], check=True)
+        
+        # 2. Run Setup
+        console.print("🛠️ Running environment setup...")
+        if sys.platform == "win32":
+            subprocess.run(["powershell", "-ExecutionPolicy", "Bypass", "-File", "./setup.ps1"], check=False)
+        else:
+            subprocess.run(["bash", "./setup.sh"], check=True)
+            
+        console.print("[bold green]✨ DARKWIN updated successfully![/bold green]")
+        
+    except Exception as e:
+        console.print(f"[bold red]❌ Update failed: {e}[/bold red]")
 
 @cli.command()
 def shell():
