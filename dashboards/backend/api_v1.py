@@ -39,3 +39,38 @@ def create_scan():
     target_domain = data.get("target")
     # In a real app, this would trigger a Celery task
     return jsonify({"message": "Scan initiated", "scan_id": "placeholder-id"}), 201
+
+@api_bp.route("/graph", methods=["GET"])
+def get_attack_surface_graph():
+    """Returns nodes and edges for 3D attack surface visualization."""
+    with SessionLocal() as db:
+        targets = db.query(Target).all()
+        nodes = []
+        edges = []
+        
+        # Add root node (The User/DARKWIN)
+        nodes.append({"id": "darkwin-root", "label": "DARKWIN Mesh", "type": "root"})
+        
+        for t in targets:
+            # Target node
+            nodes.append({
+                "id": f"target-{t.id}",
+                "label": t.domain,
+                "type": "target"
+            })
+            # Edge from root to target
+            edges.append({"source": "darkwin-root", "target": f"target-{t.id}"})
+            
+            # Scans and findings
+            for s in t.scans:
+                for f in s.findings:
+                    finding_id = f"finding-{f.id}"
+                    nodes.append({
+                        "id": finding_id,
+                        "label": f.vuln_type,
+                        "type": "finding",
+                        "severity": f.severity
+                    })
+                    edges.append({"source": f"target-{t.id}", "target": finding_id})
+                    
+        return jsonify({"nodes": nodes, "edges": edges})

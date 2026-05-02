@@ -27,6 +27,7 @@ import {
   Area
 } from 'recharts';
 import { io } from 'socket.io-client';
+import AttackSurfaceGraph from '@/components/AttackSurfaceGraph';
 import { fetchScans, Scan, Finding } from '@/lib/api';
 
 // ... existing code ...
@@ -90,6 +91,12 @@ export default function Dashboard() {
             onClick={() => setActiveTab('targets')} 
           />
           <SidebarItem 
+            icon={<Zap size={20} />} 
+            label="Neural Map" 
+            active={activeTab === 'map'} 
+            onClick={() => setActiveTab('map')} 
+          />
+          <SidebarItem 
             icon={<Activity size={20} />} 
             label="Live Scans" 
             active={activeTab === 'scans'} 
@@ -147,14 +154,20 @@ export default function Dashboard() {
         </header>
 
         {/* Dashboard Content */}
-        <div className="p-8 flex flex-col gap-8">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard label="Total Targets" value={scans.length.toString()} icon={<TargetIcon className="text-cyan-400" />} trend="+12%" />
-            <StatCard label="Critical Findings" value="42" icon={<AlertTriangle className="text-red-500" />} trend="+5" trendDown={false} />
-            <StatCard label="Active Scans" value={scans.filter(s => s.status === 'running').length.toString()} icon={<Activity className="text-green-400" />} trend="Live" />
-            <StatCard label="System Load" value="24%" icon={<BarChart3 className="text-purple-400" />} trend="Stable" />
-          </div>
+        <div className="p-8 flex flex-col gap-8 h-full">
+          {activeTab === 'map' ? (
+            <div className="h-[calc(100vh-200px)]">
+              <AttackSurfaceGraph />
+            </div>
+          ) : activeTab === 'overview' ? (
+            <>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard label="Total Targets" value={scans.length.toString()} icon={<TargetIcon className="text-cyan-400" />} trend="+12%" />
+                <StatCard label="Critical Findings" value="42" icon={<AlertTriangle className="text-red-500" />} trend="+5" trendDown={false} />
+                <StatCard label="Active Scans" value={scans.filter(s => s.status === 'running').length.toString()} icon={<Activity className="text-green-400" />} trend="Live" />
+                <StatCard label="System Load" value="24%" icon={<BarChart3 className="text-purple-400" />} trend="Stable" />
+              </div>
 
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -255,6 +268,12 @@ export default function Dashboard() {
               </table>
             )}
           </div>
+          </>
+          ) : (
+            <div className="flex items-center justify-center h-full text-zinc-600">
+              Select a tab to view content
+            </div>
+          )}
         </div>
       </main>
     </div>

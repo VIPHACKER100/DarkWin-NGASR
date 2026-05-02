@@ -276,6 +276,18 @@ def mesh():
     console.print(table)
 
 @cli.command()
+def proxy():
+    """List available proxies in the rotation pool"""
+    from core.proxy_manager import global_proxy_manager
+    proxies = global_proxy_manager.get_proxy_list()
+    if not proxies:
+        click.echo("📭 No proxies configured in the pool.")
+        return
+    click.echo(f"🌐 Found {len(proxies)} proxies in pool:")
+    for p in proxies:
+        click.echo(f" - {p}")
+
+@cli.command()
 def setup():
     """Run interactive configuration wizard"""
     run_setup_wizard()
