@@ -335,7 +335,7 @@ function LogEntry({ time, level, msg, color = "text-zinc-400" }) {
   );
 }
 
-function ScanRow({ target, status, startedAt }) {
+function ScanRow({ target, status, startedAt, verified = false }) {
   const statusColor = {
     completed: "text-green-500 bg-green-500/10 border-green-500/20",
     running: "text-cyan-500 bg-cyan-500/10 border-cyan-500/20 animate-pulse",
@@ -345,7 +345,10 @@ function ScanRow({ target, status, startedAt }) {
 
   return (
     <tr className="hover:bg-white/[0.02] transition-colors">
-      <td className="px-6 py-4 font-bold">{target}</td>
+      <td className="px-6 py-4 font-bold flex items-center gap-2">
+        {target}
+        {verified && <span className="px-1.5 py-0.5 bg-green-500/10 text-green-500 text-[8px] font-bold uppercase rounded border border-green-500/20">Verified</span>}
+      </td>
       <td className="px-6 py-4">
         <span className={`text-[10px] uppercase font-bold px-3 py-1 rounded-full border ${statusColor}`}>
           {status}

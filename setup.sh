@@ -91,9 +91,10 @@ fi
 
 info ""
 
-# 3. Check External Security Tools
-info "Checking for external security tools..."
-for tool in "${SECURITY_TOOLS[@]}"; do
+# 3. Check External Security Tools & Environment
+info "Checking for external security tools and environment..."
+ENVIRONMENT_TOOLS=(docker node npm)
+for tool in "${SECURITY_TOOLS[@]}" "${ENVIRONMENT_TOOLS[@]}"; do
     check_tool "$tool"
 done
 
@@ -101,6 +102,7 @@ info ""
 
 # 4. Create Directory Structure
 info "Creating/validating project directory structure..."
+PROJECT_DIRS+=(dashboards/frontend-next/public/reports)
 for dir in "${PROJECT_DIRS[@]}"; do
     if mkdir -p "$dir"; then
         touch "${dir}/.gitkeep"
@@ -125,13 +127,13 @@ fi
 info ""
 
 # 6. Display Next Steps
-success "DARKWIN setup completed successfully!"
+success "DARKWIN-NGASR Zenith Setup completed successfully!"
 info ""
 info "Next steps:"
-info "  1. Acknowledge LEGAL.md by running: python core/darkwin.py"
-info "  2. Configure settings: cp config.yaml.example config.yaml"
-info "  3. Initialize database: python core/migrations/init_db.py"
-info "  4. Start dashboard: python dashboards/backend/app.py"
+info "  1. Complete legal acknowledgement: python core/darkwin.py"
+info "  2. Run automated diagnostics: python core/darkwin.py doctor --fix"
+info "  3. Launch full ecosystem (Recommended): docker-compose up -d --build"
+info "  4. Start a manual hunt: python core/darkwin.py hunt example.com"
 info ""
 info "For more information, see: README.md"
 info ""

@@ -17,6 +17,10 @@ from core.pipeline_engine import Pipeline, PipelineStep
 from core.database import SessionLocal
 from core.models import Scan, Finding
 
+from core.tui_engine import DarkWinTUI
+from rich.live import Live
+from datetime import datetime
+
 logger = get_logger("AgenticLoop")
 
 class AgenticLoop:
@@ -36,73 +40,99 @@ class AgenticLoop:
         self.current_step = 0
 
     async def run(self):
-        """Execute the agentic loop."""
-        logger.info(f"🚀 [AGENT] Starting autonomous loop for {self.target}")
+        """Execute the agentic loop with real-time TUI."""
+        tui = DarkWinTUI(self.target)
+        tui.max_steps = self.max_steps
         
-        # 0. Initialize scan status
-        with SessionLocal() as db:
-            scan = db.query(Scan).filter(Scan.id == self.scan_id).first()
-            if scan:
-                scan.status = "running"
-                db.commit()
+        with Live(tui.make_layout(), refresh_per_second=4) as live:
+            tui.status = "Initializing..."
+            live.update(tui.render())
+            
+            # 0. Initialize scan status
+            with SessionLocal() as db:
+                scan = db.query(Scan).filter(Scan.id == self.scan_id).first()
+                if scan:
+                    scan.status = "running"
+                    db.commit()
+            
+            # Start notification
+            from core.notification_manager import global_notifier
+            asyncio.create_task(global_notifier.send_alert("Hunt Started", f"Autonomous research initialized for {self.target}"))
 
-        # 1. Initial Step: Baseline Recon
-        # These are "seed" modules that provide the first context
-        initial_modules = ["Subfinder", "crt.sh", "DNS Enum"]
-        logger.info("🧠 [AGENT] Phase 0: Executing baseline reconnaissance...")
-        await self.execute_modules(initial_modules)
-        
-        # 2. Reasoning Loop
-        while self.current_step < self.max_steps:
-            self.current_step += 1
-            logger.info(f"🧠 [AGENT] Reasoning Step {self.current_step} of {self.max_steps}...")
+            # 1. Initial Step: Baseline Recon
+            tui.status = "Baseline Recon"
+            tui.reasoning = "Executing initial passive reconnaissance to seed the model..."
+            live.update(tui.render())
             
-            # A. Gather context (recent findings)
-            context = self.gather_context()
+            initial_modules = ["Subfinder", "crt.sh", "DNS Enum"]
+            await self.execute_modules(initial_modules)
             
-            # B. Ask AI for next steps
-            plan_json = self.reasoner.perform_reasoning(context)
-            
-            # C. Parse and extract modules
-            try:
-                # Clean up markdown code blocks if present
-                clean_json = plan_json.strip()
-                if clean_json.startswith("```json"):
-                    clean_json = clean_json[7:-3].strip()
-                elif clean_json.startswith("```"):
-                    clean_json = clean_json[3:-3].strip()
+            # 2. Reasoning Loop
+            while self.current_step < self.max_steps:
+                self.current_step += 1
+                tui.step = self.current_step
+                tui.status = "Reasoning"
+                live.update(tui.render())
                 
-                plan = json.loads(clean_json)
-                recommendations = plan.get("recommendations", [])
-                summary = plan.get("summary", "No summary provided")
+                # A. Gather context (recent findings)
+                context = self.gather_context()
                 
-                logger.info(f"💡 [AGENT] AI Strategy: {summary}")
+                # B. Ask AI for next steps
+                plan_json = self.reasoner.perform_reasoning(context)
                 
-                if not recommendations:
-                    logger.info("🏁 [AGENT] AI suggested no further steps. Loop complete.")
+                # C. Parse and extract modules
+                try:
+                    clean_json = plan_json.strip()
+                    if clean_json.startswith("```json"):
+                        clean_json = clean_json[7:-3].strip()
+                    elif clean_json.startswith("```"):
+                        clean_json = clean_json[3:-3].strip()
+                    
+                    plan = json.loads(clean_json)
+                    recommendations = plan.get("recommendations", [])
+                    summary = plan.get("summary", "No summary provided")
+                    
+                    tui.reasoning = summary
+                    tui.status = "Executing"
+                    
+                    # Update findings for UI
+                    with SessionLocal() as db:
+                        db_findings = db.query(Finding).filter(Finding.scan_id == self.scan_id).all()
+                        tui.findings = [{
+                            "time": f.created_at.strftime("%H:%M:%S"),
+                            "severity": f.severity,
+                            "type": f.vuln_type,
+                            "endpoint": f.endpoint
+                        } for f in db_findings]
+                    
+                    live.update(tui.render())
+                    
+                    if not recommendations:
+                        tui.status = "Finished"
+                        break
+                    
+                    module_names = [r["module_name"] for r in recommendations if r.get("module_name")]
+                    await self.execute_modules(module_names)
+                    
+                except Exception as e:
+                    tui.status = "Error"
+                    tui.reasoning = f"Error: {str(e)}"
+                    live.update(tui.render())
                     break
-                
-                module_names = [r["module_name"] for r in recommendations if r.get("module_name")]
-                
-                # D. Execute recommended modules
-                logger.info(f"🛠️ [AGENT] Executing recommended modules: {', '.join(module_names)}")
-                await self.execute_modules(module_names)
-                
-            except json.JSONDecodeError as e:
-                logger.error(f"❌ [AGENT] Failed to parse AI plan: {e}\nRaw output: {plan_json}")
-                break
-            except Exception as e:
-                logger.error(f"💥 [AGENT] Error in reasoning loop: {e}", exc_info=True)
-                break
 
-        logger.info(f"✨ [AGENT] Autonomous loop for {self.target} finished.")
-        
-        # Finalize scan status
-        with SessionLocal() as db:
-            scan = db.query(Scan).filter(Scan.id == self.scan_id).first()
-            if scan:
-                scan.status = "completed"
-                db.commit()
+            tui.status = "Completed"
+            live.update(tui.render())
+            
+            # Finalize scan status
+            with SessionLocal() as db:
+                scan = db.query(Scan).filter(Scan.id == self.scan_id).first()
+                if scan:
+                    scan.status = "completed"
+                    db.commit()
+            
+            # Final notification
+            from core.notification_manager import global_notifier
+            asyncio.create_task(global_notifier.send_alert("Hunt Completed", f"Autonomous scan for {self.target} has finished successfully."))
 
     def gather_context(self) -> str:
         """Collect all findings so far for the LLM."""

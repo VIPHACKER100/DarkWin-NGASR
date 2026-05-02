@@ -186,6 +186,33 @@ def modules():
     list_all_modules()
 
 @cli.command()
+def about():
+    """Display information about DARKWIN-NGASR."""
+    from rich.panel import Panel
+    from rich.text import Text
+    
+    logo = """
+   ________    ____  _______       _______ _   __
+  / ____/ /   / __ \/ ____/ |     / /  _/ | / /
+ / /   / /   / / / / __/  | | /| / // / /  |/ / 
+/ /___/ /___/ /_/ / /___  | |/ |/ // / / /|  /  
+\____/_____/\____/_____/  |__/|__/___/_/ |_/   
+                                                
+    NEXT GEN AUTONOMOUS SECURITY RESEARCHER
+    """
+    
+    info_text = Text.from_markup(
+        "\n[bold cyan]Version:[/bold cyan] 1.0.0 (Zenith Phase)\n"
+        "[bold cyan]Author:[/bold cyan] ARYAN AHIRWAR (VIPHACKER.100)\n"
+        "[bold cyan]License:[/bold cyan] MIT\n\n"
+        "[italic white]An autonomous, distributed, and stealthy ecosystem for\n"
+        "proactive security reconnaissance and vulnerability intelligence.[/italic white]"
+    )
+    
+    console.print(Panel(Text(logo, style="bold magenta"), border_style="magenta"))
+    console.print(Panel(info_text, border_style="cyan", title="Project Status"))
+
+@cli.command()
 def dashboard():
     """Launch web dashboard"""
     logger.info("Launching DARKWIN Dashboard...")
@@ -286,6 +313,14 @@ def proxy():
     click.echo(f"🌐 Found {len(proxies)} proxies in pool:")
     for p in proxies:
         click.echo(f" - {p}")
+
+@cli.command()
+def shell():
+    """Launch interactive DARKWIN shell"""
+    import asyncio
+    from core.interactive_shell import DarkWinShell
+    s = DarkWinShell()
+    asyncio.run(s.start())
 
 @cli.command()
 def setup():

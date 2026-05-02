@@ -20,6 +20,7 @@ from rich.table import Table
 from rich.console import Console
 
 from core.logging_system import get_logger
+from core.base_module import BaseModule
 
 console: Console = Console()
 logger = get_logger("ModuleLoader")

@@ -99,6 +99,7 @@ class Finding(Base):
     payload: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     cvss_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)
     false_positive: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
