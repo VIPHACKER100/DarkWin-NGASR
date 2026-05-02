@@ -72,10 +72,13 @@ info ""
 
 # 2. Install Python Dependencies
 info "Installing Python dependencies from requirements.txt..."
-if pip install -q -r requirements.txt; then
+# Try standard install first
+if pip install --user --upgrade -r requirements.txt; then
     success "Dependencies installed successfully"
+elif pip install --user --upgrade --break-system-packages -r requirements.txt 2>/dev/null; then
+    success "Dependencies installed successfully (using --break-system-packages)"
 else
-    error "Failed to install dependencies"
+    error "Failed to install dependencies. Please try: pip install --user --upgrade typing-extensions>=4.11.0"
     exit 1
 fi
 

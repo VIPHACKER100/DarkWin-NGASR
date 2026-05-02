@@ -26,21 +26,41 @@ import {
   AreaChart,
   Area
 } from 'recharts';
+import { io } from 'socket.io-client';
+import { fetchScans, Scan, Finding } from '@/lib/api';
 
-// Mock data for the chart
-const scanData = [
-  { name: '00:00', findings: 4, intensity: 20 },
-  { name: '04:00', findings: 7, intensity: 45 },
-  { name: '08:00', findings: 5, intensity: 30 },
-  { name: '12:00', findings: 12, intensity: 80 },
-  { name: '16:00', findings: 18, intensity: 95 },
-  { name: '20:00', findings: 10, intensity: 60 },
-  { name: '23:59', findings: 6, intensity: 40 },
-];
+// ... existing code ...
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [isLive, setIsLive] = useState(true);
+  const [scans, setScans] = useState<Scan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [logs, setLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    // API Data Loading
+    async function loadData() {
+      const data = await fetchScans();
+      setScans(data);
+      setLoading(false);
+    }
+    loadData();
+
+    // WebSocket Connection
+    const socket = io(process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:5000');
+    
+    socket.on('connect', () => {
+      setLogs(prev => [...prev, { time: new Date().toLocaleTimeString(), level: 'SUCCESS', msg: 'WebSocket Connected', color: 'text-green-400' }]);
+    });
+
+    socket.on('log_event', (data) => {
+      setLogs(prev => [data, ...prev].slice(0, 50)); // Keep last 50 logs
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   return (
     <div className="flex h-screen bg-black text-white overflow-hidden">
@@ -130,9 +150,9 @@ export default function Dashboard() {
         <div className="p-8 flex flex-col gap-8">
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard label="Total Targets" value="1,284" icon={<TargetIcon className="text-cyan-400" />} trend="+12%" />
+            <StatCard label="Total Targets" value={scans.length.toString()} icon={<TargetIcon className="text-cyan-400" />} trend="+12%" />
             <StatCard label="Critical Findings" value="42" icon={<AlertTriangle className="text-red-500" />} trend="+5" trendDown={false} />
-            <StatCard label="Active Scans" value="18" icon={<Activity className="text-green-400" />} trend="Live" />
+            <StatCard label="Active Scans" value={scans.filter(s => s.status === 'running').length.toString()} icon={<Activity className="text-green-400" />} trend="Live" />
             <StatCard label="System Load" value="24%" icon={<BarChart3 className="text-purple-400" />} trend="Stable" />
           </div>
 
@@ -184,61 +204,56 @@ export default function Dashboard() {
                 <Terminal size={18} className="text-green-400" />
                 Live Execution Logs
               </h3>
-              <div className="flex-1 bg-black/50 rounded-xl p-4 font-mono text-[11px] overflow-y-auto space-y-2 border border-white/5">
-                <LogEntry time="15:32:01" level="INFO" msg="Subfinder started for example.com" />
-                <LogEntry time="15:32:05" level="SUCCESS" msg="Found 12 subdomains via Passive sources" />
-                <LogEntry time="15:32:10" level="WARN" msg="Rate limit detected on Shodan API" />
-                <LogEntry time="15:32:15" level="INFO" msg="Nuclei templates initializing..." />
-                <LogEntry time="15:32:20" level="CRITICAL" msg="Possible SQLi found at /api/v1/user" color="text-red-500" />
-                <LogEntry time="15:32:25" level="INFO" msg="Running masscan on 192.168.1.1/24" />
-                <LogEntry time="15:32:30" level="INFO" msg="Capturing screenshots of discovered hosts" />
+              <div className="flex-1 bg-black/50 rounded-xl p-4 font-mono text-[11px] overflow-y-auto space-y-2 border border-white/5 h-[300px]">
+                {logs.length === 0 ? (
+                  <p className="text-zinc-600 italic">Waiting for logs...</p>
+                ) : (
+                  logs.map((log, i) => (
+                    <LogEntry 
+                      key={i}
+                      time={log.time}
+                      level={log.level}
+                      msg={log.msg}
+                      color={log.color}
+                    />
+                  ))
+                )}
               </div>
             </div>
           </div>
 
-          {/* Recent Findings Table */}
+          {/* Recent Scans Table */}
           <div className="glass overflow-hidden">
             <div className="p-6 border-b border-white/5 flex items-center justify-between">
-              <h3 className="font-bold uppercase tracking-wider text-sm">Recent High-Severity Findings</h3>
-              <button className="text-xs text-cyan-400 hover:underline">View All Findings</button>
+              <h3 className="font-bold uppercase tracking-wider text-sm">Recent Activity</h3>
+              <button className="text-xs text-cyan-400 hover:underline">View All Scans</button>
             </div>
-            <table className="w-full text-left text-sm">
-              <thead className="bg-white/5 text-zinc-500 uppercase text-[10px] font-bold">
-                <tr>
-                  <th className="px-6 py-4">Finding</th>
-                  <th className="px-6 py-4">Severity</th>
-                  <th className="px-6 py-4">Endpoint</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                <FindingRow 
-                  title="SQL Injection" 
-                  severity="Critical" 
-                  endpoint="https://api.target.com/v1/auth" 
-                  status="Confirmed" 
-                />
-                <FindingRow 
-                  title="Cross-Site Scripting (XSS)" 
-                  severity="High" 
-                  endpoint="https://target.com/search?q=..." 
-                  status="Triaged" 
-                />
-                <FindingRow 
-                  title="Insecure Direct Object Reference" 
-                  severity="Medium" 
-                  endpoint="https://target.com/profile/edit" 
-                  status="New" 
-                />
-                <FindingRow 
-                  title="Information Disclosure" 
-                  severity="Low" 
-                  endpoint="https://target.com/.env" 
-                  status="Fixing" 
-                />
-              </tbody>
-            </table>
+            {loading ? (
+              <div className="p-12 text-center text-zinc-500">Loading scans...</div>
+            ) : scans.length === 0 ? (
+              <div className="p-12 text-center text-zinc-500">No scans found. Start one to see results!</div>
+            ) : (
+              <table className="w-full text-left text-sm">
+                <thead className="bg-white/5 text-zinc-500 uppercase text-[10px] font-bold">
+                  <tr>
+                    <th className="px-6 py-4">Target</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Started At</th>
+                    <th className="px-6 py-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {scans.map((scan) => (
+                    <ScanRow 
+                      key={scan.id}
+                      target={scan.target}
+                      status={scan.status}
+                      startedAt={new Date(scan.started_at).toLocaleString()}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </main>
@@ -301,29 +316,23 @@ function LogEntry({ time, level, msg, color = "text-zinc-400" }) {
   );
 }
 
-function FindingRow({ title, severity, endpoint, status }) {
-  const sevColor = {
-    Critical: "text-red-500 bg-red-500/10 border-red-500/20",
-    High: "text-orange-500 bg-orange-500/10 border-orange-500/20",
-    Medium: "text-yellow-500 bg-yellow-500/10 border-yellow-500/20",
-    Low: "text-blue-500 bg-blue-500/10 border-blue-500/20",
-  }[severity];
+function ScanRow({ target, status, startedAt }) {
+  const statusColor = {
+    completed: "text-green-500 bg-green-500/10 border-green-500/20",
+    running: "text-cyan-500 bg-cyan-500/10 border-cyan-500/20 animate-pulse",
+    failed: "text-red-500 bg-red-500/10 border-red-500/20",
+    pending: "text-yellow-500 bg-yellow-500/10 border-yellow-500/20",
+  }[status];
 
   return (
     <tr className="hover:bg-white/[0.02] transition-colors">
-      <td className="px-6 py-4 font-bold">{title}</td>
+      <td className="px-6 py-4 font-bold">{target}</td>
       <td className="px-6 py-4">
-        <span className={`text-[10px] uppercase font-bold px-3 py-1 rounded-full border ${sevColor}`}>
-          {severity}
+        <span className={`text-[10px] uppercase font-bold px-3 py-1 rounded-full border ${statusColor}`}>
+          {status}
         </span>
       </td>
-      <td className="px-6 py-4 font-mono text-[10px] text-zinc-400">{endpoint}</td>
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-          <span className="text-xs">{status}</span>
-        </div>
-      </td>
+      <td className="px-6 py-4 font-mono text-[10px] text-zinc-400">{startedAt}</td>
       <td className="px-6 py-4">
         <button className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
           <Download size={14} />

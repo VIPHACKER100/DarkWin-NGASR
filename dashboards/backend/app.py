@@ -25,100 +25,45 @@ from core.logging_system import get_logger
 logger = get_logger("Dashboard")
 
 
-def create_app() -> Flask:
-    """Create and configure Flask application instance.
-    
-    Initializes:
-    - Flask application with CORS support
-    - Database configuration
-    - Blueprint registration
-    - Health check endpoint
-    
-    Returns:
-        Configured Flask application instance.
-        
-    Raises:
-        ValueError: If FLASK_SECRET_KEY environment variable is not set.
-    """
+from flask_socketio import SocketIO, emit
+
+def create_app() -> tuple[Flask, SocketIO]:
+    """Create and configure Flask application and SocketIO instance."""
     app: Flask = Flask(__name__)
     CORS(app)
     
+    # Initialize SocketIO with Redis message queue for distributed scaling
     config = get_config()
+    socketio = SocketIO(app, cors_allowed_origins="*", message_queue=config.redis.url)
     
-    # Retrieve secret key from environment (required for security)
+    # Retrieve secret key from environment
     secret_key: str = os.getenv("FLASK_SECRET_KEY")
     if not secret_key:
-        logger.warning(
-            "FLASK_SECRET_KEY not set. Using default key (INSECURE FOR PRODUCTION)."
-        )
         secret_key = "darkwin_dev_key_change_in_production"
     
-    # Configure Flask application
-    app_config: Dict[str, Any] = {
+    app.config.from_mapping({
         "SECRET_KEY": secret_key,
         "SQLALCHEMY_DATABASE_URI": config.database.url,
         "SQLALCHEMY_TRACK_MODIFICATIONS": False,
-        "JSONIFY_PRETTYPRINT_REGULAR": True,
-    }
-    app.config.from_mapping(app_config)
+    })
     
-    # Register API blueprint
     app.register_blueprint(api_bp, url_prefix="/api/v1")
     
     @app.route("/health")
-    def health() -> Dict[str, str]:
-        """Health check endpoint.
-        
-        Returns:
-            JSON response with platform status.
-        """
-        return jsonify({"status": "healthy", "platform": "DARKWIN"})
+    def health():
+        return jsonify({"status": "healthy", "platform": "DARKWIN", "websocket": "enabled"})
     
-    @app.errorhandler(404)
-    def not_found(error: Exception) -> tuple:
-        """Handle 404 errors.
-        
-        Args:
-            error: Flask error object.
-            
-        Returns:
-            JSON error response with 404 status code.
-        """
-        return jsonify({"error": "Not found"}), 404
-    
-    @app.errorhandler(500)
-    def server_error(error: Exception) -> tuple:
-        """Handle 500 errors.
-        
-        Args:
-            error: Flask error object.
-            
-        Returns:
-            JSON error response with 500 status code.
-        """
-        logger.error(f"Server error: {error}", exc_info=True)
-        return jsonify({"error": "Internal server error"}), 500
-    
-    return app
+    @socketio.on("connect")
+    def handle_connect():
+        logger.info("Websocket client connected")
+        emit("status", {"msg": "Connected to DARKWIN Mesh"})
+
+    return app, socketio
 
 if __name__ == "__main__":
-    """Run Flask development server.
+    app, socketio = create_app()
+    debug_mode = os.getenv("FLASK_ENV") == "development"
+    port = int(os.getenv("FLASK_PORT", "5000"))
     
-    WARNING: This is for development only. Use production WSGI server
-    (gunicorn, uWSGI) for production deployments.
-    """
-    app: Flask = create_app()
-    
-    # Development server configuration
-    debug_mode: bool = os.getenv("FLASK_ENV") == "development"
-    
-    logger.info(
-        f"Starting DARKWIN Dashboard (debug={debug_mode})..."
-    )
-    
-    app.run(
-        host="0.0.0.0",
-        port=int(os.getenv("FLASK_PORT", "5000")),
-        debug=debug_mode,
-        use_reloader=True,
-    )
+    logger.info(f"🚀 Starting DARKWIN Dashboard with WebSocket support on port {port}...")
+    socketio.run(app, host="0.0.0.0", port=port, debug=debug_mode, allow_unsafe_werkzeug=True)

@@ -52,29 +52,33 @@ class ReasoningEngine:
             system_prompt = (
                 "You are a tactical reasoning engine for DARKWIN security research. "
                 "Analyze the current context and recommend the most effective next steps. "
-                "Focus on logical progression and high-impact security testing."
+                "Focus on logical progression and high-impact security testing. "
+                "ALWAYS respond in structured JSON format."
             )
 
             # Create secure user prompt
             prompt = f"""
-            Based on the current security research context below, recommend the top 3 modules
-            or techniques I should run next and explain why each would be valuable.
-
+            Based on the current security research context below, recommend the next modules to run.
+            
             Current Context:
             {safe_context}
 
-            Provide specific, actionable recommendations with clear reasoning.
+            Respond ONLY with a JSON object in this format:
+            {{
+                "recommendations": [
+                    {{
+                        "module_name": "exact_module_name",
+                        "reason": "why this module",
+                        "priority": 1-5
+                    }}
+                ],
+                "summary": "overall strategy"
+            }}
             """
 
             # Get AI reasoning using secure agent
-            plan = self.agent.ask_agent(prompt, system_prompt=system_prompt)
-
-            if not plan or plan.startswith("Error:"):
-                logger.warning("AI reasoning failed or returned error")
-                return plan or "Unable to generate reasoning plan"
-
-            logger.info("Successfully generated tactical reasoning plan")
-            return plan
+            response = self.agent.ask_agent(prompt, system_prompt=system_prompt)
+            return response
 
         except Exception as e:
             logger.error(f"Error in multi-step reasoning: {e}", exc_info=True)

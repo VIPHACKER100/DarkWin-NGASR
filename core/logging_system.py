@@ -86,6 +86,16 @@ def get_logger(name: str, scan_id: Optional[str] = None) -> logging.Logger:
         scan_handler.setFormatter(file_formatter)
         scan_handler.setLevel(logging.DEBUG)
         logger.addHandler(scan_handler)
+        
+        # Add SocketIO real-time streaming
+        try:
+            from core.socketio_handler import SocketIOLogHandler
+            socket_handler = SocketIOLogHandler(scan_id=scan_id)
+            socket_handler.setLevel(logging.INFO)
+            logger.addHandler(socket_handler)
+        except Exception as e:
+            # Don't fail if SocketIO setup fails
+            pass
 
     return logger
 

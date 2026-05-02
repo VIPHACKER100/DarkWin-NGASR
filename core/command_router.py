@@ -151,12 +151,33 @@ def scan(target, scope_file):
 @cli.command()
 @click.argument('target')
 @click.option('--scope-file', help='Path to JSON scope file')
-def hunt(target, scope_file):
-    """Full bug bounty pipeline"""
+@click.option('--max-steps', default=5, help='Maximum reasoning steps')
+def hunt(target, scope_file, max_steps):
+    """Full autonomous bug bounty hunt using AI reasoning"""
     if not verify_scope(target, scope_file):
         logger.critical(f"Target '{target}' is NOT in scope! Aborting.")
         sys.exit(1)
-    logger.info(f"Starting bug bounty hunt on {target}")
+    
+    from core.agent_loop import AgenticLoop
+    import asyncio
+    
+    scan_id = str(uuid.uuid4())
+    
+    with SessionLocal() as db:
+        target_obj = db.query(Target).filter(Target.domain == target).first()
+        if not target_obj:
+            target_obj = Target(domain=target, scope_confirmed=True)
+            db.add(target_obj)
+            db.commit()
+            db.refresh(target_obj)
+            
+        new_scan = Scan(id=scan_id, target_id=target_obj.id, status="starting", scan_type="autonomous")
+        db.add(new_scan)
+        db.commit()
+
+    logger.info(f"🚀 Starting autonomous hunt on {target} (Scan ID: {scan_id})")
+    loop = AgenticLoop(target, scan_id, max_steps=max_steps)
+    asyncio.run(loop.run())
 
 @cli.command()
 def modules():
@@ -206,15 +227,53 @@ def watch(target):
 
 @cli.command()
 @click.argument('scan_id')
-def report(scan_id):
-    """Generate reports"""
-    logger.info(f"Generating reports for Scan ID: {scan_id}")
+@click.option('--format', type=click.Choice(['md', 'html', 'pdf']), default='md', help='Report format')
+def report(scan_id, format):
+    """Generate a comprehensive security report for a scan"""
+    from core.reporting_engine import ReportingEngine
+    
+    try:
+        engine = ReportingEngine()
+        filepath = engine.generate_report(scan_id, format=format)
+        click.echo(f"✅ Report generated successfully: {filepath}")
+    except Exception as e:
+        logger.error(f"Failed to generate report: {e}")
+        click.echo(f"❌ Error: {str(e)}")
 
 @cli.command()
 @click.option('--fix', is_flag=True, help='Attempt to fix detected issues')
 def doctor(fix):
     """Run system diagnostics and check dependencies"""
     run_doctor(fix)
+
+@cli.command()
+def mesh():
+    """List all active scanning nodes in the mesh"""
+    from core.mesh_manager import MeshManager
+    from rich.table import Table
+    
+    manager = MeshManager()
+    nodes = manager.list_nodes()
+    
+    if not nodes:
+        click.echo("📭 No active nodes found in the mesh.")
+        return
+        
+    table = Table(title="DARKWIN Mesh Nodes")
+    table.add_column("Node ID", style="cyan")
+    table.add_column("Hostname", style="green")
+    table.add_column("OS", style="white")
+    table.add_column("Last Seen (UTC)", style="dim")
+    
+    for node in nodes:
+        table.add_row(
+            node["id"],
+            node["hostname"],
+            node["os"],
+            node.get("last_seen", "Unknown")
+        )
+        
+    console.print(table)
 
 @cli.command()
 def setup():
