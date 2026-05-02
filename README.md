@@ -67,6 +67,7 @@ docker-compose up -d --build
 | `proxy` | View available proxies in the rotation pool |
 | `report`| Generate executive AI-synthesized reports |
 | `doctor`| Run system diagnostics and self-healing fixes |
+| `test`  | Execute core unit tests to verify stability |
 | `update`| Pull latest changes and update the ecosystem |
 | `about` | Display project branding and author info |
 

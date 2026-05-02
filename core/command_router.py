@@ -316,6 +316,13 @@ def proxy():
         click.echo(f" - {p}")
 
 @cli.command()
+def test():
+    """Run core unit tests"""
+    from core.tests.test_core import run_tests
+    console.print("[bold cyan]🧪 Running DARKWIN Core Tests...[/bold cyan]")
+    run_tests()
+
+@cli.command()
 def update():
     """Pull latest changes and update the ecosystem"""
     import subprocess
