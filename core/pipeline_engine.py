@@ -12,6 +12,7 @@ License: See LICENSE file
 """
 
 import time
+import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List, Callable, Dict, Any, Optional
@@ -76,100 +77,69 @@ class Pipeline:
         self.logger.debug(f"Added step: {step.name}")
 
     def run(self, target: str, scan_id: str) -> None:
-        """Execute pipeline for a given target.
+        """Synchronous wrapper for running the pipeline."""
+        asyncio.run(self.async_run(target, scan_id))
+
+    async def async_run(self, target: str, scan_id: str) -> None:
+        """Execute pipeline for a given target asynchronously.
         
-        Orchestrates sequential execution of all steps, captures findings,
+        Orchestrates parallel execution of non-dependent steps, captures findings,
         and updates scan status in database.
-        
-        Args:
-            target: Target domain/IP to scan
-            scan_id: Unique scan identifier
         """
         self.logger.info(
-            f"🚀 Starting pipeline '{self.name}' for target: {target} "
+            f"🚀 Starting async pipeline '{self.name}' for target: {target} "
             f"(Scan ID: {scan_id})"
         )
         
         with SessionLocal() as db:
-            # Retrieve or verify scan exists
-            scan: Optional[Scan] = db.query(Scan).filter(
-                Scan.id == scan_id
-            ).first()
-            
+            scan: Optional[Scan] = db.query(Scan).filter(Scan.id == scan_id).first()
             if not scan:
                 self.logger.error(f"❌ Scan ID {scan_id} not found in database.")
                 return
             
-            # Mark as running
             scan.status = "running"
             db.commit()
 
             try:
-                # Execute each step
+                # For now, we'll run all steps in parallel if they are independent
+                # In the future, we could add dependency tracking
+                tasks = []
                 for step in self.steps:
-                    self.logger.info(f"▶️  Executing step: {step.name}")
-                    step_start_time: float = time.time()
-                    
-                    try:
-                        # Execute module function
-                        result: Any = step.module_fn(
-                            *step.args, **step.kwargs
-                        )
-                        
-                        # Persist findings if returned
-                        if isinstance(result, list):
-                            self._save_findings(db, scan_id, result, target)
-                        
-                        elapsed_time: float = time.time() - step_start_time
-                        self.logger.info(
-                            f"✅ Step '{step.name}' completed in {elapsed_time:.2f}s"
-                        )
-                        
-                    except TimeoutError as e:
-                        self.logger.error(
-                            f"⏱️  Step '{step.name}' timed out: {e}"
-                        )
-                        if step.required:
-                            self.logger.critical(
-                                f"Required step '{step.name}' failed. Aborting."
-                            )
-                            scan.status = "failed"
-                            db.commit()
-                            return
-                        else:
-                            self.logger.warning(
-                                f"Non-required step '{step.name}' failed. Continuing."
-                            )
-                            
-                    except Exception as e:
-                        self.logger.error(f"❌ Step '{step.name}' failed: {e}")
-                        if step.required:
-                            self.logger.critical(
-                                f"Required step '{step.name}' failed. Aborting."
-                            )
-                            scan.status = "failed"
-                            db.commit()
-                            return
-                        else:
-                            self.logger.warning(
-                                f"Non-required step '{step.name}' failed. Continuing."
-                            )
+                    tasks.append(self._execute_step(step, db, scan_id, target))
+                
+                await asyncio.gather(*tasks)
 
-                # Mark pipeline as completed
                 scan.status = "completed"
                 scan.finished_at = datetime.utcnow()
                 db.commit()
-                self.logger.info(
-                    f"✨ Pipeline '{self.name}' completed successfully."
-                )
+                self.logger.info(f"✨ Pipeline '{self.name}' completed successfully.")
 
             except Exception as e:
-                self.logger.critical(
-                    f"💥 Pipeline execution error: {e}", exc_info=True
-                )
+                self.logger.critical(f"💥 Pipeline execution error: {e}", exc_info=True)
                 scan.status = "failed"
                 scan.finished_at = datetime.utcnow()
                 db.commit()
+
+    async def _execute_step(self, step: PipelineStep, db, scan_id: str, target: str) -> None:
+        """Execute a single step asynchronously."""
+        self.logger.info(f"▶️  Executing step: {step.name}")
+        step_start_time = time.time()
+        
+        try:
+            # Run the potentially blocking module_fn in a separate thread
+            result = await asyncio.to_thread(step.module_fn, *step.args, **step.kwargs)
+            
+            if isinstance(result, list):
+                # Save findings (synchronous DB operation, but small enough or could be wrapped)
+                self._save_findings(db, scan_id, result, target)
+            
+            elapsed_time = time.time() - step_start_time
+            self.logger.info(f"✅ Step '{step.name}' completed in {elapsed_time:.2f}s")
+            
+        except Exception as e:
+            self.logger.error(f"❌ Step '{step.name}' failed: {e}")
+            if step.required:
+                raise # Re-raise to be caught by async_run
 
     def _save_findings(
         self, db, scan_id: str, findings_list: List[Dict[str, Any]], target: str

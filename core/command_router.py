@@ -24,6 +24,8 @@ from core.models import Target, Scan
 from pipelines.recon_pipeline import get_recon_pipeline
 from pipelines.web_vuln_pipeline import get_web_vuln_pipeline
 from pipelines.full_hunt_pipeline import get_full_hunt_pipeline
+from core.doctor import run_doctor
+from core.setup_wizard import run_setup_wizard
 
 console: Console = Console()
 logger = get_logger("CLI")
@@ -207,4 +209,15 @@ def watch(target):
 def report(scan_id):
     """Generate reports"""
     logger.info(f"Generating reports for Scan ID: {scan_id}")
+
+@cli.command()
+@click.option('--fix', is_flag=True, help='Attempt to fix detected issues')
+def doctor(fix):
+    """Run system diagnostics and check dependencies"""
+    run_doctor(fix)
+
+@cli.command()
+def setup():
+    """Run interactive configuration wizard"""
+    run_setup_wizard()
 
