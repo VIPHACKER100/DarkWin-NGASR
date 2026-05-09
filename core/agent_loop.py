@@ -65,7 +65,7 @@ class AgenticLoop:
             tui.reasoning = "Executing initial passive reconnaissance to seed the model..."
             live.update(tui.render())
             
-            initial_modules = ["Subfinder", "crt.sh", "DNS Enum"]
+            initial_modules = ["Subfinder Runner", "crt.sh Fetcher", "DNS Enumerator"]
             await self.execute_modules(initial_modules)
             
             # 2. Reasoning Loop
@@ -80,6 +80,14 @@ class AgenticLoop:
                 
                 # B. Ask AI for next steps
                 plan_json = self.reasoner.perform_reasoning(context)
+                
+                # Guard: If LLM returned an error, skip AI reasoning
+                if plan_json and isinstance(plan_json, str) and plan_json.startswith("Error:"):
+                    logger.warning(f"⚠️ LLM unavailable: {plan_json}")
+                    tui.reasoning = f"LLM offline — cannot plan next steps. Configure ai.local_llm_url or ai.openai_api_key."
+                    tui.status = "LLM Offline"
+                    live.update(tui.render())
+                    break
                 
                 # C. Parse and extract modules
                 try:

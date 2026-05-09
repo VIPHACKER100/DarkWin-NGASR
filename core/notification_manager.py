@@ -8,6 +8,7 @@ License: See LICENSE file
 """
 
 import httpx
+from datetime import datetime, timezone
 import json
 from typing import Dict, Any, Optional
 from core.config_manager import get_config
@@ -34,7 +35,7 @@ class NotificationManager:
             "title": f"🚨 DARKWIN ALERT: {title}",
             "message": message,
             "severity": severity,
-            "timestamp": str(httpx.utils.guess_json_utf(b"")) # Placeholder for now
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         
         # Discord Hook
