@@ -7,6 +7,11 @@ install:
 	pip install -r requirements.txt
 	pip install -e .
 
+setup-tools:
+	go install github.com/hahwul/dalfox/v2@latest
+	go install github.com/lc/gau/v2/cmd/gau@latest
+	go install github.com/tomnomnom/qsreplace@latest
+
 dev:
 	python core/darkwin.py
 

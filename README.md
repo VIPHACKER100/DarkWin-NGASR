@@ -111,6 +111,9 @@ darkwin doctor
 
 ### 4. Launch Platform
 ```bash
+# 🛠️ Install external security tools (dalfox, gau, qsreplace, etc.)
+make setup-tools
+
 # Interactive Shell (Recommended)
 darkwin shell
 

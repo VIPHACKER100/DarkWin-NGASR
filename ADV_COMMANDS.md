@@ -433,6 +433,9 @@ When run with the `--fix` flag, the platform performs:
 ```bash
 # Perform a full system "Health Check & Repair"
 darkwin doctor --fix
+
+# Install missing external bug bounty tools (dalfox, gau, qsreplace)
+make setup-tools
 ```
 
 ---
