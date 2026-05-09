@@ -200,7 +200,45 @@ def run_doctor(fix: bool = False) -> None:
             console.print(f"Installing missing Python packages: {', '.join(missing_pip)}...")
             subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
 
-        console.print("[bold green]Fixes attempted. Activate your venv and run doctor again.[/bold green]")
+        # Proactive Service Fixes (v1.2.0)
+        if not db_ok or not redis_ok:
+            if docker_ok:
+                console.print("[bold cyan]🚀 Attempting to start Postgres and Redis via Docker...[/bold cyan]")
+                try:
+                    # Try 'docker compose' (V2) first, then 'docker-compose'
+                    res = subprocess.run(["docker", "compose", "up", "-d", "postgres", "redis"], capture_output=True)
+                    if res.returncode != 0:
+                        subprocess.run(["docker-compose", "up", "-d", "postgres", "redis"], capture_output=False)
+                except Exception:
+                    pass
+            else:
+                console.print("[bold yellow]⚠ Docker not found. Cannot start services automatically.[/bold yellow]")
+
+        # External Tool Fixes (v1.2.0)
+        if missing_tools:
+            try:
+                # Check if go is installed
+                subprocess.run(["go", "version"], capture_output=True, check=True)
+                console.print(f"[bold cyan]🛠️ Attempting to install missing security tools via Go...[/bold cyan]")
+                
+                tool_map = {
+                    "dalfox": "github.com/hahwul/dalfox/v2@latest",
+                    "gau": "github.com/lc/gau/v2/cmd/gau@latest",
+                    "qsreplace": "github.com/tomnomnom/qsreplace@latest",
+                    "subfinder": "github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest",
+                    "httpx": "github.com/projectdiscovery/httpx/cmd/httpx@latest",
+                    "nuclei": "github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest",
+                    "katana": "github.com/projectdiscovery/katana/cmd/katana@latest"
+                }
+
+                for t in missing_tools:
+                    if t in tool_map:
+                        console.print(f"  Installing [green]{t}[/green]...")
+                        subprocess.run(["go", "install", tool_map[t]], check=False)
+            except Exception:
+                console.print("[bold yellow]⚠ Go (golang) not found. Skipping tool installation.[/bold yellow]")
+
+        console.print("[bold green]Fixes attempted. Restart your terminal or activate your venv and run doctor again.[/bold green]")
 
     elif not pydantic_ok:
         console.print("\n[bold red]Pydantic issue detected![/bold red]")
