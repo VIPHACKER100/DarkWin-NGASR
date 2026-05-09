@@ -40,15 +40,42 @@ def get_stealth_headers() -> Dict[str, str]:
     }
 
 def apply_jitter(base_delay: float = 1.0, variation: float = 0.5):
-    """Wait for a randomized duration to avoid behavioral detection.
+    """Wait for a randomized duration using Gaussian distribution to avoid detection.
     
     Args:
-        base_delay: Minimum delay in seconds.
-        variation: Maximum random variation to add.
+        base_delay: Mean delay in seconds.
+        variation: Standard deviation of the delay.
     """
-    delay = base_delay + (random.random() * variation)
+    delay = random.gauss(base_delay, variation)
+    # Ensure delay is within reasonable bounds (min 0.1s, max base + 3*variation)
+    delay = max(0.1, min(delay, base_delay + (3 * variation)))
     time.sleep(delay)
+
+def rotate_tls_config() -> Dict[str, any]:
+    """Generate randomized TLS configuration to defeat JA3 fingerprinting.
+    
+    Returns:
+        Dict compatible with httpx or custom SSL context builders.
+    """
+    # Common cipher suites used by modern browsers
+    CIPHER_SUITES = [
+        "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256",
+        "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384",
+        "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305",
+        "DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"
+    ]
+    
+    # Randomize the order and selection
+    selected_ciphers = random.sample(CIPHER_SUITES, random.randint(2, len(CIPHER_SUITES)))
+    
+    return {
+        "ciphers": ":".join(selected_ciphers),
+        "min_version": "TLSv1.2",
+        "max_version": "TLSv1.3",
+        "alpn_protocols": ["h2", "http/1.1"]
+    }
 
 def randomize_case(text: str) -> str:
     """Randomize the case of a string (useful for bypassing simple regex WAFs)."""
     return "".join(c.upper() if random.random() > 0.5 else c.lower() for c in text)
+

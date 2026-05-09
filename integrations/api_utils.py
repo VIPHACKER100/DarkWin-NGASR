@@ -1,1 +1,198 @@
-\"\"\"DARKWIN API Integration Utilities\n\nProvides common patterns for API integrations: rate limiting,\nerror handling, timeout management, and request logging.\n\nExports:\n    RateLimiter: Track and enforce API rate limits\n    APIError: Custom exception for API errors\n    parse_rate_limit_headers(): Extract limits from responses\n    \nAuthor: ARYAN AHIRWAR (VIPHACKER.100)\nLicense: See LICENSE file\n\"\"\"\n\nimport time\nfrom typing import Optional, Dict, Any\nfrom dataclasses import dataclass\nfrom core.logging_system import get_logger\n\nlogger = get_logger(\"API.Utils\")\n\n\nclass APIError(Exception):\n    \"\"\"Custom exception for API-related errors.\n    \n    Attributes:\n        status_code: HTTP status code (if applicable)\n        message: Error message\n        retry_after: Seconds to wait before retry (for rate limits)\n    \"\"\"\n    \n    def __init__(\n        self,\n        message: str,\n        status_code: Optional[int] = None,\n        retry_after: Optional[int] = None\n    ) -> None:\n        self.message = message\n        self.status_code = status_code\n        self.retry_after = retry_after\n        super().__init__(message)\n\n\nclass RateLimiter:\n    \"\"\"Track and enforce API rate limits with exponential backoff.\n    \n    Monitors rate limit headers, tracks requests, and implements\n    exponential backoff strategy for rate limit compliance.\n    \n    Attributes:\n        api_name: Name of API (for logging)\n        max_requests: Max requests per window\n        window_seconds: Time window for rate limit\n        current_requests: Count of requests in current window\n    \"\"\"\n    \n    def __init__(\n        self,\n        api_name: str,\n        max_requests: int = 100,\n        window_seconds: int = 60\n    ) -> None:\n        \"\"\"Initialize rate limiter.\n        \n        Args:\n            api_name: Name of API for logging\n            max_requests: Max requests per window (default: 100)\n            window_seconds: Window duration in seconds (default: 60)\n        \"\"\"\n        self.api_name = api_name\n        self.max_requests = max_requests\n        self.window_seconds = window_seconds\n        self.requests = []  # List of request timestamps\n        self.retry_count = 0\n        self.max_retries = 3\n    \n    def check_rate_limit(self) -> bool:\n        \"\"\"Check if we can make a request.\n        \n        Returns:\n            True if request can proceed, False if rate limited\n        \"\"\"\n        now = time.time()\n        \n        # Remove old requests outside current window\n        self.requests = [\n            req_time for req_time in self.requests\n            if now - req_time < self.window_seconds\n        ]\n        \n        # Check if at limit\n        if len(self.requests) >= self.max_requests:\n            return False\n        \n        return True\n    \n    def record_request(self) -> None:\n        \"\"\"Record a request timestamp.\"\"\"\n        self.requests.append(time.time())\n    \n    def handle_rate_limit(self, retry_after: Optional[int] = None) -> float:\n        \"\"\"Calculate backoff time for rate limit.\n        \n        Args:\n            retry_after: Server-provided retry-after value (seconds)\n            \n        Returns:\n            Seconds to wait before retrying\n        \"\"\"\n        if retry_after:\n            wait_time = retry_after\n        else:\n            # Exponential backoff: 2, 4, 8 seconds\n            wait_time = min(2 ** self.retry_count, 300)  # Cap at 5 min\n        \n        self.retry_count += 1\n        \n        logger.warning(\n            f\"{self.api_name} rate limited. Waiting {wait_time}s \"\n            f\"(retry {self.retry_count}/{self.max_retries})\"\n        )\n        \n        return wait_time\n    \n    def reset(self) -> None:\n        \"\"\"Reset rate limiter (after successful request).\"\"\"\n        self.retry_count = 0\n    \n    def should_retry(self) -> bool:\n        \"\"\"Check if we should retry after rate limit.\n        \n        Returns:\n            True if under max retries, False otherwise\n        \"\"\"\n        return self.retry_count < self.max_retries\n\n\ndef parse_rate_limit_headers(response_headers: Dict[str, Any]) -> Optional[int]:\n    \"\"\"Extract retry-after value from response headers.\n    \n    Checks common rate limit headers used by various APIs.\n    \n    Args:\n        response_headers: HTTP response headers\n        \n    Returns:\n        Seconds to wait, or None if not found\n    \"\"\"\n    # Common header names for rate limit info\n    retry_headers = [\n        \"Retry-After\",\n        \"retry-after\",\n        \"X-Rate-Limit-Reset\",\n        \"x-ratelimit-reset\",\n    ]\n    \n    for header_name in retry_headers:\n        if header_name in response_headers:\n            try:\n                # Try to parse as seconds\n                value = response_headers[header_name]\n                return int(value)\n            except (ValueError, TypeError):\n                logger.warning(\n                    f\"Could not parse {header_name}: {value}\"\n                )\n                continue\n    \n    return None\n\n\ndef validate_api_key(api_key: Optional[str], api_name: str) -> str:\n    \"\"\"Validate API key exists and has minimum length.\n    \n    Args:\n        api_key: API key to validate\n        api_name: Name of API (for logging)\n        \n    Returns:\n        The api_key if valid\n        \n    Raises:\n        APIError: If key is invalid\n    \"\"\"\n    if not api_key:\n        raise APIError(\n            f\"{api_name} API key not configured\",\n            status_code=401\n        )\n    \n    if len(api_key) < 5:\n        raise APIError(\n            f\"{api_name} API key appears invalid (too short)\",\n            status_code=401\n        )\n    \n    logger.debug(f\"{api_name} API key validated\")\n    return api_key\n
+"""DARKWIN API Integration Utilities
+
+Provides common patterns for API integrations: rate limiting,
+error handling, timeout management, and request logging.
+
+Exports:
+    RateLimiter: Track and enforce API rate limits
+    APIError: Custom exception for API errors
+    parse_rate_limit_headers(): Extract limits from responses
+    
+Author: ARYAN AHIRWAR (VIPHACKER.100)
+License: See LICENSE file
+"""
+
+import time
+from typing import Optional, Dict, Any
+from dataclasses import dataclass
+from core.logging_system import get_logger
+
+logger = get_logger("API.Utils")
+
+
+class APIError(Exception):
+    """Custom exception for API-related errors.
+    
+    Attributes:
+        status_code: HTTP status code (if applicable)
+        message: Error message
+        retry_after: Seconds to wait before retry (for rate limits)
+    """
+    
+    def __init__(
+        self,
+        message: str,
+        status_code: Optional[int] = None,
+        retry_after: Optional[int] = None
+    ) -> None:
+        self.message = message
+        self.status_code = status_code
+        self.retry_after = retry_after
+        super().__init__(message)
+
+
+class RateLimiter:
+    """Track and enforce API rate limits with exponential backoff.
+    
+    Monitors rate limit headers, tracks requests, and implements
+    exponential backoff strategy for rate limit compliance.
+    
+    Attributes:
+        api_name: Name of API (for logging)
+        max_requests: Max requests per window
+        window_seconds: Time window for rate limit
+        current_requests: Count of requests in current window
+    """
+    
+    def __init__(
+        self,
+        api_name: str,
+        max_requests: int = 100,
+        window_seconds: int = 60
+    ) -> None:
+        """Initialize rate limiter.
+        
+        Args:
+            api_name: Name of API for logging
+            max_requests: Max requests per window (default: 100)
+            window_seconds: Window duration in seconds (default: 60)
+        """
+        self.api_name = api_name
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self.requests = []  # List of request timestamps
+        self.retry_count = 0
+        self.max_retries = 3
+    
+    def check_rate_limit(self) -> bool:
+        """Check if we can make a request.
+        
+        Returns:
+            True if request can proceed, False if rate limited
+        """
+        now = time.time()
+        
+        # Remove old requests outside current window
+        self.requests = [
+            req_time for req_time in self.requests
+            if now - req_time < self.window_seconds
+        ]
+        
+        # Check if at limit
+        if len(self.requests) >= self.max_requests:
+            return False
+        
+        return True
+    
+    def record_request(self) -> None:
+        """Record a request timestamp."""
+        self.requests.append(time.time())
+    
+    def handle_rate_limit(self, retry_after: Optional[int] = None) -> float:
+        """Calculate backoff time for rate limit.
+        
+        Args:
+            retry_after: Server-provided retry-after value (seconds)
+            
+        Returns:
+            Seconds to wait before retrying
+        """
+        if retry_after:
+            wait_time = retry_after
+        else:
+            # Exponential backoff: 2, 4, 8 seconds
+            wait_time = min(2 ** self.retry_count, 300)  # Cap at 5 min
+        
+        self.retry_count += 1
+        
+        logger.warning(
+            f"{self.api_name} rate limited. Waiting {wait_time}s "
+            f"(retry {self.retry_count}/{self.max_retries})"
+        )
+        
+        return wait_time
+    
+    def reset(self) -> None:
+        """Reset rate limiter (after successful request)."""
+        self.retry_count = 0
+    
+    def should_retry(self) -> bool:
+        """Check if we should retry after rate limit.
+        
+        Returns:
+            True if under max retries, False otherwise
+        """
+        return self.retry_count < self.max_retries
+
+
+def parse_rate_limit_headers(response_headers: Dict[str, Any]) -> Optional[int]:
+    """Extract retry-after value from response headers.
+    
+    Checks common rate limit headers used by various APIs.
+    
+    Args:
+        response_headers: HTTP response headers
+        
+    Returns:
+        Seconds to wait, or None if not found
+    """
+    # Common header names for rate limit info
+    retry_headers = [
+        "Retry-After",
+        "retry-after",
+        "X-Rate-Limit-Reset",
+        "x-ratelimit-reset",
+    ]
+    
+    for header_name in retry_headers:
+        if header_name in response_headers:
+            try:
+                # Try to parse as seconds
+                value = response_headers[header_name]
+                return int(value)
+            except (ValueError, TypeError):
+                logger.warning(
+                    f"Could not parse {header_name}: {value}"
+                )
+                continue
+    
+    return None
+
+
+def validate_api_key(api_key: Optional[str], api_name: str) -> str:
+    """Validate API key exists and has minimum length.
+    
+    Args:
+        api_key: API key to validate
+        api_name: Name of API (for logging)
+        
+    Returns:
+        The api_key if valid
+        
+    Raises:
+        APIError: If key is invalid
+    """
+    if not api_key:
+        raise APIError(
+            f"{api_name} API key not configured",
+            status_code=401
+        )
+    
+    if len(api_key) < 5:
+        raise APIError(
+            f"{api_name} API key appears invalid (too short)",
+            status_code=401
+        )
+    
+    logger.debug(f"{api_name} API key validated")
+    return api_key

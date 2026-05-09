@@ -123,23 +123,30 @@ class ShodanAPI:
             return False
 
     def _api_call_with_timeout(self, api_call, timeout: int = DEFAULT_TIMEOUT):
-        """Execute API call with timeout handling."""
-        import signal
+        """Execute API call with threading-based timeout handling (Cross-platform)."""
+        import threading
+        
+        result = [None]
+        exception = [None]
+        
+        def target():
+            try:
+                result[0] = api_call()
+            except Exception as e:
+                exception[0] = e
+        
+        thread = threading.Thread(target=target, daemon=True)
+        thread.start()
+        thread.join(timeout=timeout)
+        
+        if thread.is_alive():
+            raise TimeoutError(f"Shodan API call timed out after {timeout}s")
+        
+        if exception[0]:
+            raise exception[0]
+            
+        return result[0]
 
-        def timeout_handler(signum, frame):
-            raise TimeoutError(f"API call timed out after {timeout} seconds")
-
-        # Set up timeout signal
-        old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(timeout)
-
-        try:
-            result = api_call()
-            return result
-        finally:
-            # Restore original handler and cancel alarm
-            signal.alarm(0)
-            signal.signal(signal.SIGALRM, old_handler)
 
 
 # Legacy function for backward compatibility

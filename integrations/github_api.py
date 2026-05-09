@@ -50,11 +50,12 @@ class GitHubAPI:
 
         logger.info("GitHub API client initialized successfully")
 
-    def search_code(self, query: str) -> Dict[str, any]:
-        """Search GitHub for code with security hardening.
+    def search_code(self, query: str, pages: int = 1) -> Dict[str, any]:
+        """Search GitHub for code with security hardening and pagination support.
 
         Args:
             query: Search query string
+            pages: Number of pages to fetch (max 100 results per page)
 
         Returns:
             Search results dictionary, or error dict if failed
@@ -64,65 +65,71 @@ class GitHubAPI:
                 logger.error("Empty or invalid search query")
                 return {"error": "Invalid search query"}
 
+            all_items = []
+            total_count = 0
+            
+            # per_page max is 100 for GitHub
+            results_per_page = 30 
+            
             # URL encode query for safety
             encoded_query = quote(query.strip())
-            url = f"{GITHUB_BASE_URL}/search/code?q={encoded_query}&per_page={MAX_RESULTS}"
-
-            # Check rate limit
-            if not self.limiter.check_rate_limit():
-                wait_time = self.limiter.handle_rate_limit()
-                logger.warning(f"Rate limited, waiting {wait_time}s")
-                return {"error": f"Rate limited. Try again in {wait_time} seconds"}
-
-            # Record the request
-            self.limiter.record_request()
-
-            # Make request with timeout and SSL verification
+            
             with httpx.Client(timeout=DEFAULT_TIMEOUT, verify=True) as client:
-                response = client.get(url, headers=self.headers)
+                for page in range(1, pages + 1):
+                    url = f"{GITHUB_BASE_URL}/search/code?q={encoded_query}&per_page={results_per_page}&page={page}"
 
-                # Handle rate limiting
-                if response.status_code == 403:
-                    rate_limit_info = parse_rate_limit_headers(response.headers)
-                    if rate_limit_info:
-                        reset_time = rate_limit_info.get('reset_time', 60)
-                        logger.warning(f"GitHub rate limit exceeded, reset in {reset_time}s")
-                        return {"error": f"Rate limited. Try again in {reset_time} seconds"}
+                    # Check rate limit before each page request
+                    if not self.limiter.check_rate_limit():
+                        wait_time = self.limiter.handle_rate_limit()
+                        logger.warning(f"Rate limited during pagination, waiting {wait_time}s")
+                        break # Stop and return what we have
 
-                if response.status_code == 422:
-                    logger.error(f"GitHub search query too broad or invalid: {query}")
-                    return {"error": "Search query too broad or invalid"}
+                    # Record the request
+                    self.limiter.record_request()
 
-                if response.status_code == 200:
+                    response = client.get(url, headers=self.headers)
+
+                    # Handle rate limiting
+                    if response.status_code == 403:
+                        rate_limit_info = parse_rate_limit_headers(response.headers)
+                        logger.warning("GitHub secondary rate limit hit. Returning partial results.")
+                        break
+
+                    if response.status_code != 200:
+                        logger.error(f"GitHub API Error on page {page}: {response.status_code}")
+                        break
+
                     data = response.json()
-
-                    # Process results
-                    items = []
-                    for item in data.get("items", [])[:MAX_RESULTS]:
+                    total_count = data.get("total_count", 0)
+                    
+                    items = data.get("items", [])
+                    if not items:
+                        break # No more results
+                        
+                    for item in items:
                         try:
                             repo_info = item.get("repository", {})
-                            items.append({
+                            all_items.append({
                                 "repository": repo_info.get("full_name", "unknown"),
                                 "html_url": item.get("html_url", ""),
                                 "path": item.get("path", ""),
                                 "score": item.get("score", 0)
                             })
                         except (KeyError, TypeError) as e:
-                            logger.warning(f"Error processing search result item: {e}")
                             continue
+                    
+                    # If we have reached total_count, stop
+                    if len(all_items) >= total_count:
+                        break
 
-                    result = {
-                        "total_count": data.get("total_count", 0),
-                        "items": items
-                    }
+            result = {
+                "total_count": total_count,
+                "items": all_items
+            }
 
-                    logger.info(f"GitHub code search successful: {len(items)} results for query '{query}'")
-                    return result
+            logger.info(f"GitHub code search successful: {len(all_items)} results for query '{query}'")
+            return result
 
-                else:
-                    error_msg = f"GitHub API Error: {response.status_code}"
-                    logger.error(error_msg)
-                    return {"error": error_msg}
 
         except httpx.TimeoutException as e:
             logger.error(f"GitHub request timeout for query '{query}': {e}")

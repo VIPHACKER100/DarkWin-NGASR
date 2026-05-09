@@ -49,7 +49,7 @@ class VirusTotalAPI:
         logger.info("VirusTotal API client initialized successfully")
 
     def get_domain_report(self, domain: str) -> Dict[str, any]:
-        """Query VirusTotal for a domain report with security hardening.
+        """Query VirusTotal for a domain report with security hardening and caching.
 
         Args:
             domain: Domain name to analyze
@@ -58,25 +58,33 @@ class VirusTotalAPI:
             Domain analysis results, or error dict if failed
         """
         try:
-            # Validate domain
+            # 1. Validate domain
             if not self._validate_domain(domain):
                 logger.error(f"Invalid domain format: {domain}")
                 return {"error": "Invalid domain format"}
 
-            # Check rate limit
+            # 2. Check Cache
+            from core.cache_manager import global_cache
+            cache_key = f"vt:domain:{domain}"
+            cached_data = global_cache.get(cache_key)
+            if cached_data:
+                logger.info(f"💾 Returning cached VirusTotal report for {domain}")
+                return cached_data
+
+            # 3. Check rate limit
             if not self.limiter.check_rate_limit():
                 wait_time = self.limiter.handle_rate_limit()
                 logger.warning(f"Rate limited, waiting {wait_time}s")
                 return {"error": f"Rate limited. Try again in {wait_time} seconds"}
 
-            # Record the request
+            # 4. Record the request
             self.limiter.record_request()
 
             # URL encode domain for safety
             encoded_domain = quote(domain)
             url = f"{VT_BASE_URL}/domains/{encoded_domain}"
 
-            # Make request with timeout and SSL verification
+            # 5. Make request with timeout and SSL verification
             with httpx.Client(timeout=DEFAULT_TIMEOUT, verify=True) as client:
                 response = client.get(url, headers=self.headers)
 
@@ -99,6 +107,9 @@ class VirusTotalAPI:
                         "total_votes": attributes.get('total_votes', {})
                     }
 
+                    # Store in cache for 24 hours (86400 seconds)
+                    global_cache.set(cache_key, result, ttl=86400)
+                    
                     logger.info(f"Successfully retrieved VirusTotal report for domain: {domain}")
                     return result
 
@@ -109,6 +120,7 @@ class VirusTotalAPI:
                     error_msg = f"VirusTotal API Error: {response.status_code}"
                     logger.error(error_msg)
                     return {"error": error_msg}
+
 
         except httpx.TimeoutException as e:
             logger.error(f"VirusTotal request timeout for domain {domain}: {e}")

@@ -9,6 +9,7 @@ License: See LICENSE file
 
 import json
 import asyncio
+import re
 from typing import List, Dict, Any, Optional
 from core.logging_system import get_logger
 from ai.multi_step_reasoning import ReasoningEngine
@@ -82,15 +83,11 @@ class AgenticLoop:
                 
                 # C. Parse and extract modules
                 try:
-                    clean_json = plan_json.strip()
-                    if clean_json.startswith("```json"):
-                        clean_json = clean_json[7:-3].strip()
-                    elif clean_json.startswith("```"):
-                        clean_json = clean_json[3:-3].strip()
+                    plan = self._robust_json_parse(plan_json)
                     
-                    plan = json.loads(clean_json)
                     recommendations = plan.get("recommendations", [])
                     summary = plan.get("summary", "No summary provided")
+
                     
                     tui.reasoning = summary
                     tui.status = "Executing"
@@ -115,10 +112,13 @@ class AgenticLoop:
                     await self.execute_modules(module_names)
                     
                 except Exception as e:
-                    tui.status = "Error"
-                    tui.reasoning = f"Error: {str(e)}"
+                    logger.error(f"💥 Failed to parse AI plan: {e}\nRaw output: {plan_json}")
+                    tui.status = "Parsing Error"
+                    tui.reasoning = "AI returned malformed plan. Attempting to continue..."
                     live.update(tui.render())
-                    break
+                    await asyncio.sleep(2) # Give user time to see error
+                    continue # Try next iteration or loop exit
+
 
             tui.status = "Completed"
             live.update(tui.render())
@@ -171,3 +171,37 @@ class AgenticLoop:
             await pipeline.async_run(self.target, self.scan_id)
         else:
             logger.warning("⚠️ [AGENT] No valid modules to execute in this step.")
+
+    def _robust_json_parse(self, raw_text: str) -> Dict[str, Any]:
+        """Defensive multi-stage JSON parsing for LLM responses."""
+        if not raw_text:
+            return {}
+
+        clean_text = raw_text.strip()
+        
+        # 1. Extract from Markdown code blocks
+        if "```json" in clean_text:
+            clean_text = clean_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in clean_text:
+            clean_text = clean_text.split("```")[1].split("```")[0].strip()
+        
+        # 2. Fix common LLM syntax errors
+        # Remove trailing commas in objects/arrays
+        clean_text = re.sub(r',\s*([\]}])', r'\1', clean_text)
+        # Fix common unquoted keys (optional, but helpful)
+        # clean_text = re.sub(r'(\w+):', r'"\1":', clean_text)
+        
+        try:
+            return json.loads(clean_text)
+        except json.JSONDecodeError:
+            # 3. Aggressive extraction (find first { and last })
+            match = re.search(r'(\{.*\})', clean_text, re.DOTALL)
+            if match:
+                try:
+                    return json.loads(match.group(1))
+                except:
+                    pass
+            
+            logger.error(f"❌ Failed to parse JSON even with aggressive cleaning: {raw_text[:100]}...")
+            return {}
+

@@ -43,14 +43,73 @@ class ProxyManager:
             return None
             
         proxy = random.choice(self.proxies)
-        # Assuming HTTP for now, could be expanded to SOCKS
+        # Handle cases where proxy string already has protocol
+        if "://" not in proxy:
+            proxy = f"http://{proxy}"
+            
         return {
-            "http://": f"http://{proxy}",
-            "https://": f"http://{proxy}"
+            "http://": proxy,
+            "https://": proxy
         }
+
+    async def validate_proxy(self, proxy_url: str) -> bool:
+        """Test if a proxy is responding and not leaking real IP.
+        
+        Args:
+            proxy_url: The proxy URL to test.
+            
+        Returns:
+            True if proxy is healthy, False otherwise.
+        """
+        import httpx
+        try:
+            # Protocol must be specified for httpx
+            test_proxy = proxy_url if "://" in proxy_url else f"http://{proxy_url}"
+            proxies = {"all://": test_proxy}
+            
+            async with httpx.AsyncClient(proxies=proxies, timeout=5.0) as client:
+                # Use a reliable target for health checks
+                resp = await client.get("https://httpbin.org/ip")
+                if resp.status_code == 200:
+                    origin = resp.json().get("origin", "")
+                    logger.debug(f"Proxy {test_proxy} validated successfully. Origin: {origin}")
+                    return True
+        except Exception as e:
+            logger.debug(f"Proxy validation failed for {proxy_url}: {e}")
+        
+        return False
+
+    async def cleanup_dead_proxies(self):
+        """Iterate through the proxy pool and remove unresponsive entries."""
+        if not self.proxies:
+            return
+
+        logger.info(f"🔄 Starting cleanup of dead proxies ({len(self.proxies)} in pool)")
+        valid_proxies = []
+        
+        # Check in batches to avoid overwhelming
+        import asyncio
+        batch_size = 10
+        for i in range(0, len(self.proxies), batch_size):
+            batch = self.proxies[i:i+batch_size]
+            tasks = [self.validate_proxy(p) for p in batch]
+            results = await asyncio.gather(*tasks)
+            
+            for proxy, is_valid in zip(batch, results):
+                if is_valid:
+                    valid_proxies.append(proxy)
+        
+        removed_count = len(self.proxies) - len(valid_proxies)
+        self.proxies = valid_proxies
+        
+        if removed_count > 0:
+            logger.info(f"✨ Purged {removed_count} dead proxies. {len(self.proxies)} remaining.")
+        else:
+            logger.info("✅ All proxies in pool are healthy.")
 
     def get_proxy_list(self) -> List[str]:
         return self.proxies
 
 # Singleton instance
 global_proxy_manager = ProxyManager()
+

@@ -34,6 +34,7 @@ class ReasoningEngine:
         """Perform multi-step reasoning to plan next scan steps.
 
         Sanitizes context input and validates AI responses for security.
+        Implements context windowing to stay within LLM token limits.
 
         Args:
             context: Current security research context and findings
@@ -42,13 +43,29 @@ class ReasoningEngine:
             AI-generated plan for next research steps, or error message
         """
         try:
-            # Sanitize context to prevent prompt injection
+            # 1. Implement Context Windowing
+            # Simple heuristic: ~4 characters per token, 4000 token limit = 16000 chars
+            MAX_CONTEXT_CHARS = 12000 
+            if len(context) > MAX_CONTEXT_CHARS:
+                logger.warning(f"Context too long ({len(context)} chars). Truncating...")
+                # Keep target info (start) and latest findings (end)
+                header_end = context.find("Findings discovered so far:")
+                if header_end != -1:
+                    header = context[:header_end + 28]
+                    findings_pool = context[header_end + 28:]
+                    # Take last N characters of findings
+                    truncated_findings = findings_pool[-(MAX_CONTEXT_CHARS - len(header)):]
+                    context = header + "...[TRUNCATED]...\n" + truncated_findings
+                else:
+                    context = context[-MAX_CONTEXT_CHARS:]
+
+            # 2. Sanitize context to prevent prompt injection
             safe_context = sanitize_prompt(context)
             if not safe_context:
                 logger.error("Context sanitization failed")
                 return "Error: Invalid context data"
 
-            # Create secure system prompt
+            # 3. Create secure system prompt
             system_prompt = (
                 "You are a tactical reasoning engine for DARKWIN security research. "
                 "Analyze the current context and recommend the most effective next steps. "
@@ -56,7 +73,7 @@ class ReasoningEngine:
                 "ALWAYS respond in structured JSON format."
             )
 
-            # Create secure user prompt
+            # 4. Create secure user prompt
             prompt = f"""
             Based on the current security research context below, recommend the next modules to run.
             
@@ -76,10 +93,11 @@ class ReasoningEngine:
             }}
             """
 
-            # Get AI reasoning using secure agent
+            # 5. Get AI reasoning using secure agent
             response = self.agent.ask_agent(prompt, system_prompt=system_prompt)
             return response
 
         except Exception as e:
             logger.error(f"Error in multi-step reasoning: {e}", exc_info=True)
             return f"Error generating reasoning plan: {str(e)}"
+
