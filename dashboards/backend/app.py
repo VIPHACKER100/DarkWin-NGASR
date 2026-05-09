@@ -63,9 +63,9 @@ def create_app() -> tuple[Flask, SocketIO]:
         
         # 1. Database Check
         try:
-            from core.database import engine
+            from core.database import get_engine
             from sqlalchemy import text
-            with engine.connect() as conn:
+            with get_engine().connect() as conn:
                 conn.execute(text("SELECT 1"))
         except Exception:
             status["services"]["database"] = "fail"

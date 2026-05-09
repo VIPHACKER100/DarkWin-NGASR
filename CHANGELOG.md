@@ -5,11 +5,13 @@
 
 ### [1.0.7] - 2026-05-09
 **Self-Healing Database & Robust Fallback**
-- Implemented `create_robust_engine` in `core/database.py` with automatic PostgreSQL-to-SQLite fallback.
+- Implemented **Lazy Database Initialization** in `core/database.py` to prevent CLI crashes when DB is unreachable.
+- Implemented `create_robust_engine` with automatic PostgreSQL-to-SQLite fallback.
 - Added specific diagnostic logging for "Password Authentication Failed" and "Database Does Not Exist" errors.
 - Improved error handling for environments missing the `_sqlite3` module (e.g., incomplete Python builds on Kali).
 - Aligned default `config.yaml` with `docker-compose.yml` credentials (`darkwin_pass`).
 - Added automated table creation during engine initialization for fallback databases.
+- Updated `TROUBLESHOOTING.md` with comprehensive database recovery steps.
 
 ### [1.0.6] - 2026-05-09
 **Target Scope & History Management**

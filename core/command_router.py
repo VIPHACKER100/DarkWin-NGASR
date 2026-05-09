@@ -683,7 +683,7 @@ def release(changelog):
     from rich.panel import Panel
     from rich.markdown import Markdown
     
-    version = "1.0.13"
+    version = "1.0.7"
     codename = "Zenith"
     
     if changelog:
@@ -805,7 +805,7 @@ def about():
     )
 
     info_text = Text.from_markup(
-        "\n[bold cyan]Version:[/bold cyan] 1.0.0 (Zenith Phase)\n"
+        "\n[bold cyan]Version:[/bold cyan] 1.0.7 (Zenith Phase)\n"
         "[bold cyan]Author:[/bold cyan] ARYAN AHIRWAR (VIPHACKER.100)\n"
         "[bold cyan]Status:[/bold cyan] Production Ready\n\n"
         "[italic white]An autonomous, distributed, and stealthy ecosystem for\n"
