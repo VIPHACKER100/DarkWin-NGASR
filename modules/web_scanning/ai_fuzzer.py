@@ -87,3 +87,14 @@ class AIFuzzer(BaseModule):
         if "sql error" in resp.text.lower(): return True
         if resp.status_code == 500: return True
         return False
+
+async def run(target: str, scan_id: str, **kwargs):
+    """Entry point for the AI Fuzzer module."""
+    fuzzer = AIFuzzer(target, scan_id)
+    # Extract extra args if provided, otherwise use defaults
+    endpoint = kwargs.get("endpoint", target)
+    params = kwargs.get("params", {})
+    tech_stack = kwargs.get("tech_stack", [])
+    
+    await fuzzer.run(endpoint, params, tech_stack)
+

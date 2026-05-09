@@ -20,13 +20,14 @@ class ProxyManager:
     
     def __init__(self, proxy_file: Optional[str] = None):
         self.proxies: List[str] = []
-        self.proxy_file = proxy_file or config.get("proxy_file")
+        self.proxy_file = proxy_file or config.proxy.proxy_file
         
         if self.proxy_file:
             self._load_proxies()
         else:
             # Check if proxies are in config directly
-            self.proxies = config.get("proxies", [])
+            self.proxies = config.proxy.proxies
+
 
     def _load_proxies(self):
         """Load proxies from file (format: ip:port or user:pass@ip:port)."""

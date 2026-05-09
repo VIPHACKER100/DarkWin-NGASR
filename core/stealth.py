@@ -19,6 +19,33 @@ USER_AGENTS = [
     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1",
 ]
 
+class GhostMode:
+    """Class wrapper for stealth operations."""
+    
+    def get_headers(self) -> Dict[str, str]:
+        """Instance method wrapper for get_stealth_headers."""
+        return get_stealth_headers()
+    
+    def get_random_ua(self) -> str:
+        """Instance method wrapper for get_random_user_agent."""
+        return get_random_user_agent()
+    
+    def jitter(self, base: float = 1.0, var: float = 0.5):
+        """Instance method wrapper for apply_jitter (synchronous)."""
+        apply_jitter(base, var)
+
+    async def async_jitter(self, base: float = 1.0, var: float = 0.5):
+        """Asynchronous jitter using Gaussian distribution."""
+        delay = random.gauss(base, var)
+        delay = max(0.1, min(delay, base + (3 * var)))
+        await asyncio.sleep(delay)
+    
+    def get_tls_config(self) -> Dict[str, any]:
+
+        """Instance method wrapper for rotate_tls_config."""
+        return rotate_tls_config()
+
+
 def get_random_user_agent() -> str:
     """Return a random modern User-Agent string."""
     return random.choice(USER_AGENTS)

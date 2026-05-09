@@ -46,6 +46,10 @@ class APIKeysConfig(BaseModel):
     virustotal: str = ""
     github_token: str = ""
 
+class ProxyConfig(BaseModel):
+    proxy_file: Optional[str] = None
+    proxies: list = []
+
 class DarkwinConfig(BaseSettings):
     app: AppConfig = AppConfig()
     database: DatabaseConfig = DatabaseConfig()
@@ -54,6 +58,8 @@ class DarkwinConfig(BaseSettings):
     tools: ToolsConfig = ToolsConfig()
     scans: ScansConfig = ScansConfig()
     api_keys: APIKeysConfig = APIKeysConfig()
+    proxy: ProxyConfig = ProxyConfig()
+
 
     model_config = SettingsConfigDict(
         env_file=".env",

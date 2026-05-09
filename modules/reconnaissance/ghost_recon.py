@@ -65,6 +65,12 @@ class GhostRecon(BaseModule):
         
         for port in common_ports:
             # Use ghost timing jitter
-            await asyncio.sleep(self.ghost.get_jitter())
+            await self.ghost.async_jitter()
             self.log(f"Probing {self.target}:{port}...")
             # Real port probing logic would go here
+
+async def run(target: str, scan_id: str, **kwargs):
+    """Entry point for the Ghost Recon module."""
+    recon = GhostRecon(target, scan_id)
+    await recon.run()
+

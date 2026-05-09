@@ -25,7 +25,7 @@ from modules.vulnerability_engine.web.clickjacking.clickjacking_scanner import r
 from modules.vulnerability_engine.injection.sql.sqli_scanner import run as sqli
 from modules.vulnerability_engine.injection.command.cmdi_scanner import run as cmdi
 from modules.vulnerability_engine.injection.template.ssti_scanner import run as ssti
-from modules.vulnerability_engine.injection.nosql.nosql_scanner import run as nosql
+from modules.vulnerability_engine.injection.nosql.nosqli_scanner import run as nosql
 from modules.vulnerability_engine.injection.graphql.graphql_scanner import run as graphql
 
 # --- File Vulnerabilities ---
