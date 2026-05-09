@@ -10,7 +10,7 @@ Author: ARYAN AHIRWAR (VIPHACKER.100)
 License: See LICENSE file
 """
 
-from core.database import engine, Base
+from core.database import get_engine, Base
 from core.models import Target, Scan, Finding, Screenshot, Report
 from core.logging_system import get_logger
 
@@ -29,6 +29,7 @@ def init_db() -> None:
     logger.info("Initializing DARKWIN database schema...")
     
     try:
+        engine = get_engine()
         Base.metadata.create_all(bind=engine)
         logger.info("✅ Database tables created successfully.")
         logger.info(

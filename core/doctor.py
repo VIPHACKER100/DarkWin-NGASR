@@ -35,9 +35,6 @@ def check_pydantic_health() -> Tuple[bool, str]:
 console: Console = Console()
 
 from core.config_manager import get_config
-from core.database import engine
-
-console: Console = Console()
 
 def check_python_version() -> Tuple[bool, str]:
     """Check if Python version meets minimum requirements."""
@@ -93,10 +90,12 @@ def check_external_tools() -> List[Tuple[str, bool]]:
     return results
 
 def check_database() -> Tuple[bool, str]:
-    """Check database connectivity."""
+    """Check database connectivity (lazy — safe to call with no DB)."""
     try:
         from sqlalchemy import text
-        with engine.connect() as conn:
+        from core.database import get_engine
+        eng = get_engine()
+        with eng.connect() as conn:
             conn.execute(text("SELECT 1"))
         return True, "Connected"
     except Exception as e:
