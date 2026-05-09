@@ -80,6 +80,9 @@ def check_external_tools() -> List[Tuple[str, bool]]:
         config.tools.sqlmap,
         config.tools.dalfox,
         config.tools.masscan,
+        "gau",
+        "waybackurls",
+        "qsreplace",
     ]
     
     results = []

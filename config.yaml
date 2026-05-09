@@ -30,6 +30,8 @@ tools:
   sqlmap: "sqlmap"
   dalfox: "dalfox"
   masscan: "masscan"
+  gau: "gau"
+  waybackurls: "waybackurls"
 
 scans:
   output_dir: "reports"

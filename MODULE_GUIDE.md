@@ -4,17 +4,28 @@
 DARKWIN is built on a modular architecture. Each module must follow a strict interface to be correctly loaded by the engine.
 
 ### Module Structure
+DARKWIN supports both synchronous and asynchronous modules. As of v1.2.0, **asynchronous** modules are preferred for better performance.
+
+#### Async Module (Preferred)
 ```python
 MODULE_META = {
-    "name": "Module Name",
+    "name": "Async Module",
     "category": "Category",
-    "description": "Description",
+    "description": "Async example",
     "version": "1.0.0"
 }
 
+async def run(target: str, scan_id: str, config: dict):
+    # Async logic goes here
+    # findings = await some_async_task()
+    return []
+```
+
+#### Legacy Sync Module
+```python
 def run(target: str, scan_id: str, config: dict):
-    # Logic goes here
-    return results
+    # Sync logic goes here
+    return []
 ```
 
 ### Categories

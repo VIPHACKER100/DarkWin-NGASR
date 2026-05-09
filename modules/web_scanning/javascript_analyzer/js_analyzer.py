@@ -16,10 +16,12 @@ def run(js_url: str, scan_id: str, config: dict) -> List[Dict]:
     findings = []
     
     patterns = {
-        "api_endpoint": r'["\'](/[a-zA-Z0-9._/-]+)["\']',
+        "api_endpoint": r'["\']((?:https?://|//)?/[a-zA-Z0-9_/?=&%.-]*)["\']',
         "aws_key": r'AKIA[0-9A-Z]{16}',
         "jwt_token": r'eyJh[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+',
-        "generic_secret": r'(?i)(api_key|secret|password|auth|token)["\']\s*[:=]\s*["\']([a-zA-Z0-9-_]{8,})["\']'
+        "generic_secret": r'(?i)(api_key|secret|password|auth|token|access_key|private_key)["\']\s*[:=]\s*["\']([a-zA-Z0-9-_]{8,})["\']',
+        "firebase_url": r'https://[a-zA-Z0-9-]+\.firebaseio\.com',
+        "s3_bucket": r'[a-zA-Z0-9-.]+\.s3\.amazonaws\.com'
     }
     
     try:

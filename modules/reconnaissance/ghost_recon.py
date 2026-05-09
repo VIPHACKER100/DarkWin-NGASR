@@ -13,15 +13,15 @@ from core.module_loader import BaseModule
 from core.stealth import GhostMode
 from core.proxy_manager import global_proxy_manager
 
+MODULE_META = {
+    "name": "Ghost Recon",
+    "description": "Stealthy passive & active reconnaissance",
+    "author": "ARYAN AHIRWAR",
+    "category": "Reconnaissance"
+}
+
 class GhostRecon(BaseModule):
     """Stealthy reconnaissance module with proxy rotation."""
-    
-    MODULE_META = {
-        "name": "Ghost Recon",
-        "description": "Stealthy passive & active reconnaissance",
-        "author": "ARYAN AHIRWAR",
-        "category": "reconnaissance"
-    }
 
     def __init__(self, target: str, scan_id: str):
         super().__init__(target, scan_id)

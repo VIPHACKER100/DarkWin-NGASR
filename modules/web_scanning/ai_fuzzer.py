@@ -15,16 +15,16 @@ from ai.ai_agent_manager import AIAgentManager
 from core.stealth import GhostMode
 from core.proxy_manager import global_proxy_manager
 
+MODULE_META = {
+    "name": "AI Fuzzer",
+    "description": "Smart payload generation using LLM",
+    "author": "ARYAN AHIRWAR",
+    "category": "Web Scanning",
+    "vulnerability_types": ["XSS", "SQLi", "SSRF", "RCE"]
+}
+
 class AIFuzzer(BaseModule):
     """Next-gen fuzzer that uses AI for payload generation."""
-    
-    MODULE_META = {
-        "name": "AI Fuzzer",
-        "description": "Smart payload generation using LLM",
-        "author": "ARYAN AHIRWAR",
-        "category": "vulnerability",
-        "vulnerability_types": ["XSS", "SQLi", "SSRF", "RCE"]
-    }
 
     def __init__(self, target: str, scan_id: str):
         super().__init__(target, scan_id)

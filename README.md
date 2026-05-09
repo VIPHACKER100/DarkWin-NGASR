@@ -3,7 +3,7 @@
 # 🛡️ DARKWIN-NGASR
 ### Next Gen Autonomous Security Researcher
 
-[![Version](https://img.shields.io/badge/version-1.0.7-blueviolet?style=for-the-badge)](https://github.com/VIPHACKER100/DarkWin-NGASR)
+[![Version](https://img.shields.io/badge/version-1.2.0-blueviolet?style=for-the-badge)](https://github.com/VIPHACKER100/DarkWin-NGASR)
 [![Python](https://img.shields.io/badge/python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Kali%20%7C%20Debian%20%7C%20Ubuntu-red?style=for-the-badge&logo=linux&logoColor=white)](https://kali.org)
@@ -78,6 +78,13 @@
 - **Discord Webhook** — Rich embed notifications with severity colors
 - **Slack Webhook** — Instant text-based alerts to your ops channel
 - **Lifecycle Events** — Hunt started, critical finding verified, hunt completed
+
+### 🚀 Bug Bounty One-Liner Suite (New)
+- **Aggregated Passive Discovery** — Multi-source subdomain and URL extraction (RapidDNS, Archive.org, etc.)
+- **Specialized Vuln Modules** — High-fidelity detection for Prototype Pollution, CORS, SSRF, and Subdomain Takeovers
+- **JS Intelligence** — Advanced extraction of secrets, API keys, and endpoints from obfuscated scripts
+- **Async Execution** — Core scanning engine optimized for massive parallel testing
+- **One-Liner Adapter** — Native support for executing complex shell pipelines safely
 
 ---
 
@@ -240,7 +247,7 @@ Full guide: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 ### Security Tools (optional but recommended)
 ```bash
 # Install via package manager or Go
-nmap subfinder httpx nuclei ffuf amass katana sqlmap dalfox masscan
+nmap subfinder httpx nuclei ffuf amass katana sqlmap dalfox masscan gau waybackurls
 ```
 
 ---
@@ -260,7 +267,8 @@ See [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md) for con
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
-**Latest:** v1.0.7 — Self-healing database, SQLite fallback, better Auth diagnostics  
+**Latest:** v1.2.0 — Bug Bounty One-Liner Integration, Async Vuln Engines, 10+ New specialized modules  
+**Previous:** v1.0.7 — Self-healing database, SQLite fallback, better Auth diagnostics  
 **Previous:** v1.0.6 — `history` & `targets` CLI commands, CHANGELOG updated  
 **Previous:** v1.0.5 — Fixed `IndentationError`, venv-based setup, Pydantic isolation
 

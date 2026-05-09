@@ -780,8 +780,8 @@ def sysinfo():
 @cli.command()
 def modules():
     """List all available modules"""
-    from core.module_loader import list_all_modules
-    list_all_modules()
+    from core.module_loader import list_modules
+    console.print(list_modules())
 
 @cli.command()
 def about():

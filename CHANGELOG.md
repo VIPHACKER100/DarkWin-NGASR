@@ -3,6 +3,26 @@
 
 ---
 
+### [1.2.0] - 2026-05-10
+**Bug Bounty One-Liner Integration & Performance Suite**
+- **Enhanced Vulnerability Engines**:
+    - Upgraded **LFI Scanner** with passive discovery and Base64 traversal support.
+    - Upgraded **Open Redirect Scanner** with CRLF and protocol-relative bypasses.
+    - Upgraded **XSS Scanner** with `dalfox` NDJSON support and evasion flags.
+    - Upgraded **SQLi & NoSQL Scanners** to full asynchronous execution with aggressive bug bounty flags.
+- **New Detection Modules**:
+    - **CORS Misconfiguration Scanner**: Detects Origin reflection and insecure credential policies.
+    - **Subdomain Takeover Scanner**: Signature-based detection for 10+ services + Nuclei integration.
+    - **SSRF Scanner**: Specialized testing for cloud metadata and internal endpoint leakage.
+    - **Secret & API Key Finder**: High-fidelity regex scanning for leaked AWS, GitHub, and Slack tokens.
+    - **Prototype Pollution**: Added detection for client-side prototype pollution vulnerabilities.
+    - **High-Impact CVE Scanner**: Consolidated checks for F5, Cisco, vBulletin, and Microweber.
+- **Core Improvements**:
+    - Integrated `core/one_liner_adapter.py` for safe shell pipeline execution.
+    - Upgraded `Pipeline` engine to natively support `asyncio` modules.
+    - Updated `js_analyzer` regex for broader endpoint and secret discovery.
+    - Standardized `MODULE_META` across all modules for better discovery.
+
 ### [1.0.7] - 2026-05-09
 **Self-Healing Database & Robust Fallback**
 - Implemented **Lazy Database Initialization** in `core/database.py` to prevent CLI crashes when DB is unreachable.

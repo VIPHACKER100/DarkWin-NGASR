@@ -1,11 +1,34 @@
 # DARKWIN Upgrade & Fix Report
-**Date:** April 27, 2026
-**Version:** 1.0.0 (Fixed and Verified)
-**Status:** Production Ready
+**Date:** May 10, 2026
+**Version:** 1.2.0 (Bug Bounty Integration)
+**Status:** Performance Optimized
 
 ---
 
-## Summary
+## v1.2.0 - Bug Bounty Integration Suite
+
+### 1. **Asynchronous Pipeline Migration** ✓ COMPLETED
+**Core Improvement:** `Pipeline._execute_step` upgraded to support `inspect.iscoroutinefunction` detection.
+**Impact:** Native support for high-performance async modules, preventing thread-blocking during network-heavy scans.
+
+### 2. **External Tooling Integration (One-Liner Spirit)** ✓ COMPLETED
+**New Utility:** `core/one_liner_adapter.py` created to handle complex shell pipelines.
+**Impact:** Safely executes one-liners like `gau | dalfox` or `nuclei -tags takeover` with full logging and timeout management.
+
+### 3. **Vulnerability Engine Overhaul** ✓ COMPLETED
+**Upgrades:**
+- **LFI/Open Redirect**: Parallel testing + advanced evasion payloads.
+- **XSS**: NDJSON parsing + stealth flags for `dalfox`.
+- **SQLi/NoSQL**: Full async refactor + aggressive bug bounty flags.
+- **New Modules**: CORS, SSRF, Subdomain Takeover, Secret Finder, Prototype Pollution, High-Impact CVEs.
+
+### 4. **Diagnostic & Self-Healing** ✓ COMPLETED
+**Enhancement:** `core/doctor.py` updated with Windows-specific environment fixes.
+**Fix:** Resolved terminal `UnicodeEncodeError` by enforcing UTF-8 globally in the logging system.
+
+---
+
+## v1.0.7 - Self-Healing Database & Robust Fallback
 
 DARKWIN has been successfully upgraded and stabilized with critical bug fixes and infrastructure improvements. All 117+ modules load correctly, CLI is fully functional, and the system is ready for deployment.
 
