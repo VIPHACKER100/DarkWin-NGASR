@@ -11,11 +11,22 @@ import os
 import sys
 from pathlib import Path
 from typing import NoReturn
+import io
+
 
 # Add project root to sys.path to support absolute imports (from core.xxx)
 root_dir = str(Path(__file__).resolve().parent.parent)
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
+
+# Initialize Windows UTF-8 console if needed
+if sys.platform == "win32":
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except Exception:
+        pass # Fallback to default if wrapping fails
+
 
 from rich.console import Console
 from rich.panel import Panel
@@ -98,11 +109,15 @@ def main() -> NoReturn:
         logger.warning("User interrupted execution.")
         sys.exit(0)
     except ValueError as e:
-        logger.error(f"Configuration error: {e}")
+        # Use str(e) safely in case e contains non-encodable chars
+        error_msg = str(e)
+        logger.error(f"Configuration error: {error_msg}")
         sys.exit(1)
     except Exception as e:
-        logger.critical(f"Fatal error: {e}", exc_info=True)
+        error_msg = str(e)
+        logger.critical(f"Fatal error: {error_msg}", exc_info=True)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

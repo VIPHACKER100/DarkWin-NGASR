@@ -18,6 +18,7 @@ class RedisConfig(BaseModel):
 
 class AIConfig(BaseModel):
     openai_api_key: str = ""
+    nvidia_api_key: str = ""
     openai_model: str = "gpt-4-turbo-preview"
     local_llm_url: str = "http://localhost:11434/v1"
 
@@ -82,7 +83,7 @@ def load_config(config_path: str = "config.yaml", reload: bool = False) -> Darkw
         return _config
 
     if os.path.exists(config_path):
-        with open(config_path, "r") as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
             _config = DarkwinConfig(**data)
     else:

@@ -83,8 +83,12 @@ class AgenticLoop:
                 
                 # Guard: If LLM returned an error, skip AI reasoning
                 if plan_json and isinstance(plan_json, str) and plan_json.startswith("Error:"):
-                    logger.warning(f"⚠️ LLM unavailable: {plan_json}")
-                    tui.reasoning = f"LLM offline — cannot plan next steps. Configure ai.local_llm_url or ai.openai_api_key."
+                    logger.warning(f"[yellow]⚠ LLM unavailable:[/yellow] {plan_json}")
+                    advice = "Check 'ai.local_llm_url' in config.yaml or start Ollama."
+                    if not self.reasoner.agent.config.ai.openai_api_key:
+                        advice += " Alternatively, provide 'ai.openai_api_key'."
+                    
+                    tui.reasoning = f"LLM Connection Failed: {plan_json}\n{advice}"
                     tui.status = "LLM Offline"
                     live.update(tui.render())
                     break

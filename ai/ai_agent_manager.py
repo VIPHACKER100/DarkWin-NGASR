@@ -45,9 +45,22 @@ class AIAgentManager:
             timeout: Request timeout in seconds (default: 30)
         """
         self.config = get_config()
-        self.api_url: str = self.config.ai.local_llm_url.rstrip("/") + "/chat/completions"
         self.timeout: int = timeout
         self.logger = logger
+        
+        # Determine Backend & URL
+        if self.config.ai.nvidia_api_key:
+            self.backend = "nvidia"
+            self.api_url = "https://integrate.api.nvidia.com/v1/chat/completions"
+            self.model = "google/gemma-3n-e4b-it"
+        elif self.config.ai.openai_api_key:
+            self.backend = "openai"
+            self.api_url = "https://api.openai.com/v1/chat/completions"
+            self.model = self.config.ai.openai_model
+        else:
+            self.backend = "local"
+            self.api_url = self.config.ai.local_llm_url.rstrip("/") + "/chat/completions"
+            self.model = self.config.ai.openai_model
 
         # Validate configuration
         if not self.api_url:
@@ -81,17 +94,20 @@ class AIAgentManager:
 
         # 2. Prepare request
         headers: dict = {}
-        api_key = self.config.ai.openai_api_key
-        if api_key:
-            # Note: API key NOT included in default logging
-            headers["Authorization"] = f"Bearer {api_key}"
+        if self.backend == "nvidia":
+            headers["Authorization"] = f"Bearer {self.config.ai.nvidia_api_key}"
+            headers["Accept"] = "application/json"
+        elif self.backend == "openai":
+            headers["Authorization"] = f"Bearer {self.config.ai.openai_api_key}"
 
         payload = {
-            "model": self.config.ai.openai_model,
+            "model": self.model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": safe_prompt}
-            ]
+            ],
+            "temperature": 0.2,
+            "top_p": 0.7
         }
 
         # 3. Execute request with timeout
@@ -191,16 +207,20 @@ class AIAgentManager:
 
         # 2. Prepare request
         headers: dict = {}
-        api_key = self.config.ai.openai_api_key
-        if api_key:
-            headers["Authorization"] = f"Bearer {api_key}"
+        if self.backend == "nvidia":
+            headers["Authorization"] = f"Bearer {self.config.ai.nvidia_api_key}"
+            headers["Accept"] = "application/json"
+        elif self.backend == "openai":
+            headers["Authorization"] = f"Bearer {self.config.ai.openai_api_key}"
 
         payload = {
-            "model": self.config.ai.openai_model,
+            "model": self.model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": safe_prompt}
-            ]
+            ],
+            "temperature": 0.2,
+            "top_p": 0.7
         }
 
         # 3. Execute request asynchronously

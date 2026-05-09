@@ -9,18 +9,19 @@ app:
 database:
   # Primary database URL (PostgreSQL recommended for production)
   # If unreachable, DARKWIN will automatically fallback to local sqlite:///darkwin.db
-  url: "postgresql://darkwin:darkwin_pass@localhost:5432/darkwin_db"
+  url: "sqlite:///darkwin.db"
 
 redis:
   url: "redis://localhost:6379/0"
 
 ai:
   openai_api_key: ""
+  nvidia_api_key: ""
   openai_model: "gpt-4-turbo-preview"
   local_llm_url: "http://localhost:11434/v1" # For Ollama or similar
 
 tools:
-  nmap: "/usr/bin/nmap"
+  nmap: "nmap"
   subfinder: "subfinder"
   httpx: "httpx"
   nuclei: "nuclei"

@@ -163,6 +163,30 @@ def _load_registry():
         logger.error(f"Error building module registry: {e}")
 
 
+def get_module_descriptions() -> str:
+    """Return a formatted string of available modules and their purposes for the LLM."""
+    if not _registry_loaded:
+        _load_registry()
+    
+    descriptions = []
+    # Use a set to avoid duplicates between meta names and import paths
+    processed_modules = set()
+    
+    for name, module in _module_registry.items():
+        if module in processed_modules:
+            continue
+            
+        meta = getattr(module, MODULE_META_ATTR, None)
+        if meta:
+            m_name = meta.get("name", name)
+            m_desc = meta.get("description", "No description provided")
+            m_cat = meta.get("category", "General")
+            descriptions.append(f"- {m_name} ({m_cat}): {m_desc}")
+            processed_modules.add(module)
+            
+    return "\n".join(sorted(descriptions))
+
+
 def _verify_module(module: Any):
     """Ensure module has the required interface (run function)."""
     if not hasattr(module, "run"):

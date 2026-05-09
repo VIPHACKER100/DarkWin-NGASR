@@ -811,6 +811,7 @@ def about():
     console.print(Panel(info_text, border_style="cyan", title="Project Status"))
 
 @cli.command()
+def dashboard():
     """Launch web dashboard"""
     import subprocess
     import webbrowser

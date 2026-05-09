@@ -74,9 +74,15 @@ class ReasoningEngine:
             )
 
             # 4. Create secure user prompt
-            prompt = f"""
-            Based on the current security research context below, recommend the next modules to run.
+            from core.module_loader import get_module_descriptions
+            available_modules = get_module_descriptions()
             
+            prompt = f"""
+            Based on the current security research context and available modules below, recommend the next modules to run.
+            
+            Available Modules:
+            {available_modules}
+
             Current Context:
             {safe_context}
 
