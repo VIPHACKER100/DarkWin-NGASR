@@ -86,7 +86,7 @@
 ```bash
 git clone https://github.com/VIPHACKER100/DarkWin-NGASR.git
 cd DarkWin-NGASR
-./setup.sh
+sudo bash setup.sh
 ```
 > `setup.sh` creates a `.venv` virtual environment, installs all dependencies in isolation, and sets up the package entry point.
 
