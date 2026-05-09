@@ -8,6 +8,7 @@ License: See LICENSE file
 """
 
 import httpx
+import asyncio
 from typing import Optional
 from core.config_manager import get_config
 from core.logging_system import get_logger
@@ -167,6 +168,78 @@ class AIAgentManager:
                 return f"Error: {str(e)}"
 
         return "Error: LLM query failed after retries"
+
+    async def async_ask_agent(
+        self,
+        prompt: str,
+        system_prompt: str = "You are DARKWIN AI, an elite security researcher."
+    ) -> str:
+        """Query the LLM asynchronously with security hardening.
+
+        Args:
+            prompt: User prompt to send to LLM
+            system_prompt: System role for LLM context
+
+        Returns:
+            LLM response text, or error message if request fails
+        """
+        # 1. Sanitize prompt
+        safe_prompt = sanitize_prompt(prompt)
+        if not safe_prompt:
+            self.logger.error("Prompt sanitization failed")
+            return "Error: Invalid prompt"
+
+        # 2. Prepare request
+        headers: dict = {}
+        api_key = self.config.ai.openai_api_key
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+
+        payload = {
+            "model": self.config.ai.openai_model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": safe_prompt}
+            ]
+        }
+
+        # 3. Execute request asynchronously
+        retry_count = 0
+        while retry_count < MAX_RETRIES:
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout, verify=True) as client:
+                    response = await client.post(
+                        self.api_url,
+                        json=payload,
+                        headers=headers
+                    )
+
+                    if response.status_code == 200:
+                        response_data = response.json()
+                        if validate_llm_response(str(response_data)):
+                            content = response_data.get("choices", [{}])[0].get("message", {}).get("content", "")
+                            if content:
+                                self.logger.info("Async LLM query successful")
+                                return content
+                        
+                        raise APIError("Invalid or empty LLM response")
+                    
+                    if response.status_code == 429:
+                        wait_time = int(response.headers.get("Retry-After", "2"))
+                        await asyncio.sleep(wait_time)
+                        retry_count += 1
+                        continue
+
+                    raise APIError(f"LLM returned {response.status_code}")
+
+            except Exception as e:
+                self.logger.warning(f"Async LLM query attempt {retry_count + 1} failed: {e}")
+                retry_count += 1
+                if retry_count >= MAX_RETRIES:
+                    return f"Error: {str(e)}"
+                await asyncio.sleep(2)
+
+        return "Error: Async LLM query failed"
 
 
 def analyze_vulnerability(finding: dict) -> str:

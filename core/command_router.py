@@ -16,7 +16,15 @@ from typing import Optional, Dict, Any
 
 import click
 from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.syntax import Syntax
+from rich.markdown import Markdown
+from rich.tree import Tree
+from rich.live import Live
+from rich.text import Text
 
+from sqlalchemy.orm import joinedload
 from core.config_manager import validate_config, get_config
 from core.logging_system import get_logger
 from core.database import SessionLocal
@@ -183,11 +191,11 @@ def hunt(target, scope_file, max_steps):
 @click.option('--limit', default=20, help='Number of recent scans to show')
 def history(limit):
     """View recent scan history from the database"""
-    from rich.table import Table
 
     with SessionLocal() as db:
         scans = (
             db.query(Scan)
+            .options(joinedload(Scan.target))
             .order_by(Scan.started_at.desc())
             .limit(limit)
             .all()
@@ -215,7 +223,7 @@ def history(limit):
         target_domain = s.target.domain if s.target else "unknown"
         started = s.started_at.strftime("%Y-%m-%d %H:%M") if s.started_at else "—"
         status_str = status_colors.get(s.status, s.status)
-        table.add_row(str(s.id)[:16] + "..", target_domain, s.scan_type or "—", status_str, started)
+        table.add_row(str(s.id), target_domain, s.scan_type or "—", status_str, started)
 
     console.print(table)
 
@@ -225,7 +233,6 @@ def history(limit):
 @click.option('--remove', 'remove_target', default=None, help='Remove a target domain')
 def targets(add_target, remove_target):
     """Manage the target list in the database"""
-    from rich.table import Table
 
     with SessionLocal() as db:
         if add_target:
@@ -281,7 +288,6 @@ def wordlists(download):
     """View and manage local security wordlists"""
     import os
     import requests
-    from rich.table import Table
     
     wordlists_dir = "wordlists"
     os.makedirs(wordlists_dir, exist_ok=True)
@@ -339,8 +345,6 @@ def wordlists(download):
 def payloads(payload_type):
     """View and manage exploit payloads"""
     import os
-    from rich.table import Table
-    from rich.tree import Tree
     
     payloads_dir = "payloads"
     os.makedirs(payloads_dir, exist_ok=True)
@@ -403,7 +407,6 @@ def screenshots(scan_id, open_img):
     """View and manage captured evidence screenshots"""
     import os
     import subprocess
-    from rich.table import Table
     from core.database import SessionLocal
     from core.models import Screenshot
     
@@ -456,7 +459,6 @@ def config(edit, view):
     import os
     import subprocess
     import yaml
-    from rich.syntax import Syntax
     
     config_path = "config.yaml"
     
@@ -511,7 +513,6 @@ def schedule(add_task, list_tasks, remove_id):
     """Manage periodic security scans and tasks"""
     import os
     import json
-    from rich.table import Table
     
     schedule_file = "logs/schedule.json"
     os.makedirs("logs", exist_ok=True)
@@ -580,7 +581,6 @@ def logs(tail, follow, search):
     """View and search system logs"""
     import os
     import time
-    from rich.live import Live
     
     log_file = "logs/darkwin.log"
     if not os.path.exists(log_file):
@@ -626,9 +626,6 @@ def logs(tail, follow, search):
 @click.option('--check', is_flag=True, help='Run a quick diagnostic check')
 def troubleshoot(check):
     """Interactive troubleshooting wizard for common issues"""
-    from rich.panel import Panel
-    from rich.console import Console
-    from rich.table import Table
     
     if check:
         from core.doctor import run_diagnostics
@@ -680,8 +677,6 @@ def troubleshoot(check):
 def release(changelog):
     """View current version and release history"""
     import os
-    from rich.panel import Panel
-    from rich.markdown import Markdown
     
     version = "1.0.7"
     codename = "Zenith"
@@ -759,7 +754,6 @@ def sysinfo():
     import os
     import platform
     import psutil
-    from rich.table import Table
     
     table = Table(title="💻 System Information", border_style="blue")
     table.add_column("Property", style="cyan")
@@ -792,8 +786,6 @@ def modules():
 @cli.command()
 def about():
     """Display information about DARKWIN-NGASR."""
-    from rich.panel import Panel
-    from rich.text import Text
 
     logo = (
         "\n   ________    ____  _______       _______ _   __\n"
@@ -881,7 +873,6 @@ def doctor(fix):
 def mesh():
     """List all active scanning nodes in the mesh"""
     from core.mesh_manager import MeshManager
-    from rich.table import Table
     
     manager = MeshManager()
     nodes = manager.list_nodes()

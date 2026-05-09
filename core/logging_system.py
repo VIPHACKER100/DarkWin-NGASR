@@ -72,6 +72,7 @@ def get_logger(name: str, scan_id: Optional[str] = None) -> logging.Logger:
             MAIN_LOG_FILE,
             maxBytes=MAX_LOG_SIZE,
             backupCount=LOG_BACKUP_COUNT,
+            encoding="utf-8"
         )
         file_formatter: logging.Formatter = logging.Formatter(LOG_FORMAT)
         file_handler.setFormatter(file_formatter)
@@ -89,7 +90,7 @@ def get_logger(name: str, scan_id: Optional[str] = None) -> logging.Logger:
         SCAN_LOG_DIR.mkdir(parents=True, exist_ok=True)
         
         scan_log_file: Path = SCAN_LOG_DIR / f"{scan_id}.log"
-        scan_handler: logging.FileHandler = logging.FileHandler(scan_log_file)
+        scan_handler: logging.FileHandler = logging.FileHandler(scan_log_file, encoding="utf-8")
         scan_handler.setFormatter(file_formatter)
         scan_handler.setLevel(logging.DEBUG)
         logger.addHandler(scan_handler)

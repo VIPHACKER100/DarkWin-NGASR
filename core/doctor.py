@@ -185,7 +185,10 @@ def run_doctor(fix: bool = False) -> None:
         if not pydantic_ok:
             console.print("[bold yellow]⚠ Pydantic/typing_extensions shadowing detected.[/bold yellow]")
             console.print("[bold cyan]Best Fix — Use the project virtual environment:[/bold cyan]")
-            console.print("  Run [green]./setup.sh[/green] then [green]source .venv/bin/activate[/green]")
+            if os.name == 'nt':
+                console.print("  Run [green]./setup.ps1[/green] then [green].\\.venv\\Scripts\\Activate.ps1[/green]")
+            else:
+                console.print("  Run [green]./setup.sh[/green] then [green]source .venv/bin/activate[/green]")
             console.print("  Then retry: [green]darkwin --help[/green]\n")
             subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade",
                             "typing-extensions>=4.11.0", "pydantic-core>=2.18.0"], check=False)
@@ -198,7 +201,10 @@ def run_doctor(fix: bool = False) -> None:
 
     elif not pydantic_ok:
         console.print("\n[bold red]Pydantic issue detected![/bold red]")
-        console.print("Fix: [bold cyan]./setup.sh[/bold cyan] then [bold cyan]source .venv/bin/activate[/bold cyan]")
+        if os.name == 'nt':
+            console.print("Fix: [bold cyan]./setup.ps1[/bold cyan] then [bold cyan].\\.venv\\Scripts\\Activate.ps1[/bold cyan]")
+        else:
+            console.print("Fix: [bold cyan]./setup.sh[/bold cyan] then [bold cyan]source .venv/bin/activate[/bold cyan]")
     elif missing_pip or missing_tools or not db_ok or not redis_ok:
         console.print("\n[bold red]Issues detected![/bold red] Run [bold]darkwin doctor --fix[/bold] or install missing components manually.")
     else:

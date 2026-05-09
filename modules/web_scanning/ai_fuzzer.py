@@ -47,16 +47,17 @@ class AIFuzzer(BaseModule):
         """
         
         try:
-            response = await self.ai.get_reasoning(prompt)
+            response = await self.ai.async_ask_agent(prompt)
             payloads = [p.strip() for p in response.split(",")]
         except Exception as e:
             self.log(f"❌ AI Payload Generation failed: {e}")
             return
 
         # 2. Execute stealthy fuzzing
+        proxies = global_proxy_manager.get_random_proxy()
         async with httpx.AsyncClient(
             headers=self.ghost.get_headers(),
-            proxies=global_proxy_manager.get_random_proxy()
+            proxies={"all://": list(proxies.values())[0]} if proxies else None
         ) as client:
             for payload in payloads:
                 self.log(f"🚀 Testing Payload: {payload}")

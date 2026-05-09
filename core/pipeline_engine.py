@@ -126,8 +126,13 @@ class Pipeline:
         step_start_time = time.time()
         
         try:
-            # Run the potentially blocking module_fn in a separate thread
-            result = await asyncio.to_thread(step.module_fn, *step.args, **step.kwargs)
+            # Check if the module function is a coroutine or regular function
+            import inspect
+            if inspect.iscoroutinefunction(step.module_fn):
+                result = await step.module_fn(*step.args, **step.kwargs)
+            else:
+                # Run blocking sync modules in a thread pool
+                result = await asyncio.to_thread(step.module_fn, *step.args, **step.kwargs)
             
             if isinstance(result, list):
                 # Save findings (synchronous DB operation, but small enough or could be wrapped)
