@@ -74,3 +74,25 @@ def get_attack_surface_graph():
                     edges.append({"source": f"target-{t.id}", "target": finding_id})
                     
         return jsonify({"nodes": nodes, "edges": edges})
+
+@api_bp.route("/mesh", methods=["GET"])
+def get_mesh_status():
+    from core.mesh_manager import MeshManager
+    manager = MeshManager()
+    return jsonify(manager.list_nodes())
+
+@api_bp.route("/proxy", methods=["GET"])
+def get_proxy_status():
+    from core.proxy_manager import global_proxy_manager
+    return jsonify({
+        "total": len(global_proxy_manager.get_proxy_list()),
+        "proxies": global_proxy_manager.get_proxy_list()
+    })
+
+@api_bp.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "version": "1.2.0",
+        "author": "ARYAN AHIRWAR (VIPHACKER.100)"
+    })
