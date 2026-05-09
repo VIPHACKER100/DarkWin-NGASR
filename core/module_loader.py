@@ -29,6 +29,10 @@ logger = get_logger("ModuleLoader")
 MODULES_DIR: str = "modules"
 MODULE_META_ATTR: str = "MODULE_META"
 
+# Registry for fast lookup
+_module_registry: Dict[str, Any] = {}
+_registry_loaded: bool = False
+
 
 def list_modules() -> Table:
     """Discover and display all available scanner modules.
@@ -96,57 +100,73 @@ def list_modules() -> Table:
 
 
 def get_module(name: str) -> Any:
-    """Retrieve a module by metadata name or import path.
+    """Retrieve a module by metadata name or import path (with caching)."""
+    global _registry_loaded
     
-    Searches the modules directory for a module matching the given name.
-    Name can be either the MODULE_META name field or the full import path.
+    # Check registry first
+    if name in _module_registry:
+        return _module_registry[name]
     
-    Args:
-        name: Module name (from MODULE_META) or import path (e.g., "modules.web.xss").
+    # If not in registry and registry not loaded, load it
+    if not _registry_loaded:
+        _load_registry()
+        if name in _module_registry:
+            return _module_registry[name]
+
+    # Fallback to direct import attempt if it looks like a path
+    if name.startswith(f"{MODULES_DIR}."):
+        try:
+            module = importlib.import_module(name)
+            _verify_module(module)
+            _module_registry[name] = module
+            return module
+        except Exception as e:
+            logger.error(f"Failed to load module by path '{name}': {e}")
+
+    logger.error(f"Module not found: {name}")
+    raise ModuleNotFoundError(f"Module '{name}' not found in DARKWIN library.")
+
+
+def _load_registry():
+    """Populate the module registry by scanning the modules directory."""
+    global _registry_loaded
+    logger.debug("Loading module registry...")
     
-    Returns:
-        Loaded module object.
-    
-    Raises:
-        ModuleNotFoundError: If module with given name is not found.
-    """
     modules_path: str = str(Path.cwd() / MODULES_DIR)
     
     try:
-        # Walk through modules and match by name
         for loader, module_name, is_pkg in pkgutil.walk_packages(
             [modules_path], prefix=f"{MODULES_DIR}."
         ):
-            # Skip subpackages
-            if is_pkg:
-                continue
+            if is_pkg: continue
             
             try:
                 module = importlib.import_module(module_name)
-                meta: Optional[Dict[str, Any]] = getattr(
-                    module, MODULE_META_ATTR, None
-                )
+                meta = getattr(module, MODULE_META_ATTR, None)
                 
-                # Match by MODULE_META name or import path
-                if meta and (meta.get("name") == name or module_name == name):
-                    logger.info(f"Loaded module: {name} from {module_name}")
-                    return module
-                    
-            except ImportError:
-                continue
+                if meta:
+                    meta_name = meta.get("name")
+                    if meta_name:
+                        _module_registry[meta_name] = module
+                
+                # Also index by import path
+                _module_registry[module_name] = module
+                
             except Exception as e:
-                logger.warning(f"Error checking module {module_name}: {e}")
+                logger.debug(f"Skipping module {module_name} during registry load: {e}")
                 continue
+                
+        _registry_loaded = True
+        logger.info(f"✅ Registry loaded with {len(_module_registry)} module mappings.")
         
-        # Module not found
-        logger.error(f"Module not found: {name}")
-        raise ModuleNotFoundError(f"Module '{name}' not found in DARKWIN library.")
-        
-    except ModuleNotFoundError:
-        raise
     except Exception as e:
-        logger.error(f"Error retrieving module '{name}': {e}", exc_info=True)
-        raise ModuleNotFoundError(f"Failed to load module '{name}': {e}")
+        logger.error(f"Error building module registry: {e}")
+
+
+def _verify_module(module: Any):
+    """Ensure module has the required interface (run function)."""
+    if not hasattr(module, "run"):
+        raise AttributeError(f"Module {module.__name__} is missing mandatory 'run()' function.")
 
 
 if __name__ == "__main__":

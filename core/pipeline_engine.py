@@ -14,7 +14,7 @@ License: See LICENSE file
 import time
 import asyncio
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Callable, Dict, Any, Optional
 
 from core.logging_system import get_logger
@@ -42,6 +42,7 @@ class PipelineStep:
     kwargs: Dict[str, Any] = field(default_factory=dict)
     timeout_seconds: int = 3600
     required: bool = True
+    phase: int = 1
 
 
 class Pipeline:
@@ -101,23 +102,30 @@ class Pipeline:
             db.commit()
 
             try:
-                # For now, we'll run all steps in parallel if they are independent
-                # In the future, we could add dependency tracking
-                tasks = []
-                for step in self.steps:
-                    tasks.append(self._execute_step(step, db, scan_id, target))
+                # Group steps by phase
+                from itertools import groupby
                 
-                await asyncio.gather(*tasks)
+                # Sort steps by phase to ensure correct grouping
+                self.steps.sort(key=lambda x: x.phase)
+                
+                for phase_num, phase_steps in groupby(self.steps, key=lambda x: x.phase):
+                    self.logger.info(f"🌀 Executing Pipeline Phase {phase_num}")
+                    tasks = []
+                    for step in phase_steps:
+                        tasks.append(self._execute_step(step, db, scan_id, target))
+                    
+                    if tasks:
+                        await asyncio.gather(*tasks)
 
                 scan.status = "completed"
-                scan.finished_at = datetime.utcnow()
+                scan.finished_at = datetime.now(timezone.utc)
                 db.commit()
                 self.logger.info(f"✨ Pipeline '{self.name}' completed successfully.")
 
             except Exception as e:
                 self.logger.critical(f"💥 Pipeline execution error: {e}", exc_info=True)
                 scan.status = "failed"
-                scan.finished_at = datetime.utcnow()
+                scan.finished_at = datetime.now(timezone.utc)
                 db.commit()
 
     async def _execute_step(self, step: PipelineStep, db, scan_id: str, target: str) -> None:

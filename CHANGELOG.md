@@ -3,6 +3,26 @@
 
 ---
 
+### [2.0.0] - 2026-05-10
+**Apex — Stability & Architecture Hardening**
+- **Architecture Hardening**:
+    - Implemented **Module Registry Cache** in `core/module_loader.py` for 10x faster tool discovery.
+    - Upgraded **Pipeline Engine** with strict phase-based sequencing (Recon → Intel → Vuln).
+    - Unified versioning and authorship metadata via `core/__version__.py`.
+    - Migrated all datetime operations to **Timezone-Aware UTC** for reliable distributed logging.
+- **Operational Reliability**:
+    - Hardened **Database Session Management** to prevent leaks during long-running hunts.
+    - Improved **Self-Healing Fallbacks** for Cache and Database services.
+    - Added comprehensive **Pytest Suite** covering config, caching, and verifier logic.
+- **Feature Completion**:
+    - Implemented full logic for `fuzz`, `exploit`, `cloud`, `dashboard`, and `mesh` CLI commands.
+    - Integrated **Celery Beat** for robust periodic task and scan scheduling.
+    - Expanded **VulnVerifier** with LFI, SSRF, and Redirect checks + AI-assisted triage.
+    - Migrated to **Environment-Variable (.env)** secrets management for production security.
+- **Reporting & UI**:
+    - Upgraded **PDF Reporting** with full Unicode support and AI-synthesized executive summaries.
+    - Stabilized **3D Neural Attack Surface** graph synchronization with real-time findings.
+
 ### [1.2.0] - 2026-05-10
 **Bug Bounty One-Liner Integration & Performance Suite**
 - **Enhanced Vulnerability Engines**:

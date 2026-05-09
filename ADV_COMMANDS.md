@@ -356,11 +356,14 @@ DARKWIN-NGASR respects several environment variables for sensitive operations:
 
 | Variable | Description |
 | :--- | :--- |
-| `DARKWIN_API_KEY` | Core API key for remote node authentication |
-| `DATABASE_URL` | Override default DB connection string (Postgres/SQLite) |
-| `REDIS_URL` | Connection string for task queue and cache |
-| `OPENAI_API_KEY` | Required for `hunt` (Autonomous AI Reasoning) |
-| `PROXY_AUTH` | Credentials for the proxy rotation pool |
+| `APP__VERSION` | Override platform version (e.g., "2.0.0") |
+| `DATABASE__URL` | Connection string for PostgreSQL or SQLite |
+| `REDIS__URL` | Connection string for the Mesh task queue and cache |
+| `AI__OPENAI_API_KEY` | Required for autonomous AI reasoning |
+| `AI__OPENAI_MODEL` | Override the default GPT model (e.g., "gpt-4o") |
+| `API_KEYS__SHODAN` | Passive reconnaissance enrichment key |
+| `NOTIFICATIONS__DISCORD` | Webhook URL for Discord alerts |
+| `FLASK_SECRET_KEY` | Secret key for dashboard session security |
 
 ---
 

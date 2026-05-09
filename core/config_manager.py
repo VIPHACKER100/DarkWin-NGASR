@@ -3,10 +3,11 @@ import yaml
 from typing import Optional
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from core.__version__ import __version__
 
 class AppConfig(BaseModel):
     name: str = "DARKWIN"
-    version: str = "1.0.0"
+    version: str = __version__
     author: str = "ARYAN AHIRWAR (VIPHACKER.100)"
 
 class DatabaseConfig(BaseModel):
@@ -75,14 +76,14 @@ class DarkwinConfig(BaseSettings):
 
 _config: Optional[DarkwinConfig] = None
 
-def load_config(config_path: str = "config.yaml") -> DarkwinConfig:
+def load_config(config_path: str = "config.yaml", reload: bool = False) -> DarkwinConfig:
     global _config
-    if _config:
+    if _config and not reload:
         return _config
 
     if os.path.exists(config_path):
         with open(config_path, "r") as f:
-            data = yaml.safe_load(f)
+            data = yaml.safe_load(f) or {}
             _config = DarkwinConfig(**data)
     else:
         _config = DarkwinConfig()
@@ -91,6 +92,10 @@ def load_config(config_path: str = "config.yaml") -> DarkwinConfig:
 
 def get_config() -> DarkwinConfig:
     return load_config()
+
+def force_reload():
+    """Force a reload of the configuration from disk."""
+    return load_config(reload=True)
 
 def validate_config():
     config = get_config()

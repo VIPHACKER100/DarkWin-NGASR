@@ -1,49 +1,67 @@
-"""DARKWIN Core Unit Tests
+"""DARKWIN Core Test Suite (Pytest)
 
 Provides automated validation for the central reasoning engine,
 caching layer, and vulnerability verification logic.
 
 Author: ARYAN AHIRWAR (VIPHACKER.100)
-License: See LICENSE file
 """
 
-import unittest
-import asyncio
+import pytest
+import os
 from core.cache_manager import global_cache
 from core.vuln_verifier import VulnVerifier
 from core.stealth import GhostMode
+from core.config_manager import get_config, force_reload
+from core.module_loader import get_module, list_modules
 
-class TestDarkWinCore(unittest.TestCase):
-    """Test suite for DARKWIN core components."""
+def test_cache_manager():
+    """Test Redis/In-Memory caching layer."""
+    key = "pytest_key"
+    value = {"status": "ok", "value": 456}
+    global_cache.set(key, value, ttl=5)
+    
+    cached_val = global_cache.get(key)
+    assert cached_val == value
+    
+    global_cache.delete(key)
+    assert global_cache.get(key) is None
 
-    def test_cache_manager(self):
-        """Test Redis-based caching layer."""
-        key = "test_key"
-        value = {"status": "ok", "value": 123}
-        global_cache.set(key, value, ttl=10)
-        
-        cached_val = global_cache.get(key)
-        self.assertEqual(cached_val, value)
-        
-        global_cache.delete(key)
-        self.assertIsNone(global_cache.get(key))
+def test_stealth_engine():
+    """Test GhostMode fingerprinting."""
+    ghost = GhostMode()
+    headers = ghost.get_headers()
+    assert "User-Agent" in headers
+    assert "Accept-Language" in headers
+    assert len(headers["User-Agent"]) > 10
 
-    def test_stealth_engine(self):
-        """Test GhostMode fingerprinting."""
-        ghost = GhostMode()
-        headers = ghost.get_headers()
-        self.assertIn("User-Agent", headers)
-        self.assertIn("Accept-Language", headers)
+def test_config_reload():
+    """Test configuration hot-reloading."""
+    config = get_config()
+    assert config is not None
+    
+    # Reloading shouldn't crash
+    new_config = force_reload()
+    assert new_config is not None
+    assert new_config.app.name == "DARKWIN"
 
-    def test_vuln_verifier_init(self):
-        """Test Verifier initialization."""
-        verifier = VulnVerifier()
-        self.assertIsNotNone(verifier.ghost)
+def test_module_loader():
+    """Test dynamic module discovery and registry."""
+    modules_table = list_modules()
+    assert modules_table is not None
+    
+    # Try loading a known module by path
+    try:
+        mod = get_module("modules.reconnaissance.subdomain_enumeration")
+        assert mod is not None
+        assert hasattr(mod, "run")
+    except ModuleNotFoundError:
+        pytest.skip("Subdomain module not found in this environment")
 
-def run_tests():
-    """Execute the test suite."""
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestDarkWinCore)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-
-if __name__ == "__main__":
-    run_tests()
+@pytest.mark.asyncio
+async def test_vuln_verifier_async():
+    """Test async vulnerability verification."""
+    verifier = VulnVerifier()
+    # Mocking a verification (without real networking)
+    # This just checks if the routing works
+    result = await verifier.verify("UNKNOWN_TYPE", "http://example.com", "payload")
+    assert result is False # Should fall back to AI which returns false on mock error

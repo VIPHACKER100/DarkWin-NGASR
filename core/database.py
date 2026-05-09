@@ -164,43 +164,22 @@ def get_session() -> sessionmaker:
 # This is what command_router.py imports — it behaves like sessionmaker() but
 # delays the actual DB connection until first use.
 class _LazySessionLocal:
-    """Drop-in replacement for sessionmaker that connects lazily."""
-
-    def __init__(self):
-        self._is_mock = False
+    """Drop-in replacement for sessionmaker that connects lazily.
+    
+    Returns a standard SQLAlchemy Session (or a MagicMock in no-persistence mode).
+    """
 
     def __call__(self, *args, **kwargs) -> Session:
         try:
             return get_session()(*args, **kwargs)
         except RuntimeError:
-            self._is_mock = True
             from unittest.mock import MagicMock
             logger.error("⚠️  RUNNING IN NO-PERSISTENCE MODE (DB Offline)")
-            mock = MagicMock()
+            mock = MagicMock(spec=Session)
             # Basic support for common ORM methods to prevent crashes
             mock.query.return_value.filter.return_value.first.return_value = None
             mock.__enter__.return_value = mock
             return mock
-
-    def __enter__(self):
-        try:
-            self._session = get_session()()
-            self._is_mock = False
-        except RuntimeError:
-            self._is_mock = True
-            from unittest.mock import MagicMock
-            logger.error("⚠️  RUNNING IN NO-PERSISTENCE MODE (DB Offline)")
-            self._session = MagicMock()
-            self._session.query.return_value.filter.return_value.first.return_value = None
-        return self._session
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._is_mock:
-            return False
-        if exc_type:
-            self._session.rollback()
-        self._session.close()
-        return False
 
 
 SessionLocal = _LazySessionLocal()

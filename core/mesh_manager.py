@@ -13,7 +13,7 @@ import uuid
 import platform
 import socket
 import redis
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any
 
 from core.config_manager import get_config
@@ -43,7 +43,7 @@ class MeshManager:
             "id": self.node_id,
             "hostname": self.hostname,
             "os": platform.system(),
-            "last_seen": datetime.utcnow().isoformat(),
+            "last_seen": datetime.now(timezone.utc).isoformat(),
             "status": "online"
         }
         

@@ -85,6 +85,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=600,
         required=False,
+        phase=1,
     ))
     pipeline.add_step(PipelineStep(
         name="Endpoint Finder",
@@ -92,6 +93,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=300,
         required=False,
+        phase=1,
     ))
     pipeline.add_step(PipelineStep(
         name="JavaScript Analyzer",
@@ -99,6 +101,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=180,
         required=False,
+        phase=1,
     ))
     pipeline.add_step(PipelineStep(
         name="Parameter Discovery",
@@ -106,6 +109,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=300,
         required=False,
+        phase=1,
     ))
     pipeline.add_step(PipelineStep(
         name="AI Fuzzer",
@@ -113,6 +117,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=600,
         required=False,
+        phase=1,
     ))
 
     # ── Phase 2: Web Logic Vulnerabilities ────────────────────────────────────
@@ -122,6 +127,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=300,
         required=False,
+        phase=2,
     ))
     pipeline.add_step(PipelineStep(
         name="CSRF Scanner",
@@ -129,6 +135,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=180,
         required=False,
+        phase=2,
     ))
     pipeline.add_step(PipelineStep(
         name="Open Redirect Scanner",
@@ -136,6 +143,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=180,
         required=False,
+        phase=2,
     ))
     pipeline.add_step(PipelineStep(
         name="Clickjacking Scanner",
@@ -143,6 +151,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=60,
         required=False,
+        phase=2,
     ))
 
     # ── Phase 3: Injection Vulnerabilities ───────────────────────────────────
@@ -152,6 +161,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=600,
         required=False,
+        phase=3,
     ))
     pipeline.add_step(PipelineStep(
         name="Command Injection Scanner",
@@ -159,6 +169,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=300,
         required=False,
+        phase=3,
     ))
     pipeline.add_step(PipelineStep(
         name="SSTI Scanner",
@@ -166,6 +177,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=300,
         required=False,
+        phase=3,
     ))
     pipeline.add_step(PipelineStep(
         name="NoSQL Injection Scanner",
@@ -173,6 +185,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=300,
         required=False,
+        phase=3,
     ))
     pipeline.add_step(PipelineStep(
         name="GraphQL Scanner",
@@ -180,6 +193,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=300,
         required=False,
+        phase=3,
     ))
 
     # ── Phase 4: File & Server Vulnerabilities ───────────────────────────────
@@ -189,6 +203,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=300,
         required=False,
+        phase=4,
     ))
     pipeline.add_step(PipelineStep(
         name="RFI Scanner",
@@ -196,6 +211,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=300,
         required=False,
+        phase=4,
     ))
     pipeline.add_step(PipelineStep(
         name="Upload Bypass Scanner",
@@ -203,6 +219,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=300,
         required=False,
+        phase=4,
     ))
     pipeline.add_step(PipelineStep(
         name="RCE Scanner",
@@ -210,6 +227,7 @@ def get_web_vuln_pipeline(url: str, scan_id: str, config: dict) -> Pipeline:
         args=[url, scan_id, config],
         timeout_seconds=600,
         required=False,
+        phase=4,
     ))
 
     return pipeline

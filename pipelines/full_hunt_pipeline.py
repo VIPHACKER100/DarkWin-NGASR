@@ -52,11 +52,13 @@ def get_full_hunt_pipeline(target: str, scan_id: str, config: dict) -> Pipeline:
         args=[target, scan_id, config],
         timeout_seconds=60,
         required=False,
+        phase=1,
     ))
 
     # ── Phase 1-3: Full Reconnaissance ───────────────────────────────────────
     recon = get_recon_pipeline(target, scan_id, config)
     for step in recon.steps:
+        step.phase += 1  # Offset by Phase 1 (Ghost Recon)
         pipeline.add_step(step)
 
     # ── Phase 4-7: Web Vulnerability Scanning (root target) ──────────────────
@@ -66,6 +68,7 @@ def get_full_hunt_pipeline(target: str, scan_id: str, config: dict) -> Pipeline:
 
     web = get_web_vuln_pipeline(root_url, scan_id, config)
     for step in web.steps:
+        step.phase += 4  # Offset by Phase 1-4 (Ghost Recon + 3 Recon phases)
         pipeline.add_step(step)
 
     return pipeline

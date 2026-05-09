@@ -40,6 +40,44 @@ app.conf.update(
     result_expires=3600,
 )
 
+def _load_beat_schedule() -> Dict[str, Any]:
+    """Load periodic tasks from the local schedule file."""
+    import os
+    import json
+    schedule_file = "logs/schedule.json"
+    beat_schedule = {}
+    
+    if os.path.exists(schedule_file):
+        try:
+            with open(schedule_file, "r") as f:
+                tasks = json.load(f)
+                for t in tasks:
+                    if t.get("status") == "active":
+                        # Convert frequency to crontab or interval
+                        # Simple mapping for now: daily, weekly, monthly
+                        freq = t.get("frequency", "daily").lower()
+                        if freq == "daily":
+                            schedule = 86400.0 # seconds
+                        elif freq == "weekly":
+                            schedule = 604800.0
+                        elif freq == "hourly":
+                            schedule = 3600.0
+                        else:
+                            try: schedule = float(freq)
+                            except: schedule = 86400.0
+                            
+                        beat_schedule[f"scan_{t['id']}"] = {
+                            "task": "darkwin.run_pipeline", # We'll need this task
+                            "schedule": schedule,
+                            "args": (t["target"], t["command"])
+                        }
+        except Exception as e:
+            logger.error(f"Failed to load beat schedule: {e}")
+            
+    return beat_schedule
+
+app.conf.beat_schedule = _load_beat_schedule()
+
 
 @app.task(name="darkwin.run_module", bind=True, max_retries=3)
 def run_module_task(
@@ -154,26 +192,28 @@ def _save_findings_to_db(
         )
 
 
-def schedule_recurring(
-    target: str,
-    pipeline_name: str,
-    interval_minutes: int
-) -> None:
-    """Schedule periodic scanning task.
+@app.task(name="darkwin.run_pipeline")
+def run_pipeline_task(target: str, pipeline_type: str) -> str:
+    """Task to run a full pipeline (recon, scan, or hunt)."""
+    import uuid
+    from core.command_router import recon, scan, hunt
+    from click.testing import CliRunner
     
-    Requires celery-beat to be running for periodic task execution.
+    scan_id = str(uuid.uuid4())
+    logger.info(f"⏰ Scheduled Pipeline execution: {pipeline_type} on {target}")
     
-    Args:
-        target: Target to scan
-        pipeline_name: Pipeline name to execute
-        interval_minutes: Interval in minutes between scans
+    # Use CliRunner to invoke the command functions safely
+    runner = CliRunner()
+    # Note: In a real distributed system, we would call the pipeline engine directly
+    # but for simplicity we reuse the CLI logic.
+    if pipeline_type == "recon":
+        from core.command_router import cli
+        runner.invoke(cli, ["recon", target])
+    elif pipeline_type == "scan":
+        from core.command_router import cli
+        runner.invoke(cli, ["scan", target])
+    elif pipeline_type == "hunt":
+        from core.command_router import cli
+        runner.invoke(cli, ["hunt", target])
         
-    Note:
-        This is a placeholder. Full implementation requires celery-beat
-        configuration and database-backed scheduler.
-    """
-    logger.info(
-        f"Scheduling recurring scan: {pipeline_name} on {target} "
-        f"every {interval_minutes} minutes"
-    )
-    # TODO: Implement with celery-beat
+    return f"Started {pipeline_type} on {target} (Scan ID: {scan_id})"

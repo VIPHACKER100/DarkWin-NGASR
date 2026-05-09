@@ -14,7 +14,7 @@ Author: ARYAN AHIRWAR (VIPHACKER.100)
 License: See LICENSE file
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Float, JSON
@@ -38,7 +38,7 @@ class Target(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     domain: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     scope_confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     scans: Mapped[List['Scan']] = relationship("Scan", back_populates="target")
@@ -64,7 +64,7 @@ class Scan(Base):
     target_id: Mapped[int] = mapped_column(Integer, ForeignKey("targets.id"), nullable=False)
     scan_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, default="pending", index=True)
-    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Relationships
@@ -101,7 +101,7 @@ class Finding(Base):
     cvss_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
     false_positive: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
     # Relationships
     scan: Mapped[Scan] = relationship("Scan", back_populates="findings")
@@ -124,7 +124,7 @@ class Screenshot(Base):
     scan_id: Mapped[str] = mapped_column(String, ForeignKey("scans.id"), nullable=False, index=True)
     url: Mapped[str] = mapped_column(String, nullable=False)
     filepath: Mapped[str] = mapped_column(String, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     scan: Mapped[Scan] = relationship("Scan", back_populates="screenshots")
@@ -146,4 +146,4 @@ class Report(Base):
     scan_id: Mapped[str] = mapped_column(String, ForeignKey("scans.id"), nullable=False, index=True)
     format: Mapped[str] = mapped_column(String, nullable=False)
     filepath: Mapped[str] = mapped_column(String, nullable=False)
-    generated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    generated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))

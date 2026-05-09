@@ -8,7 +8,7 @@ License: See LICENSE file
 """
 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -116,7 +116,7 @@ class ReportingEngine:
         md = f"# DARKWIN Security Assessment Report\n\n"
         md += f"**Target:** {scan.target.domain}  \n"
         md += f"**Scan ID:** `{scan.id}`  \n"
-        md += f"**Date:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}  \n\n"
+        md += f"**Date:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}  \n\n"
         
         md += "## 1. Executive Summary\n"
         md += f"{summary}\n\n"
@@ -157,7 +157,7 @@ class ReportingEngine:
             <div class="header">
                 <h1>DARKWIN Assessment Report</h1>
                 <p>Target: <strong>{scan.target.domain}</strong></p>
-                <p>Date: {datetime.utcnow().strftime('%Y-%m-%d')}</p>
+                <p>Date: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}</p>
             </div>
             
             <h2>1. Executive Summary</h2>
@@ -189,22 +189,22 @@ class ReportingEngine:
         pdf.add_page()
         
         # Header
-        pdf.set_font("Arial", 'B', 16)
+        pdf.set_font("helvetica", 'B', 16)
         pdf.cell(190, 10, "DARKWIN Security Assessment Report", ln=True, align='C')
         pdf.ln(10)
         
         # Meta Info
-        pdf.set_font("Arial", '', 10)
+        pdf.set_font("helvetica", '', 10)
         pdf.cell(40, 7, f"Target:", 0)
-        pdf.set_font("Arial", 'B', 10)
+        pdf.set_font("helvetica", 'B', 10)
         pdf.cell(150, 7, scan.target.domain, ln=True)
         
-        pdf.set_font("Arial", '', 10)
+        pdf.set_font("helvetica", '', 10)
         pdf.cell(40, 7, f"Scan ID:", 0)
         pdf.cell(150, 7, scan.id, ln=True)
         
         pdf.cell(40, 7, f"Date:", 0)
-        pdf.cell(150, 7, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), ln=True)
+        pdf.cell(150, 7, datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'), ln=True)
         pdf.ln(10)
         
         # Executive Summary
@@ -213,9 +213,12 @@ class ReportingEngine:
         pdf.cell(190, 10, "1. Executive Summary", ln=True, fill=True)
         pdf.ln(5)
         
-        pdf.set_font("Arial", '', 11)
-        # Handle multi-line summary
-        pdf.multi_cell(190, 6, summary.encode('latin-1', 'replace').decode('latin-1'))
+        pdf.set_font("helvetica", '', 11)
+        # Attempt to handle unicode via 'fpdf2' compatibility or fallback
+        try:
+            pdf.multi_cell(190, 6, summary)
+        except (UnicodeEncodeError, AttributeError):
+            pdf.multi_cell(190, 6, summary.encode('latin-1', 'replace').decode('latin-1'))
         pdf.ln(10)
         
         # Technical Findings
@@ -224,22 +227,29 @@ class ReportingEngine:
         pdf.ln(5)
         
         for i, f in enumerate(findings, 1):
-            pdf.set_font("Arial", 'B', 12)
+            pdf.set_font("helvetica", 'B', 12)
             pdf.cell(190, 8, f"{i}. {f.vuln_type} [{f.severity}]", ln=True)
             
-            pdf.set_font("Arial", '', 10)
+            pdf.set_font("helvetica", '', 10)
             pdf.cell(30, 6, "Endpoint:", 0)
-            pdf.set_font("Arial", 'I', 10)
+            pdf.set_font("helvetica", 'I', 10)
             pdf.cell(160, 6, str(f.endpoint), ln=True)
             
-            pdf.set_font("Arial", '', 10)
+            pdf.set_font("helvetica", '', 10)
             pdf.cell(30, 6, "Description:", 0)
-            pdf.multi_cell(160, 6, (f.description or "N/A").encode('latin-1', 'replace').decode('latin-1'))
+            desc = f.description or "N/A"
+            try:
+                pdf.multi_cell(160, 6, desc)
+            except (UnicodeEncodeError, AttributeError):
+                pdf.multi_cell(160, 6, desc.encode('latin-1', 'replace').decode('latin-1'))
             
             if f.payload:
                 pdf.cell(30, 6, "Payload:", 0)
-                pdf.set_font("Courier", '', 9)
-                pdf.multi_cell(160, 6, f.payload.encode('latin-1', 'replace').decode('latin-1'))
+                pdf.set_font("courier", '', 9)
+                try:
+                    pdf.multi_cell(160, 6, f.payload)
+                except (UnicodeEncodeError, AttributeError):
+                    pdf.multi_cell(160, 6, f.payload.encode('latin-1', 'replace').decode('latin-1'))
             
             pdf.ln(5)
         

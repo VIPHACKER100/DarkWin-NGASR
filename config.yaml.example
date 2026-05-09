@@ -1,4 +1,4 @@
-# DARKWIN Configuration
+# DARKWIN Configuration Example
 # Developed by ARYAN AHIRWAR (VIPHACKER.100)
 
 app:
@@ -9,18 +9,21 @@ app:
 database:
   # Primary database URL (PostgreSQL recommended for production)
   # If unreachable, DARKWIN will automatically fallback to local sqlite:///darkwin.db
-  url: "postgresql://darkwin:darkwin_pass@localhost:5432/darkwin_db"
+  url: "postgresql://user:password@localhost:5432/darkwin_db"
 
 redis:
+  # Used for distributed mesh and caching
   url: "redis://localhost:6379/0"
 
 ai:
-  openai_api_key: ""
+  # LLM reasoning engine settings
+  openai_api_key: "sk-..."
   openai_model: "gpt-4-turbo-preview"
-  local_llm_url: "http://localhost:11434/v1" # For Ollama or similar
+  local_llm_url: "http://localhost:11434/v1" # For local Ollama support
 
 tools:
-  nmap: "/usr/bin/nmap"
+  # Paths to external binary dependencies
+  nmap: "nmap"
   subfinder: "subfinder"
   httpx: "httpx"
   nuclei: "nuclei"
@@ -38,9 +41,10 @@ scans:
   log_dir: "logs"
   max_threads: 20
   timeout: 3600
-  rate_limit: 10 # requests per second
+  rate_limit: 10 # requests per second (mesh-wide)
 
 api_keys:
+  # Passive reconnaissance keys
   shodan: ""
   censys_id: ""
   censys_secret: ""
@@ -48,6 +52,12 @@ api_keys:
   github_token: ""
 
 notifications:
+  # Webhook URLs for remote alerting
   discord: ""
   slack: ""
   telegram: ""
+
+proxy:
+  # Proxy settings for evasion
+  proxy_file: "proxies.txt"
+  proxies: []

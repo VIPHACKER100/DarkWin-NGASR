@@ -28,6 +28,10 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Run Diagnostics (Doctor)
       run: python core/doctor.py
+    - name: Run Pytest
+      run: |
+        pip install pytest pytest-asyncio
+        pytest core/tests/test_core.py -v
 
   build-docker:
     runs-on: ubuntu-latest

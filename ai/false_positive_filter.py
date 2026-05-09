@@ -6,11 +6,11 @@ Author: ARYAN AHIRWAR (VIPHACKER.100)
 License: See LICENSE file
 """
 
-import openai
 from typing import Dict, Optional
 from core.config_manager import get_config
 from core.logging_system import get_logger
 from ai.security_utils import sanitize_prompt, validate_llm_response
+from ai.ai_agent_manager import AIAgentManager
 from integrations.api_utils import APIError, validate_api_key
 
 logger = get_logger("AI.FalsePositiveFilter")
@@ -81,34 +81,16 @@ def is_false_positive(finding: Dict[str, str], request_response_pair: Dict[str, 
     """
 
     try:
-        # Create secure client
-        client = openai.OpenAI(
-            api_key=api_key,
-            timeout=DEFAULT_TIMEOUT
+        # Use unified AI Agent Manager
+        agent = AIAgentManager(timeout=DEFAULT_TIMEOUT)
+        
+        result = agent.ask_agent(
+            prompt=prompt,
+            system_prompt="You are a cybersecurity expert analyzing HTTP traffic for false positives."
         )
 
-        # Make request
-        response = client.chat.completions.create(
-            model=config.ai.openai_model or DEFAULT_MODEL,
-            messages=[
-                {"role": "system", "content": "You are a cybersecurity expert analyzing HTTP traffic for false positives."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-
-        # Validate response
-        if not response.choices:
-            logger.error("No choices in OpenAI response")
-            return False
-
-        result = response.choices[0].message.content
-        if not result:
-            logger.error("Empty content in OpenAI response")
-            return False
-
-        # Validate response format
-        if not validate_llm_response(result):
-            logger.error("Response validation failed")
+        if not result or result.startswith("Error:"):
+            logger.error(f"AI Agent returned error or empty response: {result}")
             return False
 
         # Parse result
@@ -118,18 +100,6 @@ def is_false_positive(finding: Dict[str, str], request_response_pair: Dict[str, 
         logger.info(f"False positive analysis result: {is_false_positive_result}")
         return is_false_positive_result
 
-    except openai.APIError as e:
-        logger.error(f"OpenAI API error: {e}")
-        return False
-    except openai.RateLimitError as e:
-        logger.warning(f"OpenAI rate limit exceeded: {e}")
-        return False
-    except openai.Timeout as e:
-        logger.error(f"OpenAI request timeout: {e}")
-        return False
-    except ValueError as e:
-        logger.error(f"Invalid response format: {e}")
-        return False
     except Exception as e:
         logger.error(f"Unexpected error in false positive filtering: {e}", exc_info=True)
         return False

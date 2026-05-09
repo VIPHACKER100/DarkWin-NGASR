@@ -63,6 +63,7 @@ def get_recon_pipeline(target: str, scan_id: str, config: dict) -> Pipeline:
         args=[target, scan_id, config],
         timeout_seconds=300,
         required=False,
+        phase=1,
     ))
     pipeline.add_step(PipelineStep(
         name="crt.sh",
@@ -70,6 +71,7 @@ def get_recon_pipeline(target: str, scan_id: str, config: dict) -> Pipeline:
         args=[target, scan_id, config],
         timeout_seconds=120,
         required=False,
+        phase=1,
     ))
     pipeline.add_step(PipelineStep(
         name="Amass",
@@ -77,6 +79,7 @@ def get_recon_pipeline(target: str, scan_id: str, config: dict) -> Pipeline:
         args=[target, scan_id, config],
         timeout_seconds=600,
         required=False,
+        phase=1,
     ))
     pipeline.add_step(PipelineStep(
         name="Subdomain Bruteforce",
@@ -84,6 +87,7 @@ def get_recon_pipeline(target: str, scan_id: str, config: dict) -> Pipeline:
         args=[target, scan_id, config],
         timeout_seconds=900,
         required=False,
+        phase=1,
     ))
 
     # ── Phase 2: Intelligence Gathering ──────────────────────────────────────
@@ -93,6 +97,7 @@ def get_recon_pipeline(target: str, scan_id: str, config: dict) -> Pipeline:
         args=[target, scan_id, config],
         timeout_seconds=180,
         required=False,
+        phase=2,
     ))
     pipeline.add_step(PipelineStep(
         name="WHOIS Lookup",
@@ -100,6 +105,7 @@ def get_recon_pipeline(target: str, scan_id: str, config: dict) -> Pipeline:
         args=[target, scan_id, config],
         timeout_seconds=60,
         required=False,
+        phase=2,
     ))
     pipeline.add_step(PipelineStep(
         name="Dork Engine",
@@ -107,6 +113,7 @@ def get_recon_pipeline(target: str, scan_id: str, config: dict) -> Pipeline:
         args=[target, scan_id, config],
         timeout_seconds=120,
         required=False,
+        phase=2,
     ))
 
     # ── Phase 3: Network Profiling ────────────────────────────────────────────
@@ -116,6 +123,7 @@ def get_recon_pipeline(target: str, scan_id: str, config: dict) -> Pipeline:
         args=[target, scan_id, config],
         timeout_seconds=600,
         required=False,
+        phase=3,
     ))
     pipeline.add_step(PipelineStep(
         name="SSL Analyzer",
@@ -123,6 +131,7 @@ def get_recon_pipeline(target: str, scan_id: str, config: dict) -> Pipeline:
         args=[target, scan_id, config],
         timeout_seconds=120,
         required=False,
+        phase=3,
     ))
 
     return pipeline

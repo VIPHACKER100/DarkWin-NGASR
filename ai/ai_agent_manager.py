@@ -45,7 +45,7 @@ class AIAgentManager:
             timeout: Request timeout in seconds (default: 30)
         """
         self.config = get_config()
-        self.api_url: str = self.config.ai.local_llm_url
+        self.api_url: str = self.config.ai.local_llm_url.rstrip("/") + "/chat/completions"
         self.timeout: int = timeout
         self.logger = logger
 
