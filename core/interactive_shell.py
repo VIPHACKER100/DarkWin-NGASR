@@ -13,6 +13,7 @@ from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.panel import Panel
+from rich.text import Text
 import sys
 
 console = Console()
@@ -54,7 +55,7 @@ class DarkWinShell:
         })
 
     def print_welcome(self):
-        logo = """
+        logo = r"""
    ________    ____  _______       _______ _   __
   / ____/ /   / __ \/ ____/ |     / /  _/ | / /
  / /   / /   / / / / __/  | | /| / // / /  |/ / 
@@ -66,7 +67,6 @@ class DarkWinShell:
         console.print("Type 'help' for commands or 'exit' to quit.\n")
 
     async def start(self):
-        from rich.text import Text
         self.print_welcome()
         session = PromptSession(completer=self.completer, style=self.style)
         
