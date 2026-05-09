@@ -23,7 +23,7 @@ readonly NC='\033[0m'  # No Color
 readonly MIN_PYTHON_VERSION="3.11"
 
 # External security tools required
-readonly SECURITY_TOOLS=(nmap subfinder httpx nuclei ffuf amass katana sqlmap dalfox masscan)
+readonly SECURITY_TOOLS=(nmap subfinder httpx nuclei ffuf amass katana sqlmap dalfox masscan gau waybackurls qsreplace)
 
 # Project directories
 PROJECT_DIRS=(core modules pipelines ai automation integrations dashboards wordlists payloads logs reports)
@@ -163,6 +163,10 @@ info "  1. Complete legal acknowledgement: python core/darkwin.py"
 info "  2. Run automated diagnostics: python core/darkwin.py doctor --fix"
 info "  3. Launch full ecosystem (Recommended): docker-compose up -d --build"
 info "  4. Start a manual hunt: python core/darkwin.py hunt example.com"
+info ""
+info "🔧 Troubleshooting Linux (SQLite/Postgres):"
+info "  If 'darkwin doctor' reports missing _sqlite3:"
+info "  sudo apt update && sudo apt install -y libsqlite3-dev"
 info ""
 info "For more information, see: README.md"
 info ""
