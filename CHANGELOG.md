@@ -3,12 +3,19 @@
 
 ---
 
-### [1.0.5] - 2026-05-02
-**Bug Fixes & Environment Stability**
-- Fixed `IndentationError` and `SyntaxWarning` in the `about` command ASCII logo.
-- Replaced `--user` pip installs with a proper `.venv` virtual environment in `setup.sh` to permanently resolve `typing_extensions` shadowing on Python 3.13.
-- Improved `doctor --fix` to guide users to activate `.venv` instead of silently failing.
-- Dynamically add project root to `sys.path` in `core/darkwin.py` to fix `ModuleNotFoundError`.
+### [1.0.7] - 2026-05-09
+**Self-Healing Database & Robust Fallback**
+- Implemented `create_robust_engine` in `core/database.py` with automatic PostgreSQL-to-SQLite fallback.
+- Added specific diagnostic logging for "Password Authentication Failed" and "Database Does Not Exist" errors.
+- Improved error handling for environments missing the `_sqlite3` module (e.g., incomplete Python builds on Kali).
+- Aligned default `config.yaml` with `docker-compose.yml` credentials (`darkwin_pass`).
+- Added automated table creation during engine initialization for fallback databases.
+
+### [1.0.6] - 2026-05-09
+**Target Scope & History Management**
+- Implemented `darkwin targets` command for managing multi-target scope.
+- Implemented `darkwin history` command to view past scan results and status.
+- Added `darkwin update` improvements for better git pull handling.
 
 ### [1.0.4] - 2026-05-02
 **Package Structure Restoration**

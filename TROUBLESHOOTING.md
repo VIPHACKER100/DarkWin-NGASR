@@ -59,11 +59,22 @@ sudo systemctl status redis
 ```
 
 ### 5. `psycopg2.OperationalError: connection to server at "localhost" failed`
-**Cause:** PostgreSQL database is offline.
+**Cause:** PostgreSQL database is offline or credentials mismatch.
+**Fix:**
+1. Start DB: `docker-compose up -d postgres`
+2. Check `config.yaml` matches `docker-compose.yml` (user: `darkwin`, password: `darkwin_pass`, db: `darkwin_db`).
+
+### 6. `ModuleNotFoundError: No module named '_sqlite3'`
+**Cause:** Python was built without SQLite support (common on custom Linux builds).
 **Fix:**
 ```bash
-docker-compose up -d db
+sudo apt update && sudo apt install -y libsqlite3-dev
+# You may need to reinstall python or use the primary Postgres DB
 ```
+
+### 7. `FATAL: password authentication failed for user "darkwin"`
+**Cause:** The password in `config.yaml` does not match the one in the database.
+**Fix:** Update `config.yaml` to use `darkwin_pass` (default).
 
 ---
 

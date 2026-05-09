@@ -3,7 +3,7 @@
 # 🛡️ DARKWIN-NGASR
 ### Next Gen Autonomous Security Researcher
 
-[![Version](https://img.shields.io/badge/version-1.0.6-blueviolet?style=for-the-badge)](https://github.com/VIPHACKER100/DarkWin-NGASR)
+[![Version](https://img.shields.io/badge/version-1.0.7-blueviolet?style=for-the-badge)](https://github.com/VIPHACKER100/DarkWin-NGASR)
 [![Python](https://img.shields.io/badge/python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Kali%20%7C%20Debian%20%7C%20Ubuntu-red?style=for-the-badge&logo=linux&logoColor=white)](https://kali.org)
@@ -220,6 +220,8 @@ notifications:
 | `IndentationError` in command_router | Old cached `.pyc` | `find . -name "*.pyc" -delete && darkwin` |
 | `redis.exceptions.ConnectionError` | Redis not running | `docker-compose up -d redis` |
 | `darkwin: command not found` | Package not installed | `pip install -e .` inside `.venv` |
+| `OperationalError: Authentication failed` | Wrong DB credentials | Align `config.yaml` with `docker-compose.yml` |
+| `ModuleNotFoundError: _sqlite3` | Broken Python environment | `sudo apt install libsqlite3-dev` |
 
 Full guide: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
@@ -257,7 +259,8 @@ See [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md) for con
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
-**Latest:** v1.0.6 — `history` & `targets` CLI commands, CHANGELOG updated  
+**Latest:** v1.0.7 — Self-healing database, SQLite fallback, better Auth diagnostics  
+**Previous:** v1.0.6 — `history` & `targets` CLI commands, CHANGELOG updated  
 **Previous:** v1.0.5 — Fixed `IndentationError`, venv-based setup, Pydantic isolation
 
 ---

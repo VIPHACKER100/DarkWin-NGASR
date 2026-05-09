@@ -59,7 +59,19 @@ def create_robust_engine() -> Engine:
             return temp_engine
             
     except Exception as e:
-        logger.warning(f"⚠️ Primary database unreachable: {e}")
+        err_msg = str(e)
+        
+        # Specific troubleshooting for common Postgres errors
+        if "password authentication failed" in err_msg:
+            logger.critical("❌ Database Authentication Failed!")
+            logger.info("💡 Hint: Check 'config.yaml' credentials vs 'docker-compose.yml'.")
+            logger.info("💡 Your config says: user=darkwin, pass=darkwin_pass")
+        elif "does not exist" in err_msg:
+            logger.critical("❌ Database does not exist!")
+            logger.info("💡 Hint: You need to create the 'darkwin_db' database.")
+            logger.info("   👉 Run: docker-compose exec postgres psql -U darkwin -c 'CREATE DATABASE darkwin_db;'")
+        
+        logger.warning(f"⚠️ Primary database unreachable: {err_msg}")
         logger.info(f"🔄 Attempting fallback to local SQLite: {fallback_url}")
         
         try:
@@ -83,15 +95,14 @@ def create_robust_engine() -> Engine:
             if "_sqlite3" in str(sqlite_err):
                 logger.critical("❌ Critical Error: Python SQLite module is missing!")
                 logger.info("💡 To fix SQLite: sudo apt update && sudo apt install -y libsqlite3-dev")
-                logger.info("💡 Or start the primary database (Recommended):")
-                logger.info("   👉 Run: docker-compose up -d postgres")
-                logger.info("   👉 Or:  sudo service postgresql start")
+                logger.info("💡 Or fix the primary database (Recommended):")
+                logger.info("   👉 Check credentials in config.yaml")
+                logger.info("   👉 Or run: docker-compose up -d postgres")
             else:
                 logger.critical(f"❌ SQLite fallback failed: {sqlite_err}")
             
-            # If everything fails, we can't really proceed safely
-            # But we'll raise a clearer error
-            raise RuntimeError("Database connection failed and no working fallback available.") from sqlite_err
+            # If everything fails, provide final rescue instructions
+            raise RuntimeError("Database connection failed and no working fallback available. Please fix your Postgres credentials or install sqlite3.") from sqlite_err
         except Exception as fallback_err:
             logger.critical(f"❌ Database fallback failed: {fallback_err}")
             raise
