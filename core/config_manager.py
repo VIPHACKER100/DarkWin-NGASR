@@ -50,6 +50,11 @@ class ProxyConfig(BaseModel):
     proxy_file: Optional[str] = None
     proxies: list = []
 
+class NotificationConfig(BaseModel):
+    discord: Optional[str] = None
+    slack: Optional[str] = None
+    telegram: Optional[str] = None
+
 class DarkwinConfig(BaseSettings):
     app: AppConfig = AppConfig()
     database: DatabaseConfig = DatabaseConfig()
@@ -59,6 +64,7 @@ class DarkwinConfig(BaseSettings):
     scans: ScansConfig = ScansConfig()
     api_keys: APIKeysConfig = APIKeysConfig()
     proxy: ProxyConfig = ProxyConfig()
+    notifications: NotificationConfig = NotificationConfig()
 
 
     model_config = SettingsConfigDict(

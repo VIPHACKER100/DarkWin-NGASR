@@ -20,7 +20,13 @@ class NotificationManager:
     """Dispatches alerts to external communication channels."""
     
     def __init__(self):
-        self.webhooks = config.notifications or {}
+        # Support both dict and Pydantic model for backward compatibility
+        if hasattr(config.notifications, "model_dump"):
+            self.webhooks = config.notifications.model_dump()
+        elif hasattr(config.notifications, "dict"):
+            self.webhooks = config.notifications.dict()
+        else:
+            self.webhooks = config.notifications or {}
 
     async def send_alert(self, title: str, message: str, severity: str = "Info"):
         """Send a notification to all configured channels."""
