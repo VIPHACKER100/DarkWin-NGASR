@@ -154,7 +154,6 @@ def get_engine() -> Engine:
 
 def get_session() -> sessionmaker:
     """Return the session factory, initialising the engine if needed."""
-    global _SessionLocal
     get_engine()   # ensures _SessionLocal is set
     return _SessionLocal  # type: ignore[return-value]
 

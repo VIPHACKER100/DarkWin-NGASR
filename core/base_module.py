@@ -7,6 +7,7 @@ Author: ARYAN AHIRWAR (VIPHACKER.100)
 License: See LICENSE file
 """
 
+import asyncio
 from typing import Dict, Any, List, Optional
 from core.database import SessionLocal
 from core.models import Finding
