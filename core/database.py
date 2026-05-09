@@ -25,22 +25,6 @@ logger = get_logger("Database")
 # Load configuration
 config = get_config()
 
-# Create SQLAlchemy Engine
-engine: Engine = create_engine(
-    config.database.url,
-    echo=False,  # Set to True for SQL debugging
-    pool_pre_ping=True,  # Verify connections are alive before using
-    pool_recycle=3600,  # Recycle connections after 1 hour
-)
-
-# Create Session Factory
-SessionLocal: sessionmaker = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-    expire_on_commit=False,
-)
-
 # Declarative Base for ORM Models
 class Base(DeclarativeBase):
     """Base class for all DARKWIN ORM models.
@@ -49,6 +33,60 @@ class Base(DeclarativeBase):
     if necessary, though modern Mapped[] annotations are preferred.
     """
     __allow_unmapped__ = True
+
+
+# Create SQLAlchemy Engine with Fallback Support
+def create_robust_engine() -> Engine:
+    """Create a database engine with automatic fallback to SQLite.
+    
+    Tries the configured database URL first. If connection fails
+    (e.g., PostgreSQL is offline), falls back to local SQLite.
+    """
+    primary_url = config.database.url
+    fallback_url = "sqlite:///darkwin.db"
+    
+    try:
+        # Try primary connection
+        logger.info(f"Connecting to primary database: {primary_url.split('@')[-1]}")
+        temp_engine = create_engine(
+            primary_url,
+            pool_pre_ping=True,
+            pool_recycle=3600,
+        )
+        # Test the connection immediately
+        with temp_engine.connect() as conn:
+            logger.info("✅ Connected to primary database.")
+            return temp_engine
+            
+    except Exception as e:
+        logger.warning(f"⚠️ Primary database unreachable: {e}")
+        logger.info(f"🔄 Falling back to local SQLite: {fallback_url}")
+        
+        sqlite_engine = create_engine(
+            fallback_url,
+            connect_args={"check_same_thread": False} if "sqlite" in fallback_url else {}
+        )
+        
+        # Ensure tables exist for SQLite
+        try:
+            # Import models to register them with Base.metadata
+            import core.models
+            Base.metadata.create_all(bind=sqlite_engine)
+            logger.info("✅ SQLite database initialized with schema.")
+        except Exception as err:
+            logger.error(f"❌ Failed to initialize SQLite schema: {err}")
+            
+        return sqlite_engine
+
+engine: Engine = create_robust_engine()
+
+# Create Session Factory
+SessionLocal: sessionmaker = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine,
+    expire_on_commit=False,
+)
 
 
 def get_db() -> Generator[Session, None, None]:

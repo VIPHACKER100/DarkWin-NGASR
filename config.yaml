@@ -7,6 +7,8 @@ app:
   author: "ARYAN AHIRWAR (VIPHACKER.100)"
 
 database:
+  # Primary database URL (PostgreSQL recommended for production)
+  # If unreachable, DARKWIN will automatically fallback to local sqlite:///darkwin.db
   url: "postgresql://darkwin:darkwin_secret@localhost:5432/darkwin"
 
 redis:
