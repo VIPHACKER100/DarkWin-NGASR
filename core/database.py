@@ -60,23 +60,41 @@ def create_robust_engine() -> Engine:
             
     except Exception as e:
         logger.warning(f"⚠️ Primary database unreachable: {e}")
-        logger.info(f"🔄 Falling back to local SQLite: {fallback_url}")
+        logger.info(f"🔄 Attempting fallback to local SQLite: {fallback_url}")
         
-        sqlite_engine = create_engine(
-            fallback_url,
-            connect_args={"check_same_thread": False} if "sqlite" in fallback_url else {}
-        )
-        
-        # Ensure tables exist for SQLite
         try:
-            # Import models to register them with Base.metadata
-            import core.models
-            Base.metadata.create_all(bind=sqlite_engine)
-            logger.info("✅ SQLite database initialized with schema.")
-        except Exception as err:
-            logger.error(f"❌ Failed to initialize SQLite schema: {err}")
+            sqlite_engine = create_engine(
+                fallback_url,
+                connect_args={"check_same_thread": False} if "sqlite" in fallback_url else {}
+            )
             
-        return sqlite_engine
+            # Test SQLite engine creation and table setup
+            try:
+                # Import models to register them with Base.metadata
+                import core.models
+                Base.metadata.create_all(bind=sqlite_engine)
+                logger.info("✅ SQLite database initialized with schema.")
+            except Exception as err:
+                logger.error(f"❌ Failed to initialize SQLite schema: {err}")
+                
+            return sqlite_engine
+            
+        except (ModuleNotFoundError, ImportError) as sqlite_err:
+            if "_sqlite3" in str(sqlite_err):
+                logger.critical("❌ Critical Error: Python SQLite module is missing!")
+                logger.info("💡 To fix SQLite: sudo apt update && sudo apt install -y libsqlite3-dev")
+                logger.info("💡 Or start the primary database (Recommended):")
+                logger.info("   👉 Run: docker-compose up -d postgres")
+                logger.info("   👉 Or:  sudo service postgresql start")
+            else:
+                logger.critical(f"❌ SQLite fallback failed: {sqlite_err}")
+            
+            # If everything fails, we can't really proceed safely
+            # But we'll raise a clearer error
+            raise RuntimeError("Database connection failed and no working fallback available.") from sqlite_err
+        except Exception as fallback_err:
+            logger.critical(f"❌ Database fallback failed: {fallback_err}")
+            raise
 
 engine: Engine = create_robust_engine()
 
