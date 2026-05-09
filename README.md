@@ -9,6 +9,7 @@
 [![Platform](https://img.shields.io/badge/platform-Kali%20%7C%20Debian%20%7C%20Ubuntu-red?style=for-the-badge&logo=linux&logoColor=white)](https://kali.org)
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/VIPHACKER100/DarkWin-NGASR/actions)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](docker-compose.yml)
+[![Visitors](https://api.visitorbadge.io/api/visitors?path=VIPHACKER100.DarkWin-NGASR&label=VISITORS&labelColor=%23343b41&countColor=%232088ff&style=for-the-badge)](https://visitorbadge.io/status?path=VIPHACKER100.DarkWin-NGASR)
 
 <br/>
 
@@ -276,5 +277,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
 **Built with ⚡ by [ARYAN AHIRWAR (VIPHACKER.100)](https://github.com/viphacker100)**
 
 *Autonomous · Distributed · Stealthy*
+
+![Views](https://gpvc.arturio.dev/VIPHACKER100/DarkWin-NGASR)
 
 </div>
