@@ -95,11 +95,11 @@ class Pipeline:
         with SessionLocal() as db:
             scan: Optional[Scan] = db.query(Scan).filter(Scan.id == scan_id).first()
             if not scan:
-                self.logger.error(f"❌ Scan ID {scan_id} not found in database.")
-                return
+                self.logger.warning(f"⚠️  Scan ID {scan_id} not in DB (Memory Mode Active)")
             
-            scan.status = "running"
-            db.commit()
+            if scan:
+                scan.status = "running"
+                db.commit()
 
             try:
                 # Group steps by phase
@@ -117,16 +117,18 @@ class Pipeline:
                     if tasks:
                         await asyncio.gather(*tasks)
 
-                scan.status = "completed"
-                scan.finished_at = datetime.now(timezone.utc)
-                db.commit()
+                if scan:
+                    scan.status = "completed"
+                    scan.finished_at = datetime.now(timezone.utc)
+                    db.commit()
                 self.logger.info(f"✨ Pipeline '{self.name}' completed successfully.")
 
             except Exception as e:
                 self.logger.critical(f"💥 Pipeline execution error: {e}", exc_info=True)
-                scan.status = "failed"
-                scan.finished_at = datetime.now(timezone.utc)
-                db.commit()
+                if scan:
+                    scan.status = "failed"
+                    scan.finished_at = datetime.now(timezone.utc)
+                    db.commit()
 
     async def _execute_step(self, step: PipelineStep, db, scan_id: str, target: str) -> None:
         """Execute a single step asynchronously."""
