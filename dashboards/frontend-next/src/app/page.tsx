@@ -28,7 +28,7 @@ import {
 } from 'recharts';
 import { io } from 'socket.io-client';
 import AttackSurfaceGraph from '@/components/AttackSurfaceGraph';
-import { fetchScans, Scan, Finding } from '@/lib/api';
+import { fetchScans, Scan, Finding, fetchStats, DashboardStats, initiateScan } from '@/lib/api';
 
 const scanData = [
   { name: '00:00', intensity: 45, findings: 2 },
@@ -43,14 +43,21 @@ const scanData = [
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [scans, setScans] = useState<Scan[]>([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<any[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
 
   useEffect(() => {
     // API Data Loading
+    // API Data Loading
     async function loadData() {
-      const data = await fetchScans();
-      setScans(data);
+      const [scansData, statsData] = await Promise.all([
+        fetchScans(),
+        fetchStats()
+      ]);
+      setScans(scansData);
+      setStats(statsData);
       setLoading(false);
     }
     loadData();
@@ -154,9 +161,21 @@ export default function Dashboard() {
                 className="bg-transparent border-none text-sm outline-none w-64"
               />
             </div>
-            <button className="btn-primary flex items-center gap-2">
-              <Zap size={18} />
-              New Scan
+            <button 
+              onClick={async () => {
+                const target = prompt("Enter target domain or IP:");
+                if (target) {
+                  setIsScanning(true);
+                  const res = await initiateScan(target, 'recon');
+                  if (res) alert(`Scan ${res.scan_id} started!`);
+                  setIsScanning(false);
+                }
+              }}
+              disabled={isScanning}
+              className="btn-primary flex items-center gap-2 disabled:opacity-50"
+            >
+              <Zap size={18} className={isScanning ? "animate-spin" : ""} />
+              {isScanning ? "Initiating..." : "New Scan"}
             </button>
           </div>
         </header>
@@ -171,10 +190,31 @@ export default function Dashboard() {
             <>
               {/* Stats Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard label="Total Targets" value={scans.length.toString()} icon={<TargetIcon className="text-cyan-400" />} trend="+12%" />
-                <StatCard label="Critical Findings" value="42" icon={<AlertTriangle className="text-red-500" />} trend="+5" trendDown={false} />
-                <StatCard label="Active Scans" value={scans.filter(s => s.status === 'running').length.toString()} icon={<Activity className="text-green-400" />} trend="Live" />
-                <StatCard label="System Load" value="24%" icon={<BarChart3 className="text-purple-400" />} trend="Stable" />
+                <StatCard 
+                  label="Total Targets" 
+                  value={stats?.total_targets.toString() || "0"} 
+                  icon={<TargetIcon className="text-cyan-400" />} 
+                  trend="Real-time" 
+                />
+                <StatCard 
+                  label="Critical Findings" 
+                  value={stats?.critical_findings.toString() || "0"} 
+                  icon={<AlertTriangle className="text-red-500" />} 
+                  trend="Total" 
+                  trendDown={false} 
+                />
+                <StatCard 
+                  label="Active Scans" 
+                  value={stats?.active_scans.toString() || "0"} 
+                  icon={<Activity className="text-green-400" />} 
+                  trend="Live" 
+                />
+                <StatCard 
+                  label="Total Vulnerabilities" 
+                  value={stats?.total_findings.toString() || "0"} 
+                  icon={<BarChart3 className="text-purple-400" />} 
+                  trend="Sync" 
+                />
               </div>
 
           {/* Charts Row */}
@@ -247,7 +287,7 @@ export default function Dashboard() {
           <div className="glass overflow-hidden">
             <div className="p-6 border-b border-white/5 flex items-center justify-between">
               <h3 className="font-bold uppercase tracking-wider text-sm">Recent Activity</h3>
-              <button className="text-xs text-cyan-400 hover:underline">View All Scans</button>
+              <button onClick={() => setActiveTab('scans')} className="text-xs text-cyan-400 hover:underline">View All Scans</button>
             </div>
             {loading ? (
               <div className="p-12 text-center text-zinc-500">Loading scans...</div>
@@ -264,7 +304,7 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {scans.map((scan) => (
+                  {scans.slice(0, 5).map((scan) => (
                     <ScanRow 
                       key={scan.id}
                       target={scan.target}
@@ -277,6 +317,63 @@ export default function Dashboard() {
             )}
           </div>
           </>
+          ) : activeTab === 'scans' ? (
+            <div className="glass overflow-hidden">
+              <div className="p-6 border-b border-white/5">
+                <h3 className="font-bold uppercase tracking-wider text-sm">All Research Scans</h3>
+              </div>
+              <table className="w-full text-left text-sm">
+                <thead className="bg-white/5 text-zinc-500 uppercase text-[10px] font-bold">
+                  <tr>
+                    <th className="px-6 py-4">Scan ID</th>
+                    <th className="px-6 py-4">Target</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Started At</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {scans.map((scan) => (
+                    <tr key={scan.id} className="hover:bg-white/[0.02]">
+                      <td className="px-6 py-4 font-mono text-xs text-zinc-500">{scan.id.slice(0, 8)}...</td>
+                      <td className="px-6 py-4 font-bold text-cyan-400">{scan.target}</td>
+                      <td className="px-6 py-4">
+                        <span className={`text-[10px] uppercase font-bold px-3 py-1 rounded-full border ${
+                          scan.status === 'completed' ? 'text-green-500 border-green-500/20' : 'text-cyan-500 border-cyan-500/20 animate-pulse'
+                        }`}>
+                          {scan.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-zinc-400">{new Date(scan.started_at).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : activeTab === 'findings' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {stats?.recent_findings.map((f: any) => (
+                <div key={f.id} className="glass p-6 flex flex-col gap-4 border-l-4" style={{ borderColor: f.severity === 'Critical' ? '#ef4444' : f.severity === 'High' ? '#f97316' : '#eab308' }}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase px-2 py-1 bg-white/5 rounded">{f.severity}</span>
+                    <AlertTriangle size={16} className={f.severity === 'Critical' ? 'text-red-500' : 'text-yellow-500'} />
+                  </div>
+                  <h4 className="font-bold text-lg">{f.type}</h4>
+                  <p className="text-xs text-zinc-500 font-mono">{f.target}</p>
+                </div>
+              ))}
+              {(!stats?.recent_findings || stats.recent_findings.length === 0) && (
+                <div className="col-span-full p-12 text-center text-zinc-600 italic">No findings discovered yet.</div>
+              )}
+            </div>
+          ) : activeTab === 'reports' ? (
+            <div className="grid grid-cols-1 gap-4">
+              <div className="glass p-8 text-center flex flex-col items-center gap-4">
+                <FileText size={48} className="text-zinc-700" />
+                <h3 className="text-xl font-bold">Report Generation</h3>
+                <p className="text-zinc-500 max-w-md">Detailed PDF and HTML security reports are automatically generated upon scan completion. Access them here.</p>
+                <button className="btn-primary mt-4">Generate Global Summary</button>
+              </div>
+            </div>
           ) : (
             <div className="flex items-center justify-center h-full text-zinc-600">
               Select a tab to view content

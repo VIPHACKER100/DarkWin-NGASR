@@ -58,20 +58,20 @@ def _try_primary(primary_url: str) -> Optional[Engine]:
         eng = create_engine(primary_url, pool_pre_ping=True, pool_recycle=3600)
         with eng.connect() as conn:
             conn.execute(text("SELECT 1"))
-        logger.info("✅ Connected to primary database.")
+        logger.info("[SUCCESS] Connected to primary database.")
         return eng
     except Exception as e:
         err = str(e)
         if "password authentication failed" in err:
-            logger.critical("❌ Database Authentication Failed!")
-            logger.info("💡 Fix: align config.yaml password with docker-compose.yml")
+            logger.critical("[ERROR] Database Authentication Failed!")
+            logger.info("[HINT] Fix: align config.yaml password with docker-compose.yml")
             logger.info("   👉 Current url: " + primary_url.split('@')[-1])
             logger.info("   👉 Try: docker-compose exec postgres psql -U postgres -c \"ALTER USER darkwin WITH PASSWORD 'darkwin_pass';\"")
         elif "does not exist" in err:
-            logger.critical("❌ Database / role does not exist!")
+            logger.critical("[ERROR] Database / role does not exist!")
             logger.info("   👉 Try: docker-compose up -d postgres")
         elif "Connection refused" in err or "could not connect" in err.lower():
-            logger.warning("⚠️  PostgreSQL server is offline.")
+            logger.warning("[WARN] PostgreSQL server is offline.")
             logger.info("   👉 Try: docker-compose up -d postgres")
         else:
             logger.warning(f"⚠️  Primary database unreachable: {err[:200]}")
@@ -80,7 +80,7 @@ def _try_primary(primary_url: str) -> Optional[Engine]:
 
 def _try_sqlite(fallback_url: str) -> Optional[Engine]:
     """Attempt a fallback connection to local SQLite."""
-    logger.info(f"🔄 Attempting fallback to local SQLite: {fallback_url}")
+    logger.info("Attempting fallback to local SQLite: " + fallback_url)
     try:
         eng = create_engine(
             fallback_url,
@@ -93,20 +93,20 @@ def _try_sqlite(fallback_url: str) -> Optional[Engine]:
         try:
             import core.models  # noqa: F401 — registers models with Base.metadata
             Base.metadata.create_all(bind=eng)
-            logger.info("✅ SQLite database initialized with schema.")
+            logger.info("[SUCCESS] SQLite database initialized with schema.")
         except Exception as schema_err:
             logger.error(f"⚠️  Could not create SQLite schema: {schema_err}")
         return eng
     except (ModuleNotFoundError, ImportError) as e:
         if "_sqlite3" in str(e):
-            logger.critical("❌ Python _sqlite3 module is missing!")
+            logger.critical("[ERROR] Python _sqlite3 module is missing!")
             logger.info("💡 Fix 1 (SQLite): sudo apt update && sudo apt install -y libsqlite3-dev")
             logger.info("💡 Fix 2 (Recommended): Start PostgreSQL via docker-compose up -d postgres")
         else:
             logger.critical(f"❌ SQLite import error: {e}")
         return None
     except Exception as e:
-        logger.error(f"❌ SQLite fallback failed: {e}")
+        logger.error(f"[ERROR] SQLite fallback failed: {e}")
         return None
 
 
@@ -176,7 +176,7 @@ class _LazySessionLocal:
         except RuntimeError:
             from unittest.mock import MagicMock
             if not _LazySessionLocal._warned:
-                logger.error("⚠️  RUNNING IN NO-PERSISTENCE MODE (DB Offline)")
+                logger.error("[CRITICAL] RUNNING IN NO-PERSISTENCE MODE (DB Offline)")
                 _LazySessionLocal._warned = True
             mock = MagicMock(spec=Session)
             # Basic support for common ORM methods to prevent crashes

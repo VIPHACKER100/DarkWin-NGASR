@@ -46,19 +46,38 @@ export async function fetchScanDetail(scanId: string): Promise<ScanDetail | null
   }
 }
 
-export async function initiateScan(target: string): Promise<{ scan_id: string } | null> {
+export async function initiateScan(target: string, pipeline: string = 'recon'): Promise<{ scan_id: string } | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/scans`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ target }),
+      body: JSON.stringify({ target, pipeline }),
     });
     if (!response.ok) throw new Error('Failed to initiate scan');
     return await response.json();
   } catch (error) {
     console.error('Error initiating scan:', error);
+    return null;
+  }
+}
+
+export interface DashboardStats {
+  total_targets: number;
+  total_findings: number;
+  critical_findings: number;
+  active_scans: number;
+  recent_findings: any[];
+}
+
+export async function fetchStats(): Promise<DashboardStats | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/stats`);
+    if (!response.ok) throw new Error('Failed to fetch stats');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching stats:', error);
     return null;
   }
 }

@@ -156,7 +156,7 @@ def _load_registry():
                 continue
                 
         _registry_loaded = True
-        logger.info(f"✅ Registry loaded with {len(_module_registry)} module mappings.")
+        logger.info(f"Registry loaded with {len(_module_registry)} module mappings.")
         
     except Exception as e:
         logger.error(f"Error building module registry: {e}")

@@ -35,10 +35,24 @@ def get_scan(scan_id):
 
 @api_bp.route("/scans", methods=["POST"])
 def create_scan():
+    import uuid
+    from core.scheduler import run_pipeline_task
+    
     data = request.json
-    target_domain = data.get("target")
-    # In a real app, this would trigger a Celery task
-    return jsonify({"message": "Scan initiated", "scan_id": "placeholder-id"}), 201
+    target = data.get("target")
+    pipeline = data.get("pipeline", "recon")
+    
+    if not target:
+        return jsonify({"error": "Target is required"}), 400
+        
+    # Trigger the background task
+    run_pipeline_task.delay(target, pipeline)
+    
+    return jsonify({
+        "message": f"Pipeline {pipeline} initiated for {target}",
+        "scan_id": str(uuid.uuid4()),
+        "status": "queued"
+    }), 201
 
 @api_bp.route("/graph", methods=["GET"])
 def get_attack_surface_graph():
@@ -81,13 +95,30 @@ def get_mesh_status():
     manager = MeshManager()
     return jsonify(manager.list_nodes())
 
-@api_bp.route("/proxy", methods=["GET"])
-def get_proxy_status():
-    from core.proxy_manager import global_proxy_manager
-    return jsonify({
-        "total": len(global_proxy_manager.get_proxy_list()),
-        "proxies": global_proxy_manager.get_proxy_list()
-    })
+@api_bp.route("/stats", methods=["GET"])
+def get_dashboard_stats():
+    """Returns aggregated statistics for the overview dashboard."""
+    with SessionLocal() as db:
+        total_targets = db.query(Target).count()
+        total_findings = db.query(Finding).count()
+        critical_findings = db.query(Finding).filter(Finding.severity == "Critical").count()
+        active_scans = db.query(Scan).filter(Scan.status == "running").count()
+        
+        # Recent findings trend (simplified)
+        recent_findings = db.query(Finding).order_by(Finding.id.desc()).limit(10).all()
+        
+        return jsonify({
+            "total_targets": total_targets,
+            "total_findings": total_findings,
+            "critical_findings": critical_findings,
+            "active_scans": active_scans,
+            "recent_findings": [{
+                "id": f.id,
+                "type": f.vuln_type,
+                "severity": f.severity,
+                "target": f.scan.target.domain if f.scan and f.scan.target else "unknown"
+            } for f in recent_findings]
+        })
 
 @api_bp.route("/health", methods=["GET"])
 def health_check():

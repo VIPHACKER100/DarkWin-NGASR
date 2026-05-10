@@ -32,9 +32,17 @@ def create_app() -> tuple[Flask, SocketIO]:
     app: Flask = Flask(__name__)
     CORS(app)
     
-    # Initialize SocketIO with Redis message queue for distributed scaling
+    # Initialize SocketIO with optional Redis message queue
     config = get_config()
-    socketio = SocketIO(app, cors_allowed_origins="*", message_queue=config.redis.url)
+    try:
+        import redis
+        r = redis.from_url(config.redis.url, socket_timeout=1)
+        r.ping()
+        socketio = SocketIO(app, cors_allowed_origins="*", message_queue=config.redis.url)
+        logger.info("SocketIO initialized with Redis message queue.")
+    except Exception:
+        socketio = SocketIO(app, cors_allowed_origins="*")
+        logger.warning("Redis unreachable. SocketIO initialized without message queue (Local mode).")
     
     # Retrieve secret key from environment
     secret_key: str = os.getenv("FLASK_SECRET_KEY")
@@ -95,5 +103,5 @@ if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_ENV") == "development"
     port = int(os.getenv("FLASK_PORT", "5000"))
     
-    logger.info(f"🚀 Starting DARKWIN Dashboard with WebSocket support on port {port}...")
+    logger.info(f"Starting DARKWIN Dashboard with WebSocket support on port {port}...")
     socketio.run(app, host="0.0.0.0", port=port, debug=debug_mode, allow_unsafe_werkzeug=True)

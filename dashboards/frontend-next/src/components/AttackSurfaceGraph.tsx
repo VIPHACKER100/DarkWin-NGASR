@@ -31,7 +31,8 @@ export default function AttackSurfaceGraph() {
   useEffect(() => {
     async function fetchGraph() {
       try {
-        const response = await fetch('http://localhost:5000/api/v1/graph');
+        const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:5000';
+        const response = await fetch(`${apiBase}/api/v1/graph`);
         const rawData = await response.json();
         
         // Transform edges to links for react-force-graph
