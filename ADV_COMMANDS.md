@@ -146,6 +146,16 @@ darkwin report <scan_id> --format pdf
 darkwin report <scan_id> --format html
 ```
 
+### `darkwin reports`
+Manages and views all generated reports.
+```bash
+# List all generated reports
+darkwin reports
+
+# Instantly open the most recently generated report
+darkwin reports --open
+```
+
 ### `darkwin schedule`
 Manages periodic security scans and recurring tasks.
 ```bash

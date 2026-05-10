@@ -922,6 +922,48 @@ def report(scan_id, format):
         click.echo(f"❌ Error: {str(e)}")
 
 @cli.command()
+@click.option('--open', 'open_latest', is_flag=True, help='Instantly open the most recent report')
+def reports(open_latest):
+    """List all generated reports or open the latest one"""
+    import os
+    from pathlib import Path
+    
+    report_dir = Path("reports")
+    if not report_dir.exists():
+        click.echo("📭 No reports directory found.")
+        return
+        
+    report_files = sorted(report_dir.glob("report_*"), key=os.path.getmtime, reverse=True)
+    
+    if not report_files:
+        click.echo("📭 No reports generated yet.")
+        return
+        
+    if open_latest:
+        import webbrowser
+        latest = report_files[0]
+        logger.info(f"Opening latest report: {latest.name}")
+        webbrowser.open(latest.absolute().as_uri())
+        return
+        
+    table = Table(title="Generated Reports")
+    table.add_column("Filename", style="cyan")
+    table.add_column("Format", style="green")
+    table.add_column("Size", style="yellow")
+    table.add_column("Created", style="dim")
+    
+    for r in report_files[:20]:
+        size_kb = r.stat().st_size / 1024
+        from datetime import datetime
+        created = datetime.fromtimestamp(r.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+        format_ext = r.suffix[1:].upper()
+        table.add_row(r.name, format_ext, f"{size_kb:.1f} KB", created)
+        
+    console.print(table)
+    if len(report_files) > 20:
+        console.print(f"[dim]... and {len(report_files) - 20} older reports.[/dim]")
+
+@cli.command()
 @click.option('--fix', is_flag=True, help='Attempt to fix detected issues')
 def doctor(fix):
     """Run system diagnostics and check dependencies"""
