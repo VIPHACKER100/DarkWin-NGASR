@@ -30,7 +30,15 @@ import { io } from 'socket.io-client';
 import AttackSurfaceGraph from '@/components/AttackSurfaceGraph';
 import { fetchScans, Scan, Finding } from '@/lib/api';
 
-// ... existing code ...
+const scanData = [
+  { name: '00:00', intensity: 45, findings: 2 },
+  { name: '04:00', intensity: 52, findings: 5 },
+  { name: '08:00', intensity: 38, findings: 3 },
+  { name: '12:00', intensity: 65, findings: 8 },
+  { name: '16:00', intensity: 48, findings: 4 },
+  { name: '20:00', intensity: 72, findings: 12 },
+  { name: '23:59', intensity: 55, findings: 7 },
+];
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
