@@ -180,7 +180,8 @@ def get_module_descriptions() -> str:
             m_name = meta.get("name", name)
             m_desc = meta.get("description", "No description provided")
             m_cat = meta.get("category", "General")
-            descriptions.append(f"- {m_name} ({m_cat}): {m_desc}")
+            # Provide the internal ID (name) as the primary identifier for the LLM
+            descriptions.append(f"- ID: {name} | Name: {m_name} ({m_cat}): {m_desc}")
             processed_modules.add(module)
             
     return "\n".join(sorted(descriptions))

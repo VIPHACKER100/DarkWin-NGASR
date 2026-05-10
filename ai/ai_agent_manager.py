@@ -85,7 +85,8 @@ class AIAgentManager:
             {available_modules}
             
             CONSTRAINTS:
-            - Only suggest modules listed above.
+            - Only suggest modules from the list provided above.
+            - You MUST use the exact string from the 'ID' field when recommending a module.
             - Format your plan as a structured pipeline.
             - Ensure modules selected match the target technology.
             """
@@ -206,7 +207,8 @@ class AIAgentManager:
             {available_modules}
             
             CONSTRAINTS:
-            - Only suggest modules listed above.
+            - Only suggest modules from the list provided above.
+            - You MUST use the exact string from the 'ID' field when recommending a module.
             - Use the EXACT names provided in the list.
             - Formulate a logical multi-step attack plan.
             """
