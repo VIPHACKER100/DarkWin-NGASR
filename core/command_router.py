@@ -964,6 +964,118 @@ def reports(open_latest):
         console.print(f"[dim]... and {len(report_files) - 20} older reports.[/dim]")
 
 @cli.command()
+@click.option('--type', 'payload_type', help='Filter payloads by type (e.g., xss, sqli, rce, lfi)')
+@click.option('--update', is_flag=True, help='Update local payloads from remote repositories')
+def payloads(payload_type, update):
+    """Browse and manage the exploit payload repository"""
+    from pathlib import Path
+    import os
+    import urllib.request
+    
+    payloads_dir = Path("payloads")
+    payloads_dir.mkdir(exist_ok=True)
+    
+    if update:
+        click.echo("🔄 Updating payloads from remote repositories...")
+        # Define some common payload sources from SecLists and other reliable repos
+        sources = {
+            "xss.txt": "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Fuzzing/XSS/robot-friendly/XSS-Jhaddix.txt",
+            "sqli.txt": "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Fuzzing/Databases/SQLi/Generic-SQLi.txt",
+            "lfi.txt": "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Fuzzing/LFI/LFI-Jhaddix.txt",
+            "rce.txt": "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Fuzzing/command-injection-commix.txt",
+            "ssti.txt": "https://raw.githubusercontent.com/swisskyrepo/PayloadsAllTheThings/master/Server%20Side%20Template%20Injection/Intruder/ssti.fuzz"
+        }
+        
+        for filename, url in sources.items():
+            target_file = payloads_dir / filename
+            try:
+                click.echo(f"  ⬇️  Downloading {filename}...")
+                urllib.request.urlretrieve(url, target_file)
+            except Exception as e:
+                click.echo(f"  ❌ Failed to download {filename}: {e}")
+                
+        click.echo("✅ Payloads updated successfully!")
+        return
+        
+    if payload_type:
+        target_file = payloads_dir / f"{payload_type}.txt"
+        if not target_file.exists():
+            click.echo(f"❌ No payloads found for type: {payload_type}")
+            return
+            
+        with open(target_file, "r", encoding="utf-8", errors="ignore") as f:
+            lines = [line.strip() for line in f.readlines() if line.strip() and not line.startswith("#")]
+            
+        console.print(f"\n[bold cyan]🎯 Payloads for {payload_type.upper()}[/bold cyan] ([dim]{len(lines)} total[/dim])")
+        for i, line in enumerate(lines[:15]):
+            console.print(f"  [green]{i+1}.[/green] {line}")
+            
+        if len(lines) > 15:
+            console.print(f"  [dim]... and {len(lines) - 15} more payloads in {target_file.name}[/dim]")
+            
+    else:
+        table = Table(title="Payload Repository")
+        table.add_column("Category / Type", style="cyan")
+        table.add_column("Payload Count", style="green")
+        table.add_column("Size", style="yellow")
+        
+        for p in payloads_dir.glob("*.txt"):
+            try:
+                with open(p, "r", encoding="utf-8", errors="ignore") as f:
+                    count = sum(1 for line in f if line.strip() and not line.startswith("#"))
+            except Exception:
+                count = 0
+            size_kb = p.stat().st_size / 1024
+            table.add_row(p.stem.upper(), str(count), f"{size_kb:.1f} KB")
+            
+        console.print(table)
+        console.print("\n[dim]Use `darkwin payloads --type <category>` to view specific payloads.[/dim]")
+        console.print("[dim]Use `darkwin payloads --update` to fetch the latest payloads.[/dim]")
+
+@cli.command()
+@click.option('--download', is_flag=True, help='Download industry-standard wordlists')
+def wordlists(download):
+    """Manages local reconnaissance and fuzzing wordlists"""
+    from pathlib import Path
+    import urllib.request
+    
+    wordlists_dir = Path("wordlists")
+    wordlists_dir.mkdir(exist_ok=True)
+    
+    if download:
+        click.echo("🔄 Downloading standard wordlists...")
+        sources = {
+            "subdomains.txt": "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt",
+            "directories.txt": "https://raw.githubusercontent.com/maurosoria/dirsearch/master/db/dicc.txt"
+        }
+        for filename, url in sources.items():
+            target_file = wordlists_dir / filename
+            try:
+                click.echo(f"  ⬇️  Downloading {filename}...")
+                urllib.request.urlretrieve(url, target_file)
+            except Exception as e:
+                click.echo(f"  ❌ Failed to download {filename}: {e}")
+        click.echo("✅ Wordlists downloaded successfully!")
+        return
+
+    table = Table(title="Wordlist Inventory")
+    table.add_column("Filename", style="cyan")
+    table.add_column("Lines", style="green")
+    table.add_column("Size", style="yellow")
+    
+    for w in wordlists_dir.glob("*.txt"):
+        try:
+            with open(w, "r", encoding="utf-8", errors="ignore") as f:
+                count = sum(1 for _ in f)
+        except Exception:
+            count = 0
+        size_kb = w.stat().st_size / 1024
+        table.add_row(w.name, str(count), f"{size_kb:.1f} KB")
+        
+    console.print(table)
+    console.print("\n[dim]Use `darkwin wordlists --download` to fetch standard wordlists.[/dim]")
+
+@cli.command()
 @click.option('--fix', is_flag=True, help='Attempt to fix detected issues')
 def doctor(fix):
     """Run system diagnostics and check dependencies"""
