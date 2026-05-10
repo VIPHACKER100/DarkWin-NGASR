@@ -113,22 +113,30 @@ def get_logger(name: str, scan_id: Optional[str] = None) -> logging.Logger:
 
     # Scan-specific logger (if scan_id provided)
     if scan_id:
-        SCAN_LOG_DIR.mkdir(parents=True, exist_ok=True)
-        
-        scan_log_file: Path = SCAN_LOG_DIR / f"{scan_id}.log"
-        scan_handler: logging.FileHandler = logging.FileHandler(scan_log_file, encoding="utf-8")
-        scan_handler.setFormatter(file_formatter)
-        scan_handler.setLevel(logging.DEBUG)
-        logger.addHandler(scan_handler)
-        
-        # Add SocketIO real-time streaming
         try:
-            from core.socketio_handler import SocketIOLogHandler
-            socket_handler = SocketIOLogHandler(scan_id=scan_id)
-            socket_handler.setLevel(logging.INFO)
-            logger.addHandler(socket_handler)
-        except Exception as e:
-            # Don't fail if SocketIO setup fails
+            SCAN_LOG_DIR.mkdir(parents=True, exist_ok=True)
+            
+            scan_log_file: Path = SCAN_LOG_DIR / f"{scan_id}.log"
+            scan_handler: logging.FileHandler = logging.FileHandler(scan_log_file, encoding="utf-8")
+            
+            # Recreate file_formatter since it might not have been created if the main log failed
+            file_formatter: logging.Formatter = logging.Formatter(LOG_FORMAT)
+            
+            scan_handler.setFormatter(file_formatter)
+            scan_handler.setLevel(logging.DEBUG)
+            logger.addHandler(scan_handler)
+            
+            # Add SocketIO real-time streaming
+            try:
+                from core.socketio_handler import SocketIOLogHandler
+                socket_handler = SocketIOLogHandler(scan_id=scan_id)
+                socket_handler.setLevel(logging.INFO)
+                logger.addHandler(socket_handler)
+            except Exception as e:
+                # Don't fail if SocketIO setup fails
+                pass
+        except PermissionError:
+            # Silently fall back to console logging if we can't write to logs/scans
             pass
 
     return logger
