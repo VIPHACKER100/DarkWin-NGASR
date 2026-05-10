@@ -12,6 +12,7 @@ import asyncio
 from typing import Optional
 from core.config_manager import get_config
 from core.logging_system import get_logger
+from core.module_loader import get_module_descriptions
 from ai.security_utils import sanitize_prompt, validate_llm_response, create_secure_llm_client
 from integrations.api_utils import APIError
 
@@ -70,9 +71,24 @@ class AIAgentManager:
     def ask_agent(
         self,
         prompt: str,
-        system_prompt: str = "You are DARKWIN AI, an elite security researcher."
+        system_prompt: Optional[str] = None
     ) -> str:
-        """Query the LLM with security hardening.
+        """Query the LLM with security hardening and registry context."""
+        
+        # 0. Build dynamic system prompt if not provided
+        if not system_prompt:
+            available_modules = get_module_descriptions()
+            system_prompt = f"""
+            You are DARKWIN AI, an elite autonomous security research agent.
+            
+            AVAILABLE MODULES:
+            {available_modules}
+            
+            CONSTRAINTS:
+            - Only suggest modules listed above.
+            - Format your plan as a structured pipeline.
+            - Ensure modules selected match the target technology.
+            """
 
         Sanitizes prompt, enforces timeout, validates response, and handles errors.
 
@@ -188,9 +204,24 @@ class AIAgentManager:
     async def async_ask_agent(
         self,
         prompt: str,
-        system_prompt: str = "You are DARKWIN AI, an elite security researcher."
+        system_prompt: Optional[str] = None
     ) -> str:
-        """Query the LLM asynchronously with security hardening.
+        """Query the LLM asynchronously with security hardening and registry context. """
+        
+        # 0. Build dynamic system prompt if not provided
+        if not system_prompt:
+            available_modules = get_module_descriptions()
+            system_prompt = f"""
+            You are DARKWIN AI, an elite autonomous security research agent.
+            
+            AVAILABLE MODULES:
+            {available_modules}
+            
+            CONSTRAINTS:
+            - Only suggest modules listed above.
+            - Use the EXACT names provided in the list.
+            - Formulate a logical multi-step attack plan.
+            """
 
         Args:
             prompt: User prompt to send to LLM
