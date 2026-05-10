@@ -29,7 +29,7 @@ We provide security updates for the following versions of DARKWIN-NGASR:
 
 If you discover a security vulnerability within DARKWIN-NGASR (e.g., in the core engine, dashboard, or modules), please do **NOT** open a public issue. Instead, follow these steps:
 
-1. **Email**: Send a detailed report to **viphacker100@protonmail.com**.
+1. **Email**: Send a detailed report to **viphacker.100.org@gmail.com**.
 2. **Details**: Include a description of the vulnerability, reproduction steps, and potential impact.
 3. **PGP**: If possible, encrypt your email using our PGP key (available upon request).
 
