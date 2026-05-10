@@ -16,8 +16,8 @@ redis:
 
 ai:
   openai_api_key: ""
-  nvidia_api_key: ""
-  openai_model: "gpt-4-turbo-preview"
+  nvidia_api_key: "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"
+  openai_model: "google/gemma-3n-e4b-it"
   local_llm_url: "http://localhost:11434/v1" # For Ollama or similar
 
 tools:
