@@ -101,7 +101,6 @@ def list_modules() -> Table:
 
 def get_module(name: str) -> Any:
     """Retrieve a module by metadata name or import path (with caching)."""
-    global _registry_loaded
     
     # Check registry first
     if name in _module_registry:
