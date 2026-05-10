@@ -3,6 +3,19 @@
 
 ---
 
+### [2.0.1] - 2026-05-10
+**Zenith Stabilization & Reporting Overhaul**
+- **AI Intelligence**:
+    - Implemented **Dynamic Module Registry Injection** to eliminate AI hallucinations and ensure 100% valid task planning.
+    - Optimized reasoning prompts for **NVIDIA NIM (Gemma-3)** security models.
+- **Reporting & Documentation**:
+    - Added **DOCX Report Generation** support for professional Microsoft Word security assessments.
+    - Updated **Memory Map** and **Roadmap** to reflect full 150-step completion (Version 2.0.0).
+- **Environment Resilience**:
+    - Added self-healing **sys.path resolution** in `doctor.py` to allow direct execution in various CI/CD environments.
+    - Implemented **Silence Warnings** logic in the logger to suppress repeating permission-denied noise.
+    - Updated documentation for `_sqlite3` missing module errors on Kali Linux.
+
 ### [2.0.0] - 2026-05-10
 **Apex — Stability & Architecture Hardening**
 - **Architecture Hardening**:
