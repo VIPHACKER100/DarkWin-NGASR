@@ -17,6 +17,8 @@
     - Fixed `KeyError: 'vuln_type'` in `pipeline_engine.py` during NO-PERSISTENCE mode saving.
     - Suppressed internal SocketIO connection spam by adding a 1-second Redis readiness check.
     - Fixed `UnicodeEncodeError` during AI report generation on Windows by enforcing UTF-8 encoding for Markdown and HTML exports.
+    - Implemented a new `darkwin reports` command to visually list and manage all generated scan reports.
+    - Fixed a logging bug where `Pipeline` logs were being printed twice by disabling logger propagation to the root.
 
 ### [2.0.0] - 2026-05-10
 **Apex — Stability & Architecture Hardening**

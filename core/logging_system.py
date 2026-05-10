@@ -59,6 +59,7 @@ def get_logger(name: str, scan_id: Optional[str] = None) -> logging.Logger:
     """
     logger: logging.Logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
+    logger.propagate = False
 
     # Skip if already configured (prevent duplicate handlers)
     if logger.handlers:
