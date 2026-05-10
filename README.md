@@ -88,44 +88,65 @@
 
 ---
 
+---
+
+## 📖 Documentation
+
+### 👤 User Guides
+- **[Getting Started Guide](docs/user/README.md)** — Installation and basic usage.
+- **[Command Reference](docs/user/COMMANDS.md)** — Full list of CLI commands and flags.
+- **[Advanced Optimization](docs/user/ADVANCED.md)** — Stealth tuning and mesh scaling.
+- **[Troubleshooting](docs/user/TROUBLESHOOTING.md)** — Solutions for common issues.
+- **[FAQ](docs/user/FAQ.md)** — Frequently Asked Questions.
+
+### 💻 Developer Resources
+- **[Architecture Guide](docs/dev/README.md)** — Core engine design and components.
+- **[Module Development](docs/dev/MODULES.md)** — How to build custom scan modules.
+- **[API Reference](docs/dev/API.md)** — Backend REST API documentation.
+
+### 🏛️ Project Governance
+- **[Roadmap](docs/meta/ROADMAP.md)** — Future vision and planned features.
+- **[Security Policy](SECURITY.md)** — Vulnerability reporting.
+- **[Contributing](CONTRIBUTING.md)** — How to join the project.
+- **[Legal Disclaimer](docs/meta/LEGAL.md)** — Usage terms and liability.
+- **[Changelog](docs/meta/CHANGELOG.md)** — Version history.
+- **[Memory Map](docs/meta/MEMORY_MAP.md)** — Core memory and state management.
+- **[Upgrade Fixes](docs/meta/UPGRADES.md)** — Database and environment migration history.
+
+---
+
 ## 🚀 Quick Start
 
-### 1. Clone & Setup
+### 1. Setup
 ```bash
 git clone https://github.com/VIPHACKER100/DarkWin-NGASR.git
 cd DarkWin-NGASR
-sudo bash setup.sh
-```
-> `setup.sh` creates a `.venv` virtual environment, installs all dependencies in isolation, and sets up the package entry point.
 
-### 2. Activate Virtual Environment
-```bash
-# ⚡ Required every new terminal session
-source .venv/bin/activate
+# Linux/macOS
+./setup.sh && source .venv/bin/activate
+
+# Windows (PowerShell)
+.\setup.ps1; .\.venv\Scripts\Activate.ps1
 ```
 
-### 3. Verify Installation
+### 2. Verify
 ```bash
-darkwin doctor
+darkwin doctor --fix
 ```
 
-### 4. Launch Platform
+### 3. Launch
 ```bash
-# 🛠️ Install external security tools (dalfox, gau, qsreplace, etc.)
-make setup-tools
-
-# Interactive Shell (Recommended)
-darkwin shell
-
-# Or run commands directly
+# Start an autonomous hunt
 darkwin hunt example.com
+
+# Or enter the interactive shell
+darkwin shell
 ```
 
-### 5. Full-Stack Docker Launch
+### 4. Dashboard (Docker)
 ```bash
 docker-compose up -d --build
-# Dashboard → http://localhost:3000
-# API       → http://localhost:5000
+# Access http://localhost:3000
 ```
 
 ---
