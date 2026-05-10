@@ -89,7 +89,7 @@ class AIFuzzer(BaseModule):
         if resp.status_code == 500: return True
         return False
 
-async def run(target: str, scan_id: str, **kwargs):
+async def run(target: str, scan_id: str, config: dict, **kwargs):
     """Entry point for the AI Fuzzer module."""
     fuzzer = AIFuzzer(target, scan_id)
     # Extract extra args if provided, otherwise use defaults
