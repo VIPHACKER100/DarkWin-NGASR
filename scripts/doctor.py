@@ -81,9 +81,12 @@ def run_doctor():
     tools_table.add_column("Status")
     
     tools = ["nmap", "subfinder", "httpx", "nuclei", "ffuf", "sqlmap"]
+    tool_status = {}
     for tool in tools:
         path = shutil.which(tool)
-        tools_table.add_row(tool, path if path else "Not found", "[green]OK" if path else "[yellow]WARN")
+        is_ok = path is not None
+        tool_status[tool] = is_ok
+        tools_table.add_row(tool, path if path else "Not found", "[green]OK" if is_ok else "[yellow]WARN")
     
     console.print(tools_table)
     
@@ -113,9 +116,29 @@ def run_doctor():
     
     console.print(dash_table)
 
+    # 6. Repair Hints
+    hints = Table(title="💡 Repair Instructions (Windows/Choco)", expand=True, border_style="yellow")
+    hints.add_column("Issue", style="cyan")
+    hints.add_column("Recommended Command", style="green")
+    
+    if not red_ok:
+        hints.add_row("Redis Offline", "choco install redis-64  (then: redis-server)")
+    if not tool_status.get("nmap"):
+        hints.add_row("Nmap Missing", "choco install nmap")
+    if not tool_status.get("sqlmap"):
+        hints.add_row("Sqlmap Missing", "choco install sqlmap")
+    
+    # Check for missing go tools if choco doesn't have them easily
+    missing_tools = [t for t in ["subfinder", "nuclei", "ffuf"] if not check_external_tool(t)]
+    if missing_tools:
+        hints.add_row("Go Tools Missing", "choco install golang  (then: make setup-tools)")
+
+    if hints.rows:
+        console.print(hints)
+
     console.print("\n[bold yellow]Diagnostic Complete.[/bold yellow]")
     if not (py_ok and red_ok and db_ok and node_ok):
-        console.print("[red]Some critical components are missing or offline. Please check the logs above.[/red]")
+        console.print("[red]Some critical components are missing or offline. Use the hints above to fix them.[/red]")
     else:
         console.print("[bold green]All systems go! DARKWIN is ready for autonomous hunting.[/bold green]")
 
