@@ -140,6 +140,19 @@ def check_docker() -> Tuple[bool, str]:
     except Exception:
         return False, "Not Found"
 
+def check_log_permissions() -> Tuple[bool, str]:
+    """Check if the log directory is writable."""
+    log_dir = Path("logs")
+    if not log_dir.exists():
+        try:
+            log_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            return False, f"Cannot create logs directory: {e}"
+    
+    if os.access(log_dir, os.W_OK):
+        return True, "Writable"
+    return False, "Not Writable"
+
 def run_doctor(fix: bool = False) -> None:
     """Run all system diagnostics and optionally fix issues."""
     console.print(Panel.fit("[bold cyan]DARKWIN System Diagnostic (Doctor)[/bold cyan]"))
@@ -180,6 +193,7 @@ def run_doctor(fix: bool = False) -> None:
     node_ok, node_ver = check_node_version()
     docker_ok, docker_ver = check_docker()
     pydantic_ok, pydantic_msg = check_pydantic_health()
+    log_ok, log_msg = check_log_permissions()
     
     console.print("\n[bold]System Services & Environment:[/bold]")
     console.print(f"  Database: {db_msg} [{'green]OK[/green]' if db_ok else '[red]FAIL[/red]'}]")
@@ -187,6 +201,7 @@ def run_doctor(fix: bool = False) -> None:
     console.print(f"  Node.js:  {node_ver} [{'green]OK[/green]' if node_ok else '[red]FAIL[/red]'}]")
     console.print(f"  Docker:   {docker_ver} [{'green]OK[/green]' if docker_ok else '[red]FAIL[/red]'}]")
     console.print(f"  Pydantic: {pydantic_msg} [{'green]OK[/green]' if pydantic_ok else '[red]FAIL[/red]'}]")
+    console.print(f"  Logs:     {log_msg} [{'green]OK[/green]' if log_ok else '[red]FAIL[/red]'}]")
     
     # 5. Fix Logic
     if fix:

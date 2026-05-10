@@ -5,20 +5,15 @@
 
 ### [2.0.1] - 2026-05-10
 **Zenith Stabilization & Reporting Overhaul**
-- **Resilient Architecture**:
-    - Implemented **Memory-Only execution mode** to allow scans to continue without a working database.
+- **Zenith Stabilization & Bug Fixes**:
+    - Fixed `darkwin fuzz` command by correcting import paths for param discovery and AI fuzzer.
+    - Repaired `darkwin watch` (in `hunter.py`) by resolving broken imports for non-existent pipeline classes.
+    - Implemented missing `run_tests()` entry point in `core/tests/test_core.py` to enable CLI-based testing.
+    - Fixed a critical sync-async execution mismatch in `tests/vuln_suite/test_scanners.py`.
+    - Improved **Windows Error Handling**:
+        - Added cross-platform permission detection in `logging_system.py` with Administrator advice for Windows.
+        - Integrated **Log Permission Check** into the `darkwin doctor` diagnostic suite.
     - Added automatic "No-Persistence Mode" fallback detection and silent error handling.
-- **AI Intelligence**:
-    - Implemented **Dynamic Module Registry Injection** to eliminate AI hallucinations and ensure 100% valid task planning.
-    - Synchronized AI reasoning engine with internal module registry IDs.
-    - Optimized reasoning prompts for **NVIDIA NIM (Gemma-3)** security models.
-- **Reporting & Documentation**:
-    - Added **DOCX Report Generation** support for professional Microsoft Word security assessments.
-    - Updated **Memory Map** and **Roadmap** to reflect full 150-step completion (Version 2.0.1).
-- **Environment Resilience**:
-    - Added self-healing **sys.path resolution** in `doctor.py` to allow direct execution in various CI/CD environments.
-    - Implemented **Silence Warnings** logic in the logger to suppress repeating permission-denied noise.
-    - Updated documentation for `_sqlite3` missing module errors on Kali Linux.
 
 ### [2.0.0] - 2026-05-10
 **Apex — Stability & Architecture Hardening**

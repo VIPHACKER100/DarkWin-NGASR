@@ -51,11 +51,11 @@ def test_module_loader():
     
     # Try loading a known module by path
     try:
-        mod = get_module("modules.reconnaissance.subdomain_enumeration")
+        mod = get_module("modules.reconnaissance.subdomain.subfinder_runner")
         assert mod is not None
         assert hasattr(mod, "run")
     except ModuleNotFoundError:
-        pytest.skip("Subdomain module not found in this environment")
+        pytest.skip("Subfinder module not found in this environment")
 
 @pytest.mark.asyncio
 async def test_vuln_verifier_async():
@@ -65,3 +65,14 @@ async def test_vuln_verifier_async():
     # This just checks if the routing works
     result = await verifier.verify("UNKNOWN_TYPE", "http://example.com", "payload")
     assert result is False # Should fall back to AI which returns false on mock error
+
+def run_tests():
+    """CLI entry point to run core tests."""
+    import sys
+    # Ensure the current directory is in path for imports to work
+    if os.getcwd() not in sys.path:
+        sys.path.append(os.getcwd())
+    
+    # Run pytest on this file
+    retcode = pytest.main([__file__, "-v", "-p", "no:warnings"])
+    sys.exit(retcode)

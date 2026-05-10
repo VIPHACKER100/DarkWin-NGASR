@@ -29,6 +29,16 @@ MAX_LOG_SIZE: int = 10 * 1024 * 1024  # 10 MB
 LOG_BACKUP_COUNT: int = 5
 LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
+# Add SUCCESS level
+SUCCESS_LEVEL_NUM = 25
+logging.addLevelName(SUCCESS_LEVEL_NUM, "SUCCESS")
+
+def success(self, message, *args, **kws):
+    if self.isEnabledFor(SUCCESS_LEVEL_NUM):
+        self._log(SUCCESS_LEVEL_NUM, message, args, **kws)
+
+logging.Logger.success = success
+
 
 def get_logger(name: str, scan_id: Optional[str] = None) -> logging.Logger:
     """Get a configured logger with console and file output.
@@ -91,9 +101,13 @@ def get_logger(name: str, scan_id: Optional[str] = None) -> logging.Logger:
     except PermissionError:
         if not _permission_warning_shown:
             print(f"[bold red]❌ CRITICAL: Permission denied on {MAIN_LOG_FILE}[/bold red]")
-            print("[yellow]Please fix log permissions by running:[/yellow]")
-            print(f"sudo chown -R $USER:$USER {LOG_DIR}")
-            print(f"sudo chmod -R 775 {LOG_DIR}")
+            if os.name == 'nt':
+                print("[yellow]Please run your terminal as Administrator or check folder permissions for:[/yellow]")
+                print(f"  {LOG_DIR.absolute()}")
+            else:
+                print("[yellow]Please fix log permissions by running:[/yellow]")
+                print(f"sudo chown -R $USER:$USER {LOG_DIR}")
+                print(f"sudo chmod -R 775 {LOG_DIR}")
             _permission_warning_shown = True
         # We continue without file logging rather than crashing
 
@@ -148,6 +162,10 @@ class ScanLogger:
     def info(self, msg: str) -> None:
         """Log info message."""
         self.logger.info(msg)
+
+    def success(self, msg: str) -> None:
+        """Log success message."""
+        self.logger.success(msg)
 
     def warning(self, msg: str) -> None:
         """Log warning message."""
