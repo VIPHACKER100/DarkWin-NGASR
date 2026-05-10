@@ -63,6 +63,21 @@ class ReportingEngine:
                 if not FPDF:
                     raise ValueError("FPDF library not installed. PDF generation unavailable.")
                 return self._build_pdf(scan, findings, summary, scan_id)
+            elif format == "docx":
+                try:
+                    from integrations.docx_generator import DocxReportGenerator
+                    generator = DocxReportGenerator(scan.target.domain, scan_id)
+                    findings_data = [
+                        {
+                            'severity': f.severity,
+                            'vuln_type': f.vuln_type,
+                            'url': f.endpoint,
+                            'description': f.description
+                        } for f in findings
+                    ]
+                    return generator.generate(findings_data, summary)
+                except ImportError:
+                    raise ValueError("python-docx library not installed. DOCX generation unavailable.")
             else:
                 raise ValueError(f"Unsupported format: {format}")
             
