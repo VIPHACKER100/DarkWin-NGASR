@@ -19,6 +19,15 @@ class SocketIOLogHandler(logging.Handler):
     def __init__(self, scan_id=None):
         super().__init__()
         self.scan_id = scan_id
+        
+        # Test Redis connection before initializing SocketIO to avoid spam
+        import redis
+        try:
+            r = redis.from_url(config.redis.url, socket_timeout=1)
+            r.ping()
+        except Exception:
+            raise ConnectionError("Redis is not reachable")
+            
         # Initialize SocketIO in 'client only' mode with message queue
         self.sio = SocketIO(message_queue=config.redis.url)
 
