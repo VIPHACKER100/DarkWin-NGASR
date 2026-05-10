@@ -3,6 +3,19 @@
 
 ---
 
+### [2.0.2] - 2026-05-10
+**Interactivity & Resilience Overhaul**
+- **Dashboard Interactivity**:
+    - Resolved **CORS Policy Blocks** by explicitly configuring permissive cross-origin headers in the Flask backend, enabling seamless communication between the Next.js frontend and the API.
+    - Improved **Report Generation Feedback** in the UI with loading states, error handling, and direct browser-based download links.
+- **Windows Runtime Hardening**:
+    - Fixed terminal-wide **'charmap' encoding crashes** by enforcing UTF-8 rendering in the Rich console across the CLI, diagnostic tool, and reporting engine.
+    - Implemented **Encoding Fallback** for report synthesis: if complex AI-generated content cannot be saved as UTF-8, the system now automatically falls back to an ASCII-safe sanitized version.
+- **AI Backend Resilience**:
+    - Hardened the `AIAgentManager` against **WinError 10061 (Connection Refused)** by implementing graceful detection and descriptive recovery hints when local LLMs (Ollama) are offline.
+- **Data Persistence**:
+    - Improved **Vulnerability Finding Capture** with defensive type checking to prevent pipeline crashes when modules return non-standard discovery data.
+
 ### [2.0.1] - 2026-05-10
 **Zenith Stabilization & Reporting Overhaul**
 - **Zenith Stabilization & Bug Fixes**:

@@ -33,7 +33,16 @@ def check_pydantic_health() -> Tuple[bool, str]:
     except Exception as e:
         return False, str(e)
 
-console: Console = Console()
+import sys
+import io
+
+# Ensure UTF-8 output on Windows
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
+# Initialize console with explicit UTF-8 support
+console: Console = Console(force_terminal=True, legacy_windows=False)
 
 # Fix module resolution when run directly
 if __name__ == "__main__" or __name__ == "core.doctor":

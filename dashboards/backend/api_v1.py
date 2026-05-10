@@ -1,6 +1,8 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_file
 from core.database import SessionLocal
-from core.models import Scan, Target, Finding
+from core.models import Scan, Target, Finding, Report
+from core.reporting_engine import ReportingEngine
+import os
 
 api_bp = Blueprint("api_v1", __name__)
 
@@ -36,7 +38,9 @@ def get_scan(scan_id):
 @api_bp.route("/scans", methods=["POST"])
 def create_scan():
     import uuid
+    import threading
     from core.scheduler import run_pipeline_task
+    from core.cache_manager import global_cache
     
     data = request.json
     target = data.get("target")
@@ -45,14 +49,30 @@ def create_scan():
     if not target:
         return jsonify({"error": "Target is required"}), 400
         
-    # Trigger the background task
-    run_pipeline_task.delay(target, pipeline)
-    
-    return jsonify({
-        "message": f"Pipeline {pipeline} initiated for {target}",
-        "scan_id": str(uuid.uuid4()),
-        "status": "queued"
-    }), 201
+    # Trigger the background task with resilience
+    try:
+        # Check if Redis is up for Celery
+        if global_cache.redis:
+            run_pipeline_task.delay(target, pipeline)
+            mode = "distributed"
+        else:
+            # Fallback to local thread if Redis is down
+            thread = threading.Thread(target=run_pipeline_task, args=(target, pipeline))
+            thread.daemon = True
+            thread.start()
+            mode = "local"
+            
+        return jsonify({
+            "message": f"Pipeline {pipeline} initiated for {target} ({mode} mode)",
+            "scan_id": str(uuid.uuid4()),
+            "status": "queued",
+            "mode": mode
+        }), 201
+        
+    except Exception as e:
+        # Final fallback: attempt synchronous if thread fails (unlikely)
+        logger.error(f"Failed to initiate background scan: {e}")
+        return jsonify({"error": f"Failed to launch scan: {str(e)}"}), 500
 
 @api_bp.route("/graph", methods=["GET"])
 def get_attack_surface_graph():
@@ -127,3 +147,33 @@ def health_check():
         "version": "1.2.0",
         "author": "ARYAN AHIRWAR (VIPHACKER.100)"
     })
+
+@api_bp.route("/reports/generate", methods=["POST"])
+def generate_report():
+    data = request.json
+    scan_id = data.get("scan_id")
+    fmt = data.get("format", "md")
+    
+    if not scan_id:
+        # If no scan_id, generate a global report for the latest scan
+        with SessionLocal() as db:
+            latest_scan = db.query(Scan).order_by(Scan.id.desc()).first()
+            if not latest_scan:
+                return jsonify({"error": "No scans available to report"}), 404
+            scan_id = latest_scan.id
+
+    try:
+        engine = ReportingEngine()
+        filepath = engine.generate_report(scan_id, format=fmt)
+        return jsonify({
+            "message": "Report generated successfully",
+            "filepath": filepath,
+            "filename": os.path.basename(filepath)
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@api_bp.route("/reports/download/<path:filename>", methods=["GET"])
+def download_report(filename):
+    report_dir = os.path.abspath("reports")
+    return send_file(os.path.join(report_dir, filename), as_attachment=True)

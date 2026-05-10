@@ -50,17 +50,32 @@ export async function initiateScan(target: string, pipeline: string = 'recon'): 
   try {
     const response = await fetch(`${API_BASE_URL}/scans`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ target, pipeline }),
     });
-    if (!response.ok) throw new Error('Failed to initiate scan');
     return await response.json();
   } catch (error) {
-    console.error('Error initiating scan:', error);
+    console.error("Error initiating scan:", error);
     return null;
   }
+}
+
+export async function generateReport(scanId?: string, format: string = 'md'): Promise<{ filename: string } | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/reports/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scan_id: scanId, format }),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Error generating report:", error);
+    return null;
+  }
+}
+
+export function getReportDownloadUrl(filename: string): string {
+  return `${API_BASE_URL}/reports/download/${filename}`;
 }
 
 export interface DashboardStats {

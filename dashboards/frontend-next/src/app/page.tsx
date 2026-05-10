@@ -28,7 +28,8 @@ import {
 } from 'recharts';
 import { io } from 'socket.io-client';
 import AttackSurfaceGraph from '@/components/AttackSurfaceGraph';
-import { fetchScans, Scan, Finding, fetchStats, DashboardStats, initiateScan } from '@/lib/api';
+import NewScanModal from '@/components/NewScanModal';
+import { fetchScans, Scan, Finding, fetchStats, DashboardStats, initiateScan, generateReport, getReportDownloadUrl } from '@/lib/api';
 
 const scanData = [
   { name: '00:00', intensity: 45, findings: 2 },
@@ -47,6 +48,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<any[]>([]);
   const [isScanning, setIsScanning] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   useEffect(() => {
     // API Data Loading
@@ -132,6 +135,12 @@ export default function Dashboard() {
         </nav>
 
         <div className="mt-auto flex flex-col gap-2">
+          <SidebarItem 
+            icon={<Zap size={20} />} 
+            label="Launch Scan" 
+            onClick={() => setIsModalOpen(true)}
+            className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 mb-4"
+          />
           <SidebarItem icon={<Settings size={20} />} label="Settings" />
           <div className="p-4 glass mt-4">
             <div className="flex items-center gap-2 mb-2">
@@ -162,20 +171,12 @@ export default function Dashboard() {
               />
             </div>
             <button 
-              onClick={async () => {
-                const target = prompt("Enter target domain or IP:");
-                if (target) {
-                  setIsScanning(true);
-                  const res = await initiateScan(target, 'recon');
-                  if (res) alert(`Scan ${res.scan_id} started!`);
-                  setIsScanning(false);
-                }
-              }}
+              onClick={() => setIsModalOpen(true)}
               disabled={isScanning}
               className="btn-primary flex items-center gap-2 disabled:opacity-50"
             >
               <Zap size={18} className={isScanning ? "animate-spin" : ""} />
-              {isScanning ? "Initiating..." : "New Scan"}
+              {isScanning ? "Engaging..." : "New Scan"}
             </button>
           </div>
         </header>
@@ -371,7 +372,53 @@ export default function Dashboard() {
                 <FileText size={48} className="text-zinc-700" />
                 <h3 className="text-xl font-bold">Report Generation</h3>
                 <p className="text-zinc-500 max-w-md">Detailed PDF and HTML security reports are automatically generated upon scan completion. Access them here.</p>
-                <button className="btn-primary mt-4">Generate Global Summary</button>
+                <div className="flex gap-4">
+                  <button 
+                    disabled={isGeneratingReport}
+                    onClick={async () => {
+                      setIsGeneratingReport(true);
+                      try {
+                        const res = await generateReport(undefined, 'pdf');
+                        if (res && res.filename) {
+                          window.open(getReportDownloadUrl(res.filename), '_blank');
+                        } else {
+                          console.error("Failed to generate report: No filename returned");
+                          alert("Failed to generate report. Please ensure at least one scan has been completed.");
+                        }
+                      } catch (err) {
+                        console.error("Report generation failed:", err);
+                        alert("Error communicating with the reporting engine.");
+                      } finally {
+                        setIsGeneratingReport(false);
+                      }
+                    }}
+                    className="btn-primary mt-4 flex items-center gap-2"
+                  >
+                    {isGeneratingReport ? <Activity className="animate-spin" size={18} /> : <FileText size={18} />}
+                    Generate PDF Report
+                  </button>
+                  <button 
+                    disabled={isGeneratingReport}
+                    onClick={async () => {
+                      setIsGeneratingReport(true);
+                      try {
+                        const res = await generateReport(undefined, 'html');
+                        if (res && res.filename) {
+                          window.open(getReportDownloadUrl(res.filename), '_blank');
+                        } else {
+                          alert("Failed to generate report.");
+                        }
+                      } catch (err) {
+                        alert("Error generating HTML summary.");
+                      } finally {
+                        setIsGeneratingReport(false);
+                      }
+                    }}
+                    className="bg-white/5 border border-white/10 hover:bg-white/10 px-6 py-3 rounded-xl mt-4 flex items-center gap-2"
+                  >
+                    HTML Summary
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -381,11 +428,26 @@ export default function Dashboard() {
           )}
         </div>
       </main>
+
+      <NewScanModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        isScanning={isScanning}
+        onStart={async (target, pipeline) => {
+          setIsScanning(true);
+          const res = await initiateScan(target, pipeline);
+          if (res) {
+            setLogs(prev => [{ time: new Date().toLocaleTimeString(), level: 'INFO', msg: `Initiated ${pipeline} on ${target}`, color: 'text-cyan-400' }, ...prev]);
+            setIsModalOpen(false);
+          }
+          setIsScanning(false);
+        }}
+      />
     </div>
   );
 }
 
-function SidebarItem({ icon, label, active = false, onClick = () => {} }) {
+function SidebarItem({ icon, label, active = false, onClick = () => {}, className = "" }: any) {
   return (
     <button 
       onClick={onClick}
@@ -393,7 +455,7 @@ function SidebarItem({ icon, label, active = false, onClick = () => {} }) {
         active 
           ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' 
           : 'text-zinc-500 hover:text-white hover:bg-white/5'
-      }`}
+      } ${className}`}
     >
       {icon}
       <span className="font-medium text-sm">{label}</span>

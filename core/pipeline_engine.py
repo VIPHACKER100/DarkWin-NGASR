@@ -169,23 +169,22 @@ class Pipeline:
         """
         for finding_data in findings_list:
             try:
+                # Defensive check for non-dictionary findings (common in some modules)
+                if not isinstance(finding_data, dict):
+                    self.logger.warning(f"⚠️  Skipping malformed finding data (expected dict, got {type(finding_data).__name__})")
+                    continue
+
                 finding: Finding = Finding(
                     scan_id=scan_id,
-                    vuln_type=finding_data.get(
-                        "vuln_type", finding_data.get("type", "unknown")
-                    ),
+                    vuln_type=finding_data.get("vuln_type") or finding_data.get("type") or "unknown",
                     severity=finding_data.get("severity", "Info"),
-                    description=finding_data.get(
-                        "description", finding_data.get("detail", "")
-                    ),
+                    description=finding_data.get("description") or finding_data.get("detail", ""),
                     endpoint=finding_data.get("endpoint", target),
                     payload=finding_data.get("payload", ""),
                     cvss_score=finding_data.get("cvss_score"),
                 )
                 db.add(finding)
-                self.logger.debug(
-                    f"Found: {finding.vuln_type} at {finding.endpoint}"
-                )
+                self.logger.debug(f"Found: {finding.vuln_type} at {finding.endpoint}")
                 
             except Exception as e:
                 self.logger.error(f"Failed to save finding: {e}")

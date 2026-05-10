@@ -196,24 +196,47 @@ def _save_findings_to_db(
 def run_pipeline_task(target: str, pipeline_type: str) -> str:
     """Task to run a full pipeline (recon, scan, or hunt)."""
     import uuid
-    from core.command_router import recon, scan, hunt
-    from click.testing import CliRunner
+    import asyncio
+    from core.config_manager import get_config
+    from core.database import SessionLocal
+    from core.models import Target, Scan
+    from pipelines.recon_pipeline import get_recon_pipeline
+    from pipelines.web_vuln_pipeline import get_web_vuln_pipeline
+    from core.agent_loop import AgenticLoop
     
+    config = get_config()
     scan_id = str(uuid.uuid4())
-    logger.info(f"⏰ Scheduled Pipeline execution: {pipeline_type} on {target}")
+    logger.info(f"⏰ Starting Pipeline execution: {pipeline_type} on {target} (Scan: {scan_id})")
     
-    # Use CliRunner to invoke the command functions safely
-    runner = CliRunner()
-    # Note: In a real distributed system, we would call the pipeline engine directly
-    # but for simplicity we reuse the CLI logic.
-    if pipeline_type == "recon":
-        from core.command_router import cli
-        runner.invoke(cli, ["recon", target])
-    elif pipeline_type == "scan":
-        from core.command_router import cli
-        runner.invoke(cli, ["scan", target])
-    elif pipeline_type == "hunt":
-        from core.command_router import cli
-        runner.invoke(cli, ["hunt", target])
+    try:
+        # 1. Setup DB entries
+        with SessionLocal() as db:
+            target_obj = db.query(Target).filter(Target.domain == target).first()
+            if not target_obj:
+                target_obj = Target(domain=target, scope_confirmed=True)
+                db.add(target_obj)
+                db.commit()
+                db.refresh(target_obj)
+            
+            new_scan = Scan(id=scan_id, target_id=target_obj.id, status="starting", scan_type=pipeline_type)
+            db.add(new_scan)
+            db.commit()
+
+        # 2. Execute Pipeline
+        if pipeline_type == "recon":
+            pipeline = get_recon_pipeline(target, scan_id, config.dict())
+            pipeline.run(target, scan_id)
+        elif pipeline_type == "scan":
+            pipeline = get_web_vuln_pipeline(target, scan_id, config.dict())
+            pipeline.run(target, scan_id)
+        elif pipeline_type == "hunt":
+            loop = AgenticLoop(target, scan_id)
+            asyncio.run(loop.run())
+        else:
+            raise ValueError(f"Unknown pipeline type: {pipeline_type}")
+            
+        return f"Completed {pipeline_type} on {target} (Scan ID: {scan_id})"
         
-    return f"Started {pipeline_type} on {target} (Scan ID: {scan_id})"
+    except Exception as e:
+        logger.error(f"Failed to execute pipeline {pipeline_type}: {e}", exc_info=True)
+        return f"Error: {str(e)}"

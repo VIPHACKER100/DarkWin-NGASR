@@ -67,8 +67,8 @@ def get_logger(name: str, scan_id: Optional[str] = None) -> logging.Logger:
 
     # Console Handler (Rich for pretty output)
     from rich.console import Console
-    # Explicitly set force_terminal if needed or handle encoding
-    rich_console = Console(force_terminal=True) if os.name == 'nt' else None
+    # Force legacy_windows=False to prevent charmap encoding errors on modern Windows terminals
+    rich_console = Console(force_terminal=True, legacy_windows=False) if os.name == 'nt' else None
     
     console_handler: RichHandler = RichHandler(
         console=rich_console,

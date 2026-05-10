@@ -14,7 +14,17 @@ from rich.table import Table
 from rich.panel import Panel
 from core.config_manager import get_config
 
-console = Console()
+import io
+
+# Initialize Windows UTF-8 console for CLI stability
+if sys.platform == "win32":
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
+console = Console(force_terminal=True, legacy_windows=False)
 
 def check_python():
     version = sys.version_info

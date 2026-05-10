@@ -30,9 +30,10 @@ from flask_socketio import SocketIO, emit
 def create_app() -> tuple[Flask, SocketIO]:
     """Create and configure Flask application and SocketIO instance."""
     app: Flask = Flask(__name__)
-    CORS(app)
+    # Explicitly configure CORS to allow frontend requests
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
     
-    # Initialize SocketIO with optional Redis message queue
+    # Initialize SocketIO
     config = get_config()
     try:
         import redis
@@ -43,6 +44,10 @@ def create_app() -> tuple[Flask, SocketIO]:
     except Exception:
         socketio = SocketIO(app, cors_allowed_origins="*")
         logger.warning("Redis unreachable. SocketIO initialized without message queue (Local mode).")
+    
+    # Register for local log emission (crucial for Local mode logs)
+    from core.socketio_handler import register_local_sio
+    register_local_sio(socketio)
     
     # Retrieve secret key from environment
     secret_key: str = os.getenv("FLASK_SECRET_KEY")

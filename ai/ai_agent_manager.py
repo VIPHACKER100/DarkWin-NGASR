@@ -182,11 +182,17 @@ class AIAgentManager:
                 return f"Error: Invalid response format"
 
             except Exception as e:
+                err_msg = str(e)
+                if "10061" in err_msg or "connection refused" in err_msg.lower():
+                    self.logger.error("AI Backend Offline: No connection could be made to the local LLM server.")
+                    self.logger.info("👉 HINT: Start Ollama (ollama serve) or configure an OpenAI/NVIDIA API key.")
+                    return "Error: AI Backend Offline (Ollama/Local LLM not responding)"
+                
                 self.logger.error(
-                    f"Unexpected error querying LLM: {e}",
+                    f"Unexpected error querying LLM: {err_msg}",
                     exc_info=True
                 )
-                return f"Error: {str(e)}"
+                return f"Error: {err_msg}"
 
         return "Error: LLM query failed after retries"
 
