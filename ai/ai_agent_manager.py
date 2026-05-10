@@ -90,18 +90,6 @@ class AIAgentManager:
             - Ensure modules selected match the target technology.
             """
 
-        Sanitizes prompt, enforces timeout, validates response, and handles errors.
-
-        Args:
-            prompt: User prompt to send to LLM
-            system_prompt: System role for LLM context
-
-        Returns:
-            LLM response text, or error message if request fails
-
-        Raises:
-            APIError: If LLM request fails after retries
-        """
         # 1. Sanitize prompt before sending
         safe_prompt = sanitize_prompt(prompt)
         if not safe_prompt:
@@ -223,13 +211,6 @@ class AIAgentManager:
             - Formulate a logical multi-step attack plan.
             """
 
-        Args:
-            prompt: User prompt to send to LLM
-            system_prompt: System role for LLM context
-
-        Returns:
-            LLM response text, or error message if request fails
-        """
         # 1. Sanitize prompt
         safe_prompt = sanitize_prompt(prompt)
         if not safe_prompt:
