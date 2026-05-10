@@ -855,8 +855,8 @@ def fuzz(target, scope_file):
 
     logger.info(f"🔥 Starting fuzzing on {target} (Scan ID: {scan_id})")
     from core.pipeline_engine import Pipeline, PipelineStep
-    from modules.vulnerability.web.parameter_discovery import run as param_discovery
-    from modules.vulnerability.web.ai_fuzzer import run as ai_fuzzer
+    from modules.web_scanning.parameter_discovery.param_discovery import run as param_discovery
+    from modules.web_scanning.ai_fuzzer import run as ai_fuzzer
     
     pipeline = Pipeline("Fuzzing", [
         PipelineStep(name="Parameter Discovery", module_fn=param_discovery, args=[target, scan_id, config.dict()], phase=1),
