@@ -8,6 +8,7 @@ License: See LICENSE file
 """
 
 import logging
+from datetime import datetime
 from flask_socketio import SocketIO
 from core.config_manager import get_config
 
@@ -33,16 +34,22 @@ class SocketIOLogHandler(logging.Handler):
 
     def emit(self, record):
         try:
-            log_entry = self.format(record)
+            # Map Python level names to UI level names
+            level = record.levelname
+            if level == "WARNING":
+                level = "WARN"
+            elif level == "CRITICAL":
+                level = "CRITICAL"
+            elif level == "ERROR":
+                level = "CRITICAL" # Map error to critical for high visibility
+            
             payload = {
-                "time": datetime.utcnow().strftime("%H:%M:%S"),
-                "level": record.levelname,
+                "time": datetime.now().strftime("%H:%M:%S"),
+                "level": level,
                 "msg": record.getMessage(),
                 "scan_id": self.scan_id
             }
             # Broadcast to all connected clients
-            self.sio.emit("log_event", payload, namespace="/")
+            self.sio.emit("log_event", payload)
         except Exception:
             self.handleError(record)
-
-from datetime import datetime

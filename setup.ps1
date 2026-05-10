@@ -43,7 +43,24 @@ Write-Host "`n[INFO] Installing DarkWin in editable mode..." -ForegroundColor Bl
 & ".\.venv\Scripts\pip.exe" install -e .
 Write-Host "[SUCCESS] DarkWin installed" -ForegroundColor Green
 
-# 5. Check External Tools (Informational)
+# 5. Check for Dashboard Dependencies
+Write-Host "`n[INFO] Checking for Dashboard dependencies (Node.js)..." -ForegroundColor Blue
+if (Get-Command node -ErrorAction SilentlyContinue) {
+    $nodeVersion = node --version
+    Write-Host "[SUCCESS] Found Node.js $nodeVersion" -ForegroundColor Green
+    
+    if (Test-Path "dashboards\frontend-next") {
+        Write-Host "[INFO] Installing Frontend dependencies..." -ForegroundColor Blue
+        Set-Location "dashboards\frontend-next"
+        npm install
+        Set-Location "..\.."
+        Write-Host "[SUCCESS] Frontend dependencies installed" -ForegroundColor Green
+    }
+} else {
+    Write-Host "[WARN] Node.js NOT found. Dashboard frontend will not be available locally." -ForegroundColor Yellow
+}
+
+# 6. Check External Tools (Informational)
 Write-Host "`n[INFO] Checking for external security tools..." -ForegroundColor Blue
 $tools = @("nmap", "subfinder", "httpx", "nuclei", "ffuf", "amass", "katana", "sqlmap", "dalfox", "masscan")
 foreach ($tool in $tools) {

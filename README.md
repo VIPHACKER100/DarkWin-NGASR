@@ -183,11 +183,21 @@ darkwin [COMMAND] [OPTIONS]
 | `update-templates` | — | Sync latest Nuclei templates |
 | `about` | — | Display project branding |
 
+## 🖥️ Next-Gen Security Dashboard
+
+The platform includes a premium, real-time dashboard built with **Next.js 15**, **Tailwind CSS 4**, and **Three.js**.
+
+### Features:
+- **3D Neural Map**: Interactive 3D visualization of the neural attack surface.
+- **Live Logs**: Real-time streaming of AI reasoning and execution logs.
+- **Visual Analytics**: Dynamic charts for finding trends and scan intensity.
+
+### Quick Start:
+1. Start the Flask Backend: `python dashboards/backend/app.py`
+2. Start the Frontend: `cd dashboards/frontend-next && npm run dev`
+3. View at: `http://localhost:3000`
+
 ---
-
-## 🏗️ Architecture
-
-```mermaid
 graph TD
     A["🧠 Agentic Loop<br/>core/agent_loop.py"] --> B["Reasoning Engine<br/>ai/multi_step_reasoning.py"]
     B --> C["🌐 Mesh Node A"]
