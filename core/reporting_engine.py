@@ -84,7 +84,7 @@ class ReportingEngine:
             # 3. Save to File
             filename = f"report_{scan.target.domain}_{scan_id[:8]}.{format}"
             filepath = self.output_dir / filename
-            filepath.write_text(content)
+            filepath.write_text(content, encoding='utf-8')
             
             # 4. Record in Database
             new_report = Report(

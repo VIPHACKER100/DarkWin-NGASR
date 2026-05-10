@@ -14,6 +14,9 @@
         - Added cross-platform permission detection in `logging_system.py` with Administrator advice for Windows.
         - Integrated **Log Permission Check** into the `darkwin doctor` diagnostic suite.
     - Added automatic "No-Persistence Mode" fallback detection and silent error handling.
+    - Fixed `KeyError: 'vuln_type'` in `pipeline_engine.py` during NO-PERSISTENCE mode saving.
+    - Suppressed internal SocketIO connection spam by adding a 1-second Redis readiness check.
+    - Fixed `UnicodeEncodeError` during AI report generation on Windows by enforcing UTF-8 encoding for Markdown and HTML exports.
 
 ### [2.0.0] - 2026-05-10
 **Apex — Stability & Architecture Hardening**

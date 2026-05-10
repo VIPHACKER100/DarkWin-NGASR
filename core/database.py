@@ -168,13 +168,16 @@ class _LazySessionLocal:
     
     Returns a standard SQLAlchemy Session (or a MagicMock in no-persistence mode).
     """
+    _warned = False
 
     def __call__(self, *args, **kwargs) -> Session:
         try:
             return get_session()(*args, **kwargs)
         except RuntimeError:
             from unittest.mock import MagicMock
-            logger.error("⚠️  RUNNING IN NO-PERSISTENCE MODE (DB Offline)")
+            if not _LazySessionLocal._warned:
+                logger.error("⚠️  RUNNING IN NO-PERSISTENCE MODE (DB Offline)")
+                _LazySessionLocal._warned = True
             mock = MagicMock(spec=Session)
             # Basic support for common ORM methods to prevent crashes
             mock.query.return_value.filter.return_value.first.return_value = None

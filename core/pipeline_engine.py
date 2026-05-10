@@ -184,7 +184,7 @@ class Pipeline:
                 )
                 db.add(finding)
                 self.logger.debug(
-                    f"Found: {finding_data['vuln_type']} at {finding_data.get('endpoint', target)}"
+                    f"Found: {finding.vuln_type} at {finding.endpoint}"
                 )
                 
             except Exception as e:
