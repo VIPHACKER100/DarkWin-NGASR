@@ -39,4 +39,4 @@ By using DARKWIN, you acknowledge that:
 
 **Developed by ARYAN AHIRWAR (VIPHACKER.100)**
 
-© 2025 DARKWIN Project — All rights reserved.
+© 2026 DARKWIN Project — All rights reserved.

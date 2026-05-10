@@ -4,7 +4,7 @@
 DARKWIN is built on a modular architecture. Each module must follow a strict interface to be correctly loaded by the engine.
 
 ### Module Structure
-DARKWIN supports both synchronous and asynchronous modules. As of v1.2.0, **asynchronous** modules are preferred for better performance.
+DARKWIN supports both synchronous and asynchronous modules. As of v2.0.1, **asynchronous** modules are preferred for better performance.
 
 #### Async Module (Preferred)
 ```python
