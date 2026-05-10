@@ -34,6 +34,13 @@ def check_pydantic_health() -> Tuple[bool, str]:
 
 console: Console = Console()
 
+# Fix module resolution when run directly
+if __name__ == "__main__" or __name__ == "core.doctor":
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)
+    if parent_dir not in sys.path:
+        sys.path.append(parent_dir)
+
 from core.config_manager import get_config
 
 def check_python_version() -> Tuple[bool, str]:
