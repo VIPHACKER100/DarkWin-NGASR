@@ -1,24 +1,24 @@
-# 🤝 Contributing to DARKWIN-NGASR
+# Contributing to DARKWIN-NGASR
 ## Developed by ARYAN AHIRWAR (VIPHACKER.100)
 
 First off, thank you for considering contributing to DARKWIN-NGASR! It's people like you that make DARKWIN such a powerful tool for the security community.
 
 ---
 
-## 📑 Table of Contents
-1. [Code of Conduct](#-code-of-conduct)
-2. [How Can I Contribute?](#-how-can-i-contribute)
-3. [Style Guidelines](#-style-guidelines)
-4. [Pull Request Process](#-pull-request-process)
+## Table of Contents
+1. [Code of Conduct](#code-of-conduct)
+2. [How Can I Contribute?](#how-can-i-contribute)
+3. [Style Guidelines](#style-guidelines)
+4. [Pull Request Process](#pull-request-process)
 
 ---
 
-## 🛡️ Code of Conduct
+## Code of Conduct
 This project and everyone participating in it is governed by the [Project Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
 ---
 
-## 🛠️ How Can I Contribute?
+## How Can I Contribute?
 
 ### Reporting Bugs
 - Use the **GitHub Issue Tracker**.
@@ -36,13 +36,33 @@ This project and everyone participating in it is governed by the [Project Code o
 
 ---
 
-## 🎨 Style Guidelines
+## Style Guidelines
 
 ### Python Style
 - Follow **PEP 8**.
-- Use **Type Hints** for all function signatures.
+- Use **Type Hints** for all function signatures (`def func() -> None:`).
 - Use **Async/Await** for I/O bound operations.
-- Write descriptive docstrings for all classes and functions.
+- Write descriptive docstrings for all classes and functions (PEP 257 style with `Args:`, `Returns:`, `Raises:` sections).
+
+### Exception Handling
+- **NEVER** use bare `except:` or `except Exception:`.
+- Always catch specific exception types: `httpx.RequestError`, `OSError`, `ValueError`, `json.JSONDecodeError`, `subprocess.CalledProcessError`, etc.
+- Use multiple `except` clauses for different error types when appropriate.
+
+### File Operations
+- Use `pathlib.Path` instead of `os.path.*`.
+- Always use context managers (`with` statements) for file operations.
+- Specify `encoding="utf-8"` on text file operations.
+- Use `.unlink(missing_ok=True)` instead of `os.remove()`.
+
+### HTTP Client
+- Use `httpx` instead of `requests`.
+- Always specify timeouts on HTTP calls.
+- Handle `httpx.RequestError` and `httpx.HTTPStatusError` explicitly.
+
+### Subprocess
+- Always specify `check=True` or `check=False` on `subprocess.run()` calls.
+- Handle `subprocess.CalledProcessError`, `subprocess.TimeoutExpired`, and `FileNotFoundError` as appropriate.
 
 ### Commit Messages
 - Use the imperative mood ("Add feature" instead of "Added feature").
@@ -51,17 +71,18 @@ This project and everyone participating in it is governed by the [Project Code o
 
 ---
 
-## 🚀 Pull Request Process
+## Pull Request Process
 
 1. **Fork the Repo**: Create your own copy of the repository.
 2. **Create a Branch**: `git checkout -b feature/amazing-module`.
-3. **Write Code**: Ensure your changes are well-documented and tested.
-4. **Run Tests**: `pytest tests/` must pass 100%.
-5. **Linting**: Run `flake8 core/ modules/` to ensure code quality.
+3. **Write Code**: Ensure your changes follow the style guidelines above.
+4. **Run Tests**: `pytest tests/ -v` must pass.
+5. **Verify Compilation**: `python -m py_compile` on all new/modified files.
 6. **Submit PR**: Provide a clear description of the changes in your PR.
 
 ---
+
 <div align="center">
 <b>Build the Future of Autonomous Security</b><br/>
-© 2026 ARYAN AHIRWAR (VIPHACKER.100)
+(C) 2026 ARYAN AHIRWAR (VIPHACKER.100)
 </div>

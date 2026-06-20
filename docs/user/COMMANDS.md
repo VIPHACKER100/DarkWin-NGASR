@@ -366,7 +366,7 @@ DARKWIN-NGASR respects several environment variables for sensitive operations:
 
 | Variable | Description |
 | :--- | :--- |
-| `APP__VERSION` | Override platform version (e.g., "2.0.0") |
+| `APP__VERSION` | Override platform version (e.g., "2.0.3") |
 | `DATABASE__URL` | Connection string for PostgreSQL or SQLite |
 | `REDIS__URL` | Connection string for the Mesh task queue and cache |
 | `AI__OPENAI_API_KEY` | Required for autonomous AI reasoning |

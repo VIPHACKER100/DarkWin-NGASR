@@ -317,90 +317,78 @@ def wordlists(download):
         return
 
     # List local wordlists
-    files = [f for f in os.listdir(wordlists_dir) if os.path.isfile(os.path.join(wordlists_dir, f))]
-    
-    table = Table(title="📁 Local Wordlists", border_style="cyan")
+    files = [f for f in wordlists_dir.iterdir() if f.is_file()]
+
+    table = Table(title="Local Wordlists", border_style="cyan")
     table.add_column("Filename", style="bold white")
     table.add_column("Size", justify="right")
     table.add_column("Status", justify="center")
-    
+
     for name in recommended.keys():
-        path = os.path.join(wordlists_dir, name)
-        exists = os.path.exists(path)
-        size = f"{os.path.getsize(path) / 1024:.1f} KB" if exists else "—"
+        path = wordlists_dir / name
+        exists = path.exists()
+        size = f"{path.stat().st_size / 1024:.1f} KB" if exists else "-"
         status = "[green]Ready[/green]" if exists else "[red]Missing[/red]"
         table.add_row(name, size, status)
-        
+
     for f in files:
-        if f not in recommended:
-            path = os.path.join(wordlists_dir, f)
-            size = f"{os.path.getsize(path) / 1024:.1f} KB"
-            table.add_row(f, size, "[white]Custom[/white]")
-            
+        if f.name not in recommended:
+            size = f"{f.stat().st_size / 1024:.1f} KB"
+            table.add_row(f.name, size, "[white]Custom[/white]")
+
     console.print(table)
-    if not any(os.path.exists(os.path.join(wordlists_dir, n)) for n in recommended.keys()):
-        console.print("\n[yellow]💡 Tip: Run 'darkwin wordlists --download' to get started.[/yellow]")
+    if not any((wordlists_dir / n).exists() for n in recommended.keys()):
+        console.print("\n[yellow]Tip: Run 'darkwin wordlists --download' to get started.[/yellow]")
 
 @cli.command()
 @click.option('--type', 'payload_type', help='Filter payloads by type (xss, sqli, lfi, etc.)')
 def payloads(payload_type):
     """View and manage exploit payloads"""
-    import os
-    
-    payloads_dir = "payloads"
-    os.makedirs(payloads_dir, exist_ok=True)
-    
-    # Categorized payloads (Examples)
+    payloads_dir = Path("payloads")
+    payloads_dir.mkdir(exist_ok=True)
+
     categories = {
         "xss": ["<script>alert(1)</script>", "javascript:alert(1)", "<img src=x onerror=alert(1)>"],
         "sqli": ["' OR '1'='1", "' UNION SELECT NULL--", "admin'--"],
         "lfi": ["../../../../etc/passwd", "..\\..\\..\\..\\windows\\win.ini", "/etc/hosts"],
         "rce": ["; id", "`id`", "| id", "$(id)"]
     }
-    
-    # Ensure local files exist for these categories if not already present
+
     for cat, items in categories.items():
-        cat_dir = os.path.join(payloads_dir, cat)
-        os.makedirs(cat_dir, exist_ok=True)
-        default_file = os.path.join(cat_dir, "default.txt")
-        if not os.path.exists(default_file):
-            with open(default_file, "w") as f:
-                f.write("\n".join(items))
+        cat_dir = payloads_dir / cat
+        cat_dir.mkdir(exist_ok=True)
+        default_file = cat_dir / "default.txt"
+        if not default_file.exists():
+            default_file.write_text("\n".join(items))
 
     if payload_type:
-        cat_path = os.path.join(payloads_dir, payload_type)
-        if not os.path.exists(cat_path):
-            console.print(f"[bold red]✘ Category '{payload_type}' not found.[/bold red]")
+        cat_path = payloads_dir / payload_type
+        if not cat_path.exists():
+            console.print(f"[bold red]Category '{payload_type}' not found.[/bold red]")
             return
-        
-        table = Table(title=f"🔥 {payload_type.upper()} Payloads", border_style="red")
+
+        table = Table(title=f"{payload_type.upper()} Payloads", border_style="red")
         table.add_column("Payload", style="bold white")
-        
-        for root, _, files in os.walk(cat_path):
-            for file in files:
-                with open(os.path.join(root, file), "r") as f:
-                    for line in f.readlines():
+
+        for f in sorted(cat_path.iterdir()):
+            if f.is_file():
+                with f.open("r") as fh:
+                    for line in fh.readlines():
                         if line.strip():
                             table.add_row(line.strip())
         console.print(table)
         return
 
-    # Tree view of all payloads
-    tree = Tree("📂 [bold]Payloads Repository[/bold]", guide_style="bold red")
-    
-    for cat in os.listdir(payloads_dir):
-        cat_path = os.path.join(payloads_dir, cat)
-        if os.path.isdir(cat_path):
-            cat_node = tree.add(f"[bold yellow]{cat.upper()}[/bold yellow]")
-            for file in os.listdir(cat_path):
-                file_path = os.path.join(cat_path, file)
-                if os.path.isfile(file_path):
-                    with open(file_path) as f:
-                        count = sum(1 for line in f if line.strip())
-                    cat_node.add(f"{file} ([dim]{count} payloads[/dim])")
-    
-    console.print(tree)
-    console.print("\n[yellow]💡 Tip: Use 'darkwin payloads --type <name>' to view specific strings.[/yellow]")
+    tree = Tree("[bold]Payloads Repository[/bold]", guide_style="bold red")
+
+    for cat in sorted(payloads_dir.iterdir()):
+        if cat.is_dir():
+            cat_node = tree.add(f"[bold yellow]{cat.name.upper()}[/bold yellow]")
+            for f in sorted(cat.iterdir()):
+                if f.is_file():
+                    with f.open() as fh:
+                        count = sum(1 for line in fh if line.strip())
+                    cat_node.add(f"{f.name} ([dim]{count} payloads[/dim])")
 
 @cli.command()
 @click.option('--scan-id', help='Filter screenshots by Scan ID')
@@ -458,33 +446,31 @@ def screenshots(scan_id, open_img):
 @click.option('--view', is_flag=True, help='View current configuration (masked)')
 def config(edit, view):
     """View or edit platform configuration"""
-    import os
     import subprocess
     import yaml
-    
-    config_path = "config.yaml"
-    
+
+    config_path = Path("config.yaml")
+
     if edit:
-        console.print(f"[bold cyan]📝 Opening {config_path} for editing...[/bold cyan]")
+        console.print(f"[bold cyan]Opening {config_path} for editing...[/bold cyan]")
         try:
             if os.name == 'nt':
-                os.startfile(config_path)
+                os.startfile(str(config_path))
             else:
                 editor = os.environ.get('EDITOR', 'nano')
-                subprocess.run([editor, config_path], check=True)
+                subprocess.run([editor, str(config_path)], check=True)
         except (OSError, subprocess.CalledProcessError) as e:
             console.print(f"[bold red]Failed to open editor: {e}[/bold red]")
         return
 
     if view:
-        if not os.path.exists(config_path):
-            console.print(f"[bold red]❌ {config_path} not found![/bold red]")
+        if not config_path.exists():
+            console.print(f"[bold red]{config_path} not found![/bold red]")
             return
-            
-        with open(config_path, 'r') as f:
+
+        with config_path.open('r') as f:
             data = yaml.safe_load(f)
-            
-        # Mask sensitive keys
+
         def mask_recursive(d):
             if not isinstance(d, dict): return
             for k, v in d.items():
@@ -492,17 +478,17 @@ def config(edit, view):
                     d[k] = "********"
                 elif isinstance(v, dict):
                     mask_recursive(v)
-        
+
         mask_recursive(data)
         masked_yaml = yaml.dump(data, default_flow_style=False)
-        
+
         syntax = Syntax(masked_yaml, "yaml", theme="monokai", line_numbers=True)
-        console.print(Panel(syntax, title=f"⚙️ {config_path} (Masked)", border_style="cyan"))
+        console.print(Panel(syntax, title=f"{config_path} (Masked)", border_style="cyan"))
         return
 
     # Default: Show info
     console.print(f"[bold cyan]DARKWIN Configuration Management[/bold cyan]")
-    console.print(f"Path: [bold]{os.path.abspath(config_path)}[/bold]")
+    console.print(f"Path: [bold]{config_path.resolve()}[/bold]")
     console.print("\nAvailable options:")
     console.print("  --view : View the current configuration with masked secrets")
     console.print("  --edit : Open the configuration file in your default editor")
@@ -513,20 +499,19 @@ def config(edit, view):
 @click.option('--remove', 'remove_id', help='Remove a scheduled task by ID')
 def schedule(add_task, list_tasks, remove_id):
     """Manage periodic security scans and tasks"""
-    import os
     import json
-    
-    schedule_file = "logs/schedule.json"
-    os.makedirs("logs", exist_ok=True)
-    
+
+    schedule_path = Path("logs/schedule.json")
+    schedule_path.parent.mkdir(exist_ok=True)
+
     def load_schedule():
-        if os.path.exists(schedule_file):
-            with open(schedule_file, "r") as f:
+        if schedule_path.exists():
+            with schedule_path.open("r") as f:
                 return json.load(f)
         return []
 
     def save_schedule(tasks):
-        with open(schedule_file, "w") as f:
+        with schedule_path.open("w") as f:
             json.dump(tasks, f, indent=4)
 
     tasks = load_schedule()
@@ -581,22 +566,21 @@ def schedule(add_task, list_tasks, remove_id):
 @click.option('--search', help='Search logs for a specific keyword')
 def logs(tail, follow, search):
     """View and search system logs"""
-    import os
     import time
-    
-    log_file = "logs/darkwin.log"
-    if not os.path.exists(log_file):
-        console.print(f"[bold red]❌ Log file not found: {log_file}[/bold red]")
+
+    log_path = Path("logs/darkwin.log")
+    if not log_path.exists():
+        console.print(f"[bold red]Log file not found: {log_path}[/bold red]")
         return
 
     def get_lines(n):
-        with open(log_file, "r") as f:
+        with log_path.open("r") as f:
             lines = f.readlines()
             return lines[-n:]
 
     if search:
-        console.print(f"[bold cyan]🔍 Searching logs for: '{search}'...[/bold cyan]")
-        with open(log_file, "r") as f:
+        console.print(f"[bold cyan]Searching logs for: '{search}'...[/bold cyan]")
+        with log_path.open("r") as f:
             count = 0
             for line in f:
                 if search.lower() in line.lower():
@@ -606,10 +590,10 @@ def logs(tail, follow, search):
         return
 
     if follow:
-        console.print(f"[bold cyan]👀 Tailing logs (Ctrl+C to stop):[/bold cyan]")
+        console.print(f"[bold cyan]Tailing logs (Ctrl+C to stop):[/bold cyan]")
         try:
-            with open(log_file, "r") as f:
-                f.seek(0, 2)  # Go to end
+            with log_path.open("r") as f:
+                f.seek(0, 2)
                 while True:
                     line = f.readline()
                     if not line:
@@ -620,9 +604,8 @@ def logs(tail, follow, search):
             console.print("\n[yellow]Stopped tailing logs.[/yellow]")
         return
 
-    # Default: Show tail
     lines = get_lines(tail)
-    console.print(Panel("\n".join([l.strip() for l in lines]), title=f"📋 Last {tail} logs", border_style="dim"))
+    console.print(Panel("\n".join([l.strip() for l in lines]), title=f"Last {tail} logs", border_style="dim"))
 
 @cli.command()
 @click.option('--check', is_flag=True, help='Run a quick diagnostic check')
@@ -678,18 +661,16 @@ def troubleshoot(check):
 @click.option('--changelog', is_flag=True, help='Show full version history')
 def release(changelog):
     """View current version and release history"""
-    import os
-    
     version = __version__
     codename = __codename__
-    
+
     if changelog:
-        changelog_path = "CHANGELOG.md"
-        if not os.path.exists(changelog_path):
-            console.print(f"[bold red]❌ {changelog_path} not found.[/bold red]")
+        changelog_path = Path("CHANGELOG.md")
+        if not changelog_path.exists():
+            console.print(f"[bold red]{changelog_path} not found.[/bold red]")
             return
-            
-        with open(changelog_path, 'r') as f:
+
+        with changelog_path.open('r') as f:
             md = Markdown(f.read())
         console.print(md)
         return
@@ -712,43 +693,41 @@ def release(changelog):
 @click.option('--all', 'purge_all', is_flag=True, help='Purge EVERYTHING (logs, images, temp)')
 def clean(logs, screenshots, temp, purge_all):
     """Platform maintenance and data purging"""
-    import os
     import shutil
     from core.database import SessionLocal
     from core.models import Screenshot
-    
+
     if not (logs or screenshots or temp or purge_all):
-        console.print("[yellow]⚠️ Please specify what to clean (e.g. --logs, --temp, --all).[/yellow]")
+        console.print("[yellow]Please specify what to clean (e.g. --logs, --temp, --all).[/yellow]")
         return
 
     if logs or purge_all:
-        log_dir = "logs"
-        if os.path.exists(log_dir):
-            for f in os.listdir(log_dir):
-                if f != ".gitkeep":
-                    path = os.path.join(log_dir, f)
-                    if os.path.isfile(path): os.remove(path)
-                    elif os.path.isdir(path): shutil.rmtree(path)
-            console.print("[green]✔ System logs purged.[/green]")
+        log_dir = Path("logs")
+        if log_dir.exists():
+            for f in log_dir.iterdir():
+                if f.name != ".gitkeep":
+                    if f.is_file(): f.unlink()
+                    elif f.is_dir(): shutil.rmtree(f)
+            console.print("[green]System logs purged.[/green]")
 
     if screenshots or purge_all:
-        img_dir = "screenshots"
-        if os.path.exists(img_dir):
+        img_dir = Path("screenshots")
+        if img_dir.exists():
             shutil.rmtree(img_dir)
-            os.makedirs(img_dir)
-            with open(os.path.join(img_dir, ".gitkeep"), "w") as f: f.write("")
-        
+        img_dir.mkdir()
+        (img_dir / ".gitkeep").write_text("")
+
         with SessionLocal() as db:
             db.query(Screenshot).delete()
             db.commit()
-        console.print("[green]✔ Captured evidence purged.[/green]")
+        console.print("[green]Captured evidence purged.[/green]")
 
     if temp or purge_all:
-        temp_dirs = [".pytest_cache", "__pycache__", "core/__pycache__", "ai/__pycache__"]
+        temp_dirs = [Path(".pytest_cache"), Path("__pycache__"), Path("core/__pycache__"), Path("ai/__pycache__")]
         for d in temp_dirs:
-            if os.path.exists(d):
+            if d.exists():
                 shutil.rmtree(d)
-        console.print("[green]✔ Temporary files and cache purged.[/green]")
+        console.print("[green]Temporary files and cache purged.[/green]")
 
 @cli.command()
 def sysinfo():
@@ -925,15 +904,16 @@ def report(scan_id, format):
 @click.option('--open', 'open_latest', is_flag=True, help='Instantly open the most recent report')
 def reports(open_latest):
     """List all generated reports or open the latest one"""
-    import os
-    from pathlib import Path
-    
     report_dir = Path("reports")
     if not report_dir.exists():
-        click.echo("📭 No reports directory found.")
+        click.echo("No reports directory found.")
         return
-        
-    report_files = sorted(report_dir.glob("report_*"), key=os.path.getmtime, reverse=True)
+
+    report_files = sorted(
+        report_dir.glob("report_*"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True
+    )
     
     if not report_files:
         click.echo("📭 No reports generated yet.")
@@ -968,8 +948,6 @@ def reports(open_latest):
 @click.option('--update', is_flag=True, help='Update local payloads from remote repositories')
 def payloads(payload_type, update):
     """Browse and manage the exploit payload repository"""
-    from pathlib import Path
-    import os
     import urllib.request
     
     payloads_dir = Path("payloads")

@@ -6,7 +6,7 @@
 ### 🚀 General Questions
 
 #### What is DARKWIN-NGASR?
-DARKWIN-NGASR is an autonomous security research platform that uses AI (LLMs) to automate the entire penetration testing lifecycle, from reconnaissance to reporting. Current version: **2.0.2 (Zenith)**.
+DARKWIN-NGASR is an autonomous security research platform that uses AI (LLMs) to automate the entire penetration testing lifecycle, from reconnaissance to reporting. Current version: **2.0.3 (Zenith)**.
 
 #### Is it free to use?
 Yes, the core platform is open-source under the MIT license. However, you will need your own API keys for external services like OpenAI, Shodan, etc.
@@ -53,8 +53,8 @@ Please open an issue on the GitHub repository or follow the steps in our [Securi
 #### How can I contribute a new module?
 Check our [Module Development Guide](../dev/MODULES.md) for step-by-step instructions.
 
-#### What changed in v2.0.1 and v2.0.2?
-v2.0.1 (Zenith Stabilization) fixed CLI bugs, added the `darkwin reports` command, and hardened Windows encoding. v2.0.2 resolved CORS issues for the dashboard, improved Windows `charmap` handling, and added AI backend resilience for offline local models. See the [Changelog](../meta/CHANGELOG.md) for details.
+#### What changed in v2.0.1, v2.0.2, and v2.0.3?
+v2.0.1 (Zenith Stabilization) fixed CLI bugs, added the `darkwin reports` command, and hardened Windows encoding. v2.0.2 resolved CORS issues for the dashboard, improved Windows `charmap` handling, and added AI backend resilience for offline local models. v2.0.3 completed a codebase-wide modernization: all bare `except:` were replaced with specific exception types, `os.path` was replaced with `pathlib.Path`, `import requests` was replaced with `httpx`, and emoji characters were removed from logger messages. See the [Changelog](../meta/CHANGELOG.md) for details.
 
 ---
 <div align="center">

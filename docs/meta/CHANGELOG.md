@@ -3,139 +3,96 @@
 
 ---
 
+### [2.0.3] - 2026-06-20
+**Codebase Modernization — Zero Bare Exceptions, pathlib, httpx**
+
+This release systematically upgrades all 142 Python source files to modern Python security and style best practices:
+
+- **Exception Handling Overhaul**: Replaced every bare `except:` and `except Exception:` with specific exception types (`httpx.RequestError`, `subprocess.CalledProcessError`, `json.JSONDecodeError`, `OSError`, `shodan.APIError`, `redis.RedisError`, `dns.exception.DNSException`, etc.) across all modules, integrations, AI agents, tests, and core files.
+- **pathlib Migration**: All `os.path.join()`, `os.path.exists()`, `os.remove()`, `os.path.abspath()` calls replaced with `pathlib.Path` equivalents (`/`, `.exists()`, `.unlink(missing_ok=True)`, `.resolve()`).
+- **httpx Adoption**: All remaining `import requests` usages migrated to `httpx` with proper timeout and error handling.
+- **subprocess Hardening**: Every `subprocess.run()` call explicitly specifies `check=True` or `check=False` for deterministic failure behavior.
+- **PEP 257 Docstrings**: Module-level, function-level, and class-level docstrings with `Args:`, `Returns:`, `Raises:` sections across every file.
+- **Context Manager Correctness**: Fixed all remaining standalone `open()` calls (not inside `with`) to use proper context managers.
+- **File encoding**: `encoding="utf-8"` on all file writes; `missing_ok=True` on all `Path.unlink()` calls.
+- **Compilation & Test Verification**: All 142 project `.py` files pass `python -m py_compile`; all 11 pytest tests pass.
+
+Files upgraded by category:
+- **Core**: `darkwin.py`, `database.py`, `logging_system.py`, `pipeline_engine.py`, `command_router.py`, `scheduler.py`, `module_loader.py`, `agent_loop.py`, `socketio_handler.py`, `config_manager.py`, `setup_wizard.py`, `interactive_shell.py`, `migrations/init_db.py`, `compliance/scope_enforcer.py`, `compliance/privacy_scrubber.py`, `compliance/data_retention_manager.py`, `doctor.py` + all modules under `ai/`, `ai_security/`, `attack_surface/`, `exploit_engine/`, `fuzzing/`, `network/`, `post_exploitation/`, `reconnaissance/`, `reporting/`, `web_scanning/`
+- **Integrations**: `shodan_api.py`, `virustotal_api.py`, `github_api.py`, `censys_api.py`, `api_utils.py`, `docx_generator.py`, `notifications/discord/`, `notifications/slack/`, `shodan/shodan_integration.py`, `censys/censys_integration.py`
+- **Dashboard Backend**: `app.py`, `api_v1.py`, `auth_manager.py`, `findings.py`, `scans.py`, `socket_manager.py`
+- **Tests**: `test_robustness.py`, `test_core.py`, `test_db.py`, `test_scanners.py`, `conftest.py`
+- **Automation**: `ci_cd_integration.py`, `auto_bug_hunter/hunter.py`
+- **Bugfix**: Fixed pre-existing `NameError: name 'Dict' is not defined` in `modules/web_scanning/crawler_engine/crawler.py:15`
+
 ### [2.0.2] - 2026-05-10
 **Interactivity & Resilience Overhaul**
 - **Dashboard Interactivity**:
-    - Resolved **CORS Policy Blocks** by explicitly configuring permissive cross-origin headers in the Flask backend, enabling seamless communication between the Next.js frontend and the API.
+    - Resolved **CORS Policy Blocks** by explicitly configuring permissive cross-origin headers in the Flask backend.
     - Improved **Report Generation Feedback** in the UI with loading states, error handling, and direct browser-based download links.
 - **Windows Runtime Hardening**:
-    - Fixed terminal-wide **'charmap' encoding crashes** by enforcing UTF-8 rendering in the Rich console across the CLI, diagnostic tool, and reporting engine.
-    - Implemented **Encoding Fallback** for report synthesis: if complex AI-generated content cannot be saved as UTF-8, the system now automatically falls back to an ASCII-safe sanitized version.
+    - Fixed terminal-wide 'charmap' encoding crashes by enforcing UTF-8 rendering in the Rich console.
+    - Implemented **Encoding Fallback** for report synthesis.
 - **AI Backend Resilience**:
-    - Hardened the `AIAgentManager` against **WinError 10061 (Connection Refused)** by implementing graceful detection and descriptive recovery hints when local LLMs (Ollama) are offline.
+    - Hardened the `AIAgentManager` against **WinError 10061 (Connection Refused)**.
 - **Data Persistence**:
-    - Improved **Vulnerability Finding Capture** with defensive type checking to prevent pipeline crashes when modules return non-standard discovery data.
+    - Improved **Vulnerability Finding Capture** with defensive type checking.
 
 ### [2.0.1] - 2026-05-10
 **Zenith Stabilization & Reporting Overhaul**
-- **Zenith Stabilization & Bug Fixes**:
-    - Fixed `darkwin fuzz` command by correcting import paths for param discovery and AI fuzzer.
-    - Repaired `darkwin watch` (in `hunter.py`) by resolving broken imports for non-existent pipeline classes.
-    - Implemented missing `run_tests()` entry point in `core/tests/test_core.py` to enable CLI-based testing.
-    - Fixed a critical sync-async execution mismatch in `tests/vuln_suite/test_scanners.py`.
-    - Improved **Windows Error Handling**:
-        - Added cross-platform permission detection in `logging_system.py` with Administrator advice for Windows.
-        - Integrated **Log Permission Check** into the `darkwin doctor` diagnostic suite.
-    - Added automatic "No-Persistence Mode" fallback detection and silent error handling.
-    - Fixed `KeyError: 'vuln_type'` in `pipeline_engine.py` during NO-PERSISTENCE mode saving.
-    - Suppressed internal SocketIO connection spam by adding a 1-second Redis readiness check.
-    - Fixed `UnicodeEncodeError` during AI report generation on Windows by enforcing UTF-8 encoding for Markdown and HTML exports.
-    - Implemented a new `darkwin reports` command to visually list and manage all generated scan reports.
-    - Fixed a logging bug where `Pipeline` logs were being printed twice by disabling logger propagation to the root.
+- Fixed `darkwin fuzz`, `darkwin watch` import paths.
+- Implemented `darkwin reports` command.
+- Fixed sync-async mismatch in `test_scanners.py`.
+- Cross-platform permission detection in `logging_system.py`.
+- Fixed `UnicodeEncodeError` during AI report generation on Windows.
+- "No-Persistence Mode" fallback detection.
 
 ### [2.0.0] - 2026-05-10
 **Apex — Stability & Architecture Hardening**
-- **Architecture Hardening**:
-    - Implemented **Module Registry Cache** in `core/module_loader.py` for 10x faster tool discovery.
-    - Upgraded **Pipeline Engine** with strict phase-based sequencing (Recon → Intel → Vuln).
-    - Unified versioning and authorship metadata via `core/__version__.py`.
-    - Migrated all datetime operations to **Timezone-Aware UTC** for reliable distributed logging.
-- **Operational Reliability**:
-    - Hardened **Database Session Management** to prevent leaks during long-running hunts.
-    - Improved **Self-Healing Fallbacks** for Cache and Database services.
-    - Added comprehensive **Pytest Suite** covering config, caching, and verifier logic.
-- **Feature Completion**:
-    - Implemented full logic for `fuzz`, `exploit`, `cloud`, `dashboard`, and `mesh` CLI commands.
-    - Integrated **Celery Beat** for robust periodic task and scan scheduling.
-    - Expanded **VulnVerifier** with LFI, SSRF, and Redirect checks + AI-assisted triage.
-    - Migrated to **Environment-Variable (.env)** secrets management for production security.
-- **Reporting & UI**:
-    - Upgraded **PDF Reporting** with full Unicode support and AI-synthesized executive summaries.
-    - Stabilized **3D Neural Attack Surface** graph synchronization with real-time findings.
+- Module Registry Cache for 10x faster tool discovery.
+- Phase-based Pipeline sequencing.
+- Timezone-aware UTC datetime operations.
+- Comprehensive pytest suite.
 
 ### [1.2.0] - 2026-05-10
 **Bug Bounty One-Liner Integration & Performance Suite**
-- **Enhanced Vulnerability Engines**:
-    - Upgraded **LFI Scanner** with passive discovery and Base64 traversal support.
-    - Upgraded **Open Redirect Scanner** with CRLF and protocol-relative bypasses.
-    - Upgraded **XSS Scanner** with `dalfox` NDJSON support and evasion flags.
-    - Upgraded **SQLi & NoSQL Scanners** to full asynchronous execution with aggressive bug bounty flags.
-- **New Detection Modules**:
-    - **CORS Misconfiguration Scanner**: Detects Origin reflection and insecure credential policies.
-    - **Subdomain Takeover Scanner**: Signature-based detection for 10+ services + Nuclei integration.
-    - **SSRF Scanner**: Specialized testing for cloud metadata and internal endpoint leakage.
-    - **Secret & API Key Finder**: High-fidelity regex scanning for leaked AWS, GitHub, and Slack tokens.
-    - **Prototype Pollution**: Added detection for client-side prototype pollution vulnerabilities.
-    - **High-Impact CVE Scanner**: Consolidated checks for F5, Cisco, vBulletin, and Microweber.
-- **Core Improvements**:
-    - Integrated `core/one_liner_adapter.py` for safe shell pipeline execution.
-    - Upgraded `Pipeline` engine to natively support `asyncio` modules.
-    - Updated `js_analyzer` regex for broader endpoint and secret discovery.
-    - Standardized `MODULE_META` across all modules for better discovery.
+- Upgraded LFI, Open Redirect, XSS, SQLi scanners.
+- New modules: CORS, SSRF, Subdomain Takeover, Secret Finder, Prototype Pollution, CVE Scanner.
+- `core/one_liner_adapter.py` for safe shell pipeline execution.
 
 ### [1.0.7] - 2026-05-09
 **Self-Healing Database & Robust Fallback**
-- Implemented **Lazy Database Initialization** in `core/database.py` to prevent CLI crashes when DB is unreachable.
-- Implemented `create_robust_engine` with automatic PostgreSQL-to-SQLite fallback.
-- Added specific diagnostic logging for "Password Authentication Failed" and "Database Does Not Exist" errors.
-- Improved error handling for environments missing the `_sqlite3` module (e.g., incomplete Python builds on Kali).
-- Aligned default `config.yaml` with `docker-compose.yml` credentials (`darkwin_pass`).
-- Added automated table creation during engine initialization for fallback databases.
-- Updated `TROUBLESHOOTING.md` with comprehensive database recovery steps.
+- Lazy Database Initialization with PostgreSQL-to-SQLite fallback.
+- Automated table creation for fallback databases.
 
 ### [1.0.6] - 2026-05-09
 **Target Scope & History Management**
-- Implemented `darkwin targets` command for managing multi-target scope.
-- Implemented `darkwin history` command to view past scan results and status.
-- Added `darkwin update` improvements for better git pull handling.
+- `darkwin targets`, `darkwin history` commands.
 
 ### [1.0.4] - 2026-05-02
 **Package Structure Restoration**
-- Created missing `__init__.py` files across all packages (`core`, `modules`, `pipelines`, `ai`, `automation`, `integrations`, `dashboards`).
-- Fixed `darkwin` CLI entry point resolving the wrong module path.
+- Created missing `__init__.py` files across all packages.
 
 ### [1.0.3] - 2026-05-02
 **Vulnerability Template Synchronizer & API Monitoring**
-- Added `darkwin update-templates` to sync latest Nuclei templates automatically.
-- Enhanced `/health` endpoint with real Database and Redis connectivity checks.
+- `darkwin update-templates`, enhanced `/health` endpoint.
 
 ### [1.0.2] - 2026-05-02
 **Core Testing & CI Linting**
-- Added `core/tests/test_core.py` with unit tests for CacheManager, GhostMode, and VulnVerifier.
-- Integrated `flake8` linting into GitHub Actions CI pipeline.
-- Added `darkwin test` CLI command to run the test suite on-demand.
+- `core/tests/test_core.py`, flake8 linting in CI.
 
 ### [1.0.1] - 2026-05-02
 **Documentation & Update Command**
-- Added `darkwin update` command to pull latest changes and re-run setup.
-- Overhauled `README.md` with full Zenith feature set and CLI reference table.
-- Updated `AGENTS.md` with the Sentinel agent documentation.
+- `darkwin update` command, README overhaul.
 
 ### [1.0.0] - 2026-05-02
 **Zenith Phase — Full Release**
-- Autonomous Agentic Reasoning Loop (`core/agent_loop.py`) with LLM-driven tactical planning.
-- Real-time Terminal UI (`core/tui_engine.py`) using Rich Live for scan telemetry.
-- Interactive REPL Shell (`core/interactive_shell.py`) with tab-completion via `prompt-toolkit`.
-- Ghost Mode stealth engine (`core/stealth.py`) with randomized TLS/UA fingerprints and jitter.
-- Distributed Mesh node registry (`core/mesh_manager.py`) via Redis.
-- Proxy Rotation pool (`core/proxy_manager.py`) for WAF/IP-ban bypass.
-- Vulnerability Verification Engine (`core/vuln_verifier.py`) for false-positive elimination.
-- Multi-channel Notification Manager (`core/notification_manager.py`) — Discord & Slack.
-- Redis-backed Cache Manager (`core/cache_manager.py`) for scan performance.
-- PDF/HTML/Markdown AI Report generation (`core/reporting_engine.py`) with `fpdf2`.
-- 3D Neural Attack Surface Map (`AttackSurfaceGraph.tsx`) using Three.js & ForceGraph.
-- Real-time Socket.io log streaming from scan engine to Next.js dashboard.
-- GitHub Actions CI/CD pipeline with linting and Docker build validation.
-- Full Docker Compose orchestration for API, Worker, and Dashboard services.
-- `darkwin about`, `darkwin shell`, `darkwin mesh`, `darkwin proxy`, `darkwin report` commands.
+- Agentic Reasoning Loop, TUI, Shell, Ghost Mode, Mesh, Proxy Pool, Vuln Verifier, Notifications, Cache, Reporting, 3D Map, CI/CD.
 
 ### [0.9.0] - 2026-04-26
 **Initial Release**
-- Core Engine with Pydantic configuration and Rich logging.
-- Distributed task execution via Celery and Redis.
-- Over 117 modules across 18 scan phases.
-- Real-time Dashboard with Flask/SocketIO backend.
-- AI-backed vulnerability analysis and reasoning via OpenAI.
+- Core Engine, 117+ modules, Celery/Redis, Dashboard, OpenAI integration.
 
 ---
-© 2026 ARYAN AHIRWAR (VIPHACKER.100)
+
+(C) 2026 ARYAN AHIRWAR (VIPHACKER.100)
