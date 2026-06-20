@@ -24,8 +24,8 @@ if sys.platform == "win32":
     try:
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-    except Exception:
-        pass # Fallback to default if wrapping fails
+    except (AttributeError, OSError):
+        pass
 
 
 from rich.console import Console
@@ -113,7 +113,7 @@ def main() -> NoReturn:
         error_msg = str(e)
         logger.error(f"Configuration error: {error_msg}")
         sys.exit(1)
-    except Exception as e:
+    except (RuntimeError, OSError, ValueError, ImportError) as e:
         error_msg = str(e)
         logger.critical(f"Fatal error: {error_msg}", exc_info=True)
         sys.exit(1)

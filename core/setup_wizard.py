@@ -8,6 +8,8 @@ License: See LICENSE file
 """
 
 import os
+from pathlib import Path
+
 import yaml
 from rich.console import Console
 from rich.panel import Panel
@@ -60,8 +62,7 @@ def run_setup_wizard() -> None:
         # Note: We use dict() for Pydantic v1, model_dump() for Pydantic v2
         config_dict = config.model_dump() if hasattr(config, "model_dump") else config.dict()
         
-        with open(save_path, "w") as f:
-            yaml.dump(config_dict, f, default_flow_style=False)
+        Path(save_path).write_text(yaml.dump(config_dict, default_flow_style=False))
         
         console.print(f"[bold green]Configuration saved successfully to {save_path}[/bold green]")
     else:

@@ -89,7 +89,7 @@ class DarkWinShell:
                     from core.command_router import cli
                     try:
                         cli.main(args=parts, standalone_mode=False)
-                    except Exception as e:
+                    except (SystemExit, ValueError, ImportError) as e:
                         console.print(f"[red]Error executing command: {e}[/red]")
                 else:
                     console.print(f"[yellow]Unknown command: {cmd}[/yellow]")

@@ -88,14 +88,14 @@ class Pipeline:
         and updates scan status in database.
         """
         self.logger.info(
-            f"🚀 Starting async pipeline '{self.name}' for target: {target} "
+            f"Starting async pipeline '{self.name}' for target: {target} "
             f"(Scan ID: {scan_id})"
         )
         
         with SessionLocal() as db:
             scan: Optional[Scan] = db.query(Scan).filter(Scan.id == scan_id).first()
             if not scan:
-                self.logger.warning(f"⚠️  Scan ID {scan_id} not in DB (Memory Mode Active)")
+                self.logger.warning(f"Scan ID {scan_id} not in DB (Memory Mode Active)")
             
             if scan:
                 scan.status = "running"
@@ -123,8 +123,8 @@ class Pipeline:
                     db.commit()
                 self.logger.info(f"✨ Pipeline '{self.name}' completed successfully.")
 
-            except Exception as e:
-                self.logger.critical(f"💥 Pipeline execution error: {e}", exc_info=True)
+            except (OSError, RuntimeError, ValueError, ImportError) as e:
+                self.logger.critical(f"Pipeline execution error: {e}", exc_info=True)
                 if scan:
                     scan.status = "failed"
                     scan.finished_at = datetime.now(timezone.utc)
@@ -136,7 +136,6 @@ class Pipeline:
         step_start_time = time.time()
         
         try:
-            # Check if the module function is a coroutine or regular function
             import inspect
             if inspect.iscoroutinefunction(step.module_fn):
                 result = await step.module_fn(*step.args, **step.kwargs)
@@ -151,10 +150,10 @@ class Pipeline:
             elapsed_time = time.time() - step_start_time
             self.logger.info(f"✅ Step '{step.name}' completed in {elapsed_time:.2f}s")
             
-        except Exception as e:
-            self.logger.error(f"❌ Step '{step.name}' failed: {e}")
+        except (OSError, RuntimeError, ValueError, TypeError, KeyError, ImportError) as e:
+            self.logger.error(f"Step '{step.name}' failed: {e}")
             if step.required:
-                raise # Re-raise to be caught by async_run
+                raise
 
     def _save_findings(
         self, db, scan_id: str, findings_list: List[Dict[str, Any]], target: str
@@ -169,9 +168,10 @@ class Pipeline:
         """
         for finding_data in findings_list:
             try:
-                # Defensive check for non-dictionary findings (common in some modules)
                 if not isinstance(finding_data, dict):
-                    self.logger.warning(f"⚠️  Skipping malformed finding data (expected dict, got {type(finding_data).__name__})")
+                    self.logger.warning(
+                        f"Skipping malformed finding data (expected dict, got {type(finding_data).__name__})"
+                    )
                     continue
 
                 finding: Finding = Finding(
@@ -186,7 +186,7 @@ class Pipeline:
                 db.add(finding)
                 self.logger.debug(f"Found: {finding.vuln_type} at {finding.endpoint}")
                 
-            except Exception as e:
+            except (ValueError, KeyError, TypeError) as e:
                 self.logger.error(f"Failed to save finding: {e}")
         
         db.commit()

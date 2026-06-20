@@ -181,11 +181,11 @@ class AIAgentManager:
                 self.logger.error(f"Invalid JSON response: {e}")
                 return f"Error: Invalid response format"
 
-            except Exception as e:
+            except (httpx.RequestError, httpx.HTTPStatusError, OSError, APIError) as e:
                 err_msg = str(e)
                 if "10061" in err_msg or "connection refused" in err_msg.lower():
                     self.logger.error("AI Backend Offline: No connection could be made to the local LLM server.")
-                    self.logger.info("👉 HINT: Start Ollama (ollama serve) or configure an OpenAI/NVIDIA API key.")
+                    self.logger.info("HINT: Start Ollama (ollama serve) or configure an OpenAI/NVIDIA API key.")
                     return "Error: AI Backend Offline (Ollama/Local LLM not responding)"
                 
                 self.logger.error(
@@ -272,7 +272,7 @@ class AIAgentManager:
 
                     raise APIError(f"LLM returned {response.status_code}")
 
-            except Exception as e:
+            except (httpx.RequestError, asyncio.TimeoutError, APIError) as e:
                 self.logger.warning(f"Async LLM query attempt {retry_count + 1} failed: {e}")
                 retry_count += 1
                 if retry_count >= MAX_RETRIES:
@@ -304,6 +304,6 @@ def analyze_vulnerability(finding: dict) -> str:
         3. Recommended remediation
         """
         return manager.ask_agent(prompt)
-    except Exception as e:
+    except (APIError, ValueError, httpx.RequestError) as e:
         logger.error(f"Vulnerability analysis failed: {e}", exc_info=True)
         return f"Analysis failed: {str(e)}"

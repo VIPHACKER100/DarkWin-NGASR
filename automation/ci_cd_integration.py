@@ -1,11 +1,18 @@
-import os
-import json
+"""DARKWIN CI/CD Integration module.
 
-def generate_github_action():
+Generates GitHub Action workflow files for automated DARKWIN scanning in CI pipelines.
+
+Author: ARYAN AHIRWAR (VIPHACKER.100)
+License: See LICENSE file
+"""
+
+def generate_github_action() -> str:
+    """Generate a GitHub Action workflow YAML for DARKWIN scanning.
+
+    Returns:
+        Workflow YAML string.
     """
-    Generates a GitHub Action workflow file for DARKWIN.
-    """
-    workflow = """
+    return """
 name: DARKWIN Security Scan
 on:
   push:
@@ -28,4 +35,3 @@ jobs:
     - name: Run Recon
       run: darkwin recon example.com --scope-file scope.json
 """
-    return workflow

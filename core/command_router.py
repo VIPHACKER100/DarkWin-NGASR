@@ -91,7 +91,7 @@ def verify_scope(target: str, scope_file: Optional[str] = None) -> bool:
     except json.JSONDecodeError as e:
         logger.error(f"Invalid JSON in scope file: {e}")
         return False
-    except Exception as e:
+    except (OSError, PermissionError, FileNotFoundError) as e:
         logger.error(f"Error reading scope file: {e}", exc_info=True)
         return False
 
@@ -288,11 +288,11 @@ def targets(add_target, remove_target):
 @click.option('--download', is_flag=True, help='Download recommended wordlists')
 def wordlists(download):
     """View and manage local security wordlists"""
-    import os
-    import requests
+    import httpx
+    from pathlib import Path
     
-    wordlists_dir = "wordlists"
-    os.makedirs(wordlists_dir, exist_ok=True)
+    wordlists_dir = Path("wordlists")
+    wordlists_dir.mkdir(exist_ok=True)
     
     recommended = {
         "subdomains.txt": "https://raw.githubusercontent.com/rbsec/dnscan/master/subdomains-10000.txt",
@@ -301,20 +301,19 @@ def wordlists(download):
     }
     
     if download:
-        console.print("[bold cyan]📥 Downloading recommended wordlists...[/bold cyan]")
+        console.print("[bold cyan]Downloading recommended wordlists...[/bold cyan]")
         for name, url in recommended.items():
-            path = os.path.join(wordlists_dir, name)
-            if os.path.exists(path):
-                console.print(f"  [yellow]![/yellow] {name} already exists. Skipping.")
+            path = wordlists_dir / name
+            if path.exists():
+                console.print(f"  [yellow]{name} already exists. Skipping.[/yellow]")
                 continue
             try:
-                console.print(f"  [blue]→[/blue] Downloading {name}...")
-                r = requests.get(url, timeout=30)
-                with open(path, "wb") as f:
-                    f.write(r.content)
-                console.print(f"  [green]✔[/green] {name} saved.")
-            except Exception as e:
-                console.print(f"  [red]✘[/red] Failed to download {name}: {e}")
+                console.print(f"  Downloading {name}...")
+                r = httpx.get(url, timeout=30)
+                path.write_bytes(r.content)
+                console.print(f"  [green]{name} saved.[/green]")
+            except (httpx.RequestError, httpx.HTTPStatusError, OSError) as e:
+                console.print(f"  [red]Failed to download {name}: {e}[/red]")
         return
 
     # List local wordlists
@@ -396,7 +395,8 @@ def payloads(payload_type):
             for file in os.listdir(cat_path):
                 file_path = os.path.join(cat_path, file)
                 if os.path.isfile(file_path):
-                    count = sum(1 for line in open(file_path) if line.strip())
+                    with open(file_path) as f:
+                        count = sum(1 for line in f if line.strip())
                     cat_node.add(f"{file} ([dim]{count} payloads[/dim])")
     
     console.print(tree)
@@ -431,8 +431,8 @@ def screenshots(scan_id, open_img):
                 os.startfile(latest.filepath)
             else:
                 subprocess.run(['xdg-open', latest.filepath], check=True)
-        except Exception as e:
-            console.print(f"[bold red]❌ Failed to open screenshot: {e}[/bold red]")
+        except (OSError, subprocess.CalledProcessError) as e:
+            console.print(f"[bold red]Failed to open screenshot: {e}[/bold red]")
         return
 
     table = Table(title="📸 Captured Evidence", border_style="magenta")
@@ -472,8 +472,8 @@ def config(edit, view):
             else:
                 editor = os.environ.get('EDITOR', 'nano')
                 subprocess.run([editor, config_path], check=True)
-        except Exception as e:
-            console.print(f"[bold red]❌ Failed to open editor: {e}[/bold red]")
+        except (OSError, subprocess.CalledProcessError) as e:
+            console.print(f"[bold red]Failed to open editor: {e}[/bold red]")
         return
 
     if view:
@@ -826,7 +826,7 @@ def dashboard():
         url = "http://localhost:5000"
         console.print(f"[green]✔ Dashboard available at {url}[/green]")
         webbrowser.open(url)
-    except Exception as e:
+    except (OSError, subprocess.SubprocessError) as e:
         logger.error(f"Failed to launch dashboard: {e}")
 
 @cli.command()
@@ -917,9 +917,9 @@ def report(scan_id, format):
         engine = ReportingEngine()
         filepath = engine.generate_report(scan_id, format=format)
         click.echo(f"✅ Report generated successfully: {filepath}")
-    except Exception as e:
+    except (ValueError, OSError, AttributeError) as e:
         logger.error(f"Failed to generate report: {e}")
-        click.echo(f"❌ Error: {str(e)}")
+        click.echo(f"Error: {str(e)}")
 
 @cli.command()
 @click.option('--open', 'open_latest', is_flag=True, help='Instantly open the most recent report')
@@ -991,10 +991,10 @@ def payloads(payload_type, update):
             try:
                 click.echo(f"  ⬇️  Downloading {filename}...")
                 urllib.request.urlretrieve(url, target_file)
-            except Exception as e:
-                click.echo(f"  ❌ Failed to download {filename}: {e}")
-                
-        click.echo("✅ Payloads updated successfully!")
+            except (OSError, urllib.error.URLError) as e:
+                click.echo(f"  Failed to download {filename}: {e}")
+
+        click.echo("Payloads updated successfully!")
         return
         
     if payload_type:
@@ -1023,11 +1023,11 @@ def payloads(payload_type, update):
             try:
                 with open(p, "r", encoding="utf-8", errors="ignore") as f:
                     count = sum(1 for line in f if line.strip() and not line.startswith("#"))
-            except Exception:
+            except (OSError, UnicodeDecodeError):
                 count = 0
             size_kb = p.stat().st_size / 1024
             table.add_row(p.stem.upper(), str(count), f"{size_kb:.1f} KB")
-            
+
         console.print(table)
         console.print("\n[dim]Use `darkwin payloads --type <category>` to view specific payloads.[/dim]")
         console.print("[dim]Use `darkwin payloads --update` to fetch the latest payloads.[/dim]")
@@ -1053,9 +1053,9 @@ def wordlists(download):
             try:
                 click.echo(f"  ⬇️  Downloading {filename}...")
                 urllib.request.urlretrieve(url, target_file)
-            except Exception as e:
-                click.echo(f"  ❌ Failed to download {filename}: {e}")
-        click.echo("✅ Wordlists downloaded successfully!")
+            except (OSError, urllib.error.URLError) as e:
+                click.echo(f"  Failed to download {filename}: {e}")
+        click.echo("Wordlists downloaded successfully!")
         return
 
     table = Table(title="Wordlist Inventory")
@@ -1067,11 +1067,11 @@ def wordlists(download):
         try:
             with open(w, "r", encoding="utf-8", errors="ignore") as f:
                 count = sum(1 for _ in f)
-        except Exception:
+        except (OSError, UnicodeDecodeError):
             count = 0
         size_kb = w.stat().st_size / 1024
         table.add_row(w.name, str(count), f"{size_kb:.1f} KB")
-        
+
     console.print(table)
     console.print("\n[dim]Use `darkwin wordlists --download` to fetch standard wordlists.[/dim]")
 
@@ -1140,8 +1140,8 @@ def update_templates():
     try:
         subprocess.run([nuclei_bin, "-ut"], check=True)
         console.print("[bold green]✨ Templates updated successfully![/bold green]")
-    except Exception as e:
-        console.print(f"[bold red]❌ Template update failed: {e}[/bold red]")
+    except (subprocess.CalledProcessError, OSError) as e:
+        console.print(f"[bold red]Template update failed: {e}[/bold red]")
 
 @cli.command()
 def update():
@@ -1163,8 +1163,8 @@ def update():
             
         console.print("[bold green]✨ DARKWIN updated successfully![/bold green]")
         
-    except Exception as e:
-        console.print(f"[bold red]❌ Update failed: {e}[/bold red]")
+    except (subprocess.CalledProcessError, OSError) as e:
+        console.print(f"[bold red]Update failed: {e}[/bold red]")
 
 @cli.command()
 def shell():

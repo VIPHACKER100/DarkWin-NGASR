@@ -1,5 +1,5 @@
+"""Pytest configuration — adds project root to sys.path for test imports."""
 import sys
-import os
+from pathlib import Path
 
-# Add the project root to sys.path to resolve 'core' and other modules during tests
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+sys.path.insert(0, str(Path(__file__).resolve().parent))

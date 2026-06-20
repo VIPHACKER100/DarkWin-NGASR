@@ -10,7 +10,7 @@ License: See LICENSE file
 import random
 import time
 import asyncio
-from typing import Dict
+from typing import Dict, Any
 
 
 USER_AGENTS = [
@@ -42,8 +42,7 @@ class GhostMode:
         delay = max(0.1, min(delay, base + (3 * var)))
         await asyncio.sleep(delay)
     
-    def get_tls_config(self) -> Dict[str, any]:
-
+    def get_tls_config(self) -> Dict[str, Any]:
         """Instance method wrapper for rotate_tls_config."""
         return rotate_tls_config()
 
@@ -80,7 +79,7 @@ def apply_jitter(base_delay: float = 1.0, variation: float = 0.5):
     delay = max(0.1, min(delay, base_delay + (3 * variation)))
     time.sleep(delay)
 
-def rotate_tls_config() -> Dict[str, any]:
+def rotate_tls_config() -> Dict[str, Any]:
     """Generate randomized TLS configuration to defeat JA3 fingerprinting.
     
     Returns:

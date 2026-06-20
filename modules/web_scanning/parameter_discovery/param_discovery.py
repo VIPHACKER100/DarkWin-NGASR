@@ -1,30 +1,46 @@
+"""DARKWIN Parameter Discovery module.
 
-import subprocess
+Uses ffuf to discover hidden URL parameters on a given endpoint.
+
+Author: ARYAN AHIRWAR (VIPHACKER.100)
+License: See LICENSE file
+"""
+
 import json
-import os
-from typing import List, Dict, Any
+import subprocess
+import tempfile
+from pathlib import Path
+from typing import Any, Dict, List
+
 from core.logging_system import get_logger
 
 logger = get_logger("WebScanning.ParameterDiscovery")
 
-MODULE_META = {
+MODULE_META: Dict[str, str] = {
     "name": "Parameter Discovery",
     "category": "Web Scanning",
     "description": "Uses ffuf to discover hidden URL parameters",
-    "version": "1.0.0"
+    "version": "1.0.0",
 }
 
+
 def run(url: str, scan_id: str, config: dict) -> List[Dict[str, Any]]:
-    """
-    Runs ffuf to find hidden parameters for a given URL with error handling and logging.
+    """Run ffuf to discover hidden URL parameters.
+
+    Args:
+        url: Target URL.
+        scan_id: Unique scan identifier.
+        config: Application config; expects ``config["tools"]["ffuf"]``.
+
+    Returns:
+        List of discovered parameter dicts.
     """
     params: List[Dict[str, Any]] = []
-    output_file = f"/tmp/params_{scan_id}.json"
-    if os.name == 'nt':
-        output_file = os.path.join(os.environ.get('TEMP', 'C:\\Temp'), f"params_{scan_id}.json")
+    tmp = Path(tempfile.gettempdir()) / f"params_{scan_id}.json"
+    output_file = str(tmp)
 
-    wordlist = os.path.join("wordlists", "parameters.txt")
-    if not os.path.exists(wordlist):
+    wordlist = Path("wordlists") / "parameters.txt"
+    if not wordlist.exists():
         logger.error(f"Wordlist not found: {wordlist}")
         return []
 
@@ -32,26 +48,30 @@ def run(url: str, scan_id: str, config: dict) -> List[Dict[str, Any]]:
         ffuf_path = config.get("tools", {}).get("ffuf", "ffuf")
         cmd = [
             ffuf_path, "-u", f"{url}?FUZZ=test",
-            "-w", wordlist, "-mc", "200,301,302",
-            "-o", output_file, "-of", "json"
+            "-w", str(wordlist), "-mc", "200,301,302",
+            "-o", output_file, "-of", "json",
         ]
         logger.info(f"Running ffuf: {' '.join(cmd)}")
         result = subprocess.run(cmd, capture_output=True, text=True, check=False)
         if result.returncode != 0:
             logger.error(f"ffuf failed: {result.stderr}")
-        if os.path.exists(output_file):
-            with open(output_file, 'r') as f:
+
+        if tmp.exists():
+            with tmp.open("r", encoding="utf-8") as f:
                 try:
-                    data = json.load(f)
-                    for result in data.get("results", []):
+                    data: Any = json.load(f)
+                    for entry in data.get("results", []):
                         params.append({
-                            "parameter": result.get("input", {}).get("FUZZ"),
+                            "parameter": entry.get("input", {}).get("FUZZ"),
                             "url": url,
-                            "scan_id": scan_id
+                            "scan_id": scan_id,
                         })
-                except Exception as e:
+                except json.JSONDecodeError as e:
                     logger.error(f"Error parsing ffuf output: {e}")
-            os.remove(output_file)
-    except Exception as e:
-        logger.critical(f"Unexpected error in parameter discovery: {e}")
+            tmp.unlink(missing_ok=True)
+    except subprocess.SubprocessError as e:
+        logger.error(f"ffuf execution error: {e}")
+    except OSError as e:
+        logger.error(f"File system error in parameter discovery: {e}")
+
     return params

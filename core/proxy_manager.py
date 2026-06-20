@@ -29,13 +29,17 @@ class ProxyManager:
             self.proxies = config.proxy.proxies
 
 
-    def _load_proxies(self):
+    def _load_proxies(self) -> None:
         """Load proxies from file (format: ip:port or user:pass@ip:port)."""
         try:
             with open(self.proxy_file, 'r') as f:
                 self.proxies = [line.strip() for line in f if line.strip()]
             logger.info(f"Loaded {len(self.proxies)} proxies from {self.proxy_file}")
-        except Exception as e:
+        except FileNotFoundError:
+            logger.error(f"Proxy file not found: {self.proxy_file}")
+        except PermissionError:
+            logger.error(f"Permission denied reading proxy file: {self.proxy_file}")
+        except OSError as e:
             logger.error(f"Failed to load proxies from {self.proxy_file}: {e}")
 
     def get_random_proxy(self) -> Optional[Dict[str, str]]:
@@ -75,9 +79,11 @@ class ProxyManager:
                     origin = resp.json().get("origin", "")
                     logger.debug(f"Proxy {test_proxy} validated successfully. Origin: {origin}")
                     return True
-        except Exception as e:
+        except httpx.RequestError as e:
             logger.debug(f"Proxy validation failed for {proxy_url}: {e}")
-        
+        except httpx.TimeoutException as e:
+            logger.debug(f"Proxy validation timeout for {proxy_url}: {e}")
+
         return False
 
     async def cleanup_dead_proxies(self):
@@ -109,6 +115,7 @@ class ProxyManager:
             logger.info("✅ All proxies in pool are healthy.")
 
     def get_proxy_list(self) -> List[str]:
+        """Return the current list of proxies."""
         return self.proxies
 
 # Singleton instance

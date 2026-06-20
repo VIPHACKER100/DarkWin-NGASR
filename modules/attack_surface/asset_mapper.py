@@ -1,33 +1,46 @@
-import json
-import os
-from typing import List, Dict
+"""DARKWIN Asset Mapper module.
 
-MODULE_META = {
+Aggregates and deduplicates discovered assets into a graph structure.
+
+Author: ARYAN AHIRWAR (VIPHACKER.100)
+License: See LICENSE file
+"""
+
+import json
+from pathlib import Path
+from typing import Any, Dict
+
+MODULE_META: Dict[str, str] = {
     "name": "Asset Mapper",
     "category": "Attack Surface",
     "description": "Aggregates and deduplicates discovered assets into a graph",
-    "version": "1.0.0"
+    "version": "1.0.0",
 }
 
-def run(target: str, scan_id: str, config: dict) -> Dict:
+
+def run(target: str, scan_id: str, config: dict) -> Dict[str, Any]:
+    """Aggregate and persist the attack-surface graph for a scan.
+
+    Args:
+        target: The target identifier.
+        scan_id: Unique scan identifier.
+        config: Application config (unused, kept for API consistency).
+
+    Returns:
+        Dict with ``target``, ``scan_id``, ``nodes``, and ``edges``.
     """
-    Aggregates results from other modules for the scan_id.
-    """
-    # This would normally query the database for all results with scan_id
-    # For now, we return a placeholder structure
-    report_path = os.path.join("reports", scan_id)
-    if not os.path.exists(report_path):
-        os.makedirs(report_path)
-    
-    graph = {
+    report_dir = Path("reports") / scan_id
+    report_dir.mkdir(parents=True, exist_ok=True)
+
+    graph: Dict[str, Any] = {
         "target": target,
         "scan_id": scan_id,
         "nodes": [],
-        "edges": []
+        "edges": [],
     }
-    
-    output_file = os.path.join(report_path, "attack_surface_graph.json")
-    with open(output_file, 'w') as f:
+
+    output_file = report_dir / "attack_surface_graph.json"
+    with output_file.open("w", encoding="utf-8") as f:
         json.dump(graph, f, indent=4)
-        
+
     return graph

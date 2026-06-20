@@ -28,6 +28,7 @@ MAIN_LOG_FILE: Path = LOG_DIR / "darkwin.log"
 MAX_LOG_SIZE: int = 10 * 1024 * 1024  # 10 MB
 LOG_BACKUP_COUNT: int = 5
 LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+_permission_warning_shown: bool = False
 
 # Add SUCCESS level
 SUCCESS_LEVEL_NUM = 25
@@ -85,8 +86,6 @@ def get_logger(name: str, scan_id: Optional[str] = None) -> logging.Logger:
 
     # Main Log File (Rotating)
     global _permission_warning_shown
-    if '_permission_warning_shown' not in globals():
-        _permission_warning_shown = False
 
     try:
         file_handler: RotatingFileHandler = RotatingFileHandler(
@@ -101,16 +100,15 @@ def get_logger(name: str, scan_id: Optional[str] = None) -> logging.Logger:
         logger.addHandler(file_handler)
     except PermissionError:
         if not _permission_warning_shown:
-            print(f"[bold red]❌ CRITICAL: Permission denied on {MAIN_LOG_FILE}[/bold red]")
+            print(f"[bold red]Permission denied on {MAIN_LOG_FILE}[/bold red]")
             if os.name == 'nt':
-                print("[yellow]Please run your terminal as Administrator or check folder permissions for:[/yellow]")
+                print("[yellow]Run terminal as Administrator or check folder permissions for:[/yellow]")
                 print(f"  {LOG_DIR.absolute()}")
             else:
-                print("[yellow]Please fix log permissions by running:[/yellow]")
-                print(f"sudo chown -R $USER:$USER {LOG_DIR}")
-                print(f"sudo chmod -R 775 {LOG_DIR}")
+                print("[yellow]Fix log permissions by running:[/yellow]")
+                print(f"  sudo chown -R $USER:$USER {LOG_DIR}")
+                print(f"  sudo chmod -R 775 {LOG_DIR}")
             _permission_warning_shown = True
-        # We continue without file logging rather than crashing
 
     # Scan-specific logger (if scan_id provided)
     if scan_id:
@@ -133,8 +131,7 @@ def get_logger(name: str, scan_id: Optional[str] = None) -> logging.Logger:
                 socket_handler = SocketIOLogHandler(scan_id=scan_id)
                 socket_handler.setLevel(logging.INFO)
                 logger.addHandler(socket_handler)
-            except Exception as e:
-                # Don't fail if SocketIO setup fails
+            except (ImportError, AttributeError, OSError):
                 pass
         except PermissionError:
             # Silently fall back to console logging if we can't write to logs/scans

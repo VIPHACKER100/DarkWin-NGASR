@@ -1,19 +1,33 @@
-import httpx
-from typing import List, Dict
+"""DARKWIN CT Monitor module.
 
-MODULE_META = {
+Polls crt.sh for newly issued certificates for a target domain.
+Delegates to the crt.sh subdomain fetcher.
+
+Author: ARYAN AHIRWAR (VIPHACKER.100)
+License: See LICENSE file
+"""
+
+from typing import Any, Dict, List
+
+MODULE_META: Dict[str, str] = {
     "name": "CT Monitor",
     "category": "Reconnaissance",
     "description": "Polls crt.sh for new certificates issued recently",
-    "version": "1.0.0"
+    "version": "1.0.0",
 }
 
-def run(target: str, scan_id: str, config: dict) -> List[Dict]:
+
+def run(target: str, scan_id: str, config: dict) -> List[Dict[str, Any]]:
+    """Poll crt.sh for new certificates.
+
+    Args:
+        target: Domain to monitor.
+        scan_id: Unique scan identifier.
+        config: Application config (unused, kept for API consistency).
+
+    Returns:
+        List of certificate/subdomain findings from crt.sh.
     """
-    Polls crt.sh for new certificates for the target domain.
-    """
-    # In a full implementation, this would compare against previously seen certs in DB
-    # For now, it fetches the latest list from crt.sh
     from modules.reconnaissance.subdomain.crt_sh_fetcher import run as fetch_crt
-    results = fetch_crt(target, scan_id, config)
-    return results
+
+    return fetch_crt(target, scan_id, config)

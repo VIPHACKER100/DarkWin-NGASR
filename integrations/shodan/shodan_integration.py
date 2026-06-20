@@ -1,4 +1,4 @@
-"""DARKWIN Shodan Integration Module with Security Hardening
+"""DARKWIN Shodan Integration Module with Security Hardening.
 
 Provides secure Shodan search and host lookup functionality.
 
@@ -6,10 +6,13 @@ Author: ARYAN AHIRWAR (VIPHACKER.100)
 License: See LICENSE file
 """
 
+import signal
+from typing import Any, Dict, List, Optional
+
 import shodan
-from typing import List, Dict, Optional
+
 from core.logging_system import get_logger
-from integrations.api_utils import RateLimiter, APIError, validate_api_key
+from integrations.api_utils import APIError, RateLimiter, validate_api_key
 
 logger = get_logger("Integrations.ShodanIntegration")
 
@@ -45,7 +48,7 @@ class ShodanIntegration:
         try:
             self.api = shodan.Shodan(self.api_key)
             logger.info("Shodan integration initialized successfully")
-        except Exception as e:
+        except (shodan.APIError, ValueError) as e:
             logger.error(f"Failed to initialize Shodan client: {e}")
             raise
 
@@ -88,7 +91,7 @@ class ShodanIntegration:
         except APIError as e:
             logger.error(f"API error during search: {e.message}")
             return []
-        except Exception as e:
+        except (ValueError, TimeoutError, KeyError) as e:
             logger.error(f"Unexpected error during Shodan search: {e}", exc_info=True)
             return []
 
@@ -131,7 +134,7 @@ class ShodanIntegration:
         except APIError as e:
             logger.error(f"API error getting host info: {e.message}")
             return {}
-        except Exception as e:
+        except (ValueError, TimeoutError, KeyError) as e:
             logger.error(f"Unexpected error getting host info: {e}", exc_info=True)
             return {}
 
@@ -150,13 +153,10 @@ class ShodanIntegration:
             return False
 
     def _api_call_with_timeout(self, api_call, timeout: int = DEFAULT_TIMEOUT):
-        """Execute API call with timeout handling."""
-        import signal
-
+        """Execute API call with timeout handling (Unix signal-based)."""
         def timeout_handler(signum, frame):
             raise TimeoutError(f"API call timed out after {timeout} seconds")
 
-        # Set up timeout signal
         old_handler = signal.signal(signal.SIGALRM, timeout_handler)
         signal.alarm(timeout)
 
@@ -164,7 +164,6 @@ class ShodanIntegration:
             result = api_call()
             return result
         finally:
-            # Restore original handler and cancel alarm
             signal.alarm(0)
             signal.signal(signal.SIGALRM, old_handler)
 
@@ -175,7 +174,7 @@ def run_shodan_search(query: str, config: Dict) -> List[Dict]:
     try:
         integration = ShodanIntegration(config)
         return integration.run_shodan_search(query)
-    except Exception as e:
+    except (ValueError, APIError, shodan.APIError) as e:
         logger.error(f"Legacy run_shodan_search failed: {e}")
         return []
 
@@ -185,6 +184,6 @@ def get_host_info(ip: str, config: Dict) -> Dict:
     try:
         integration = ShodanIntegration(config)
         return integration.get_host_info(ip)
-    except Exception as e:
+    except (ValueError, APIError, shodan.APIError) as e:
         logger.error(f"Legacy get_host_info failed: {e}")
         return {}

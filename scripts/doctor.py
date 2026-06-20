@@ -21,7 +21,7 @@ if sys.platform == "win32":
     try:
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-    except Exception:
+    except (AttributeError, OSError):
         pass
 
 console = Console(force_terminal=True, legacy_windows=False)
@@ -49,7 +49,7 @@ def check_redis():
         r = redis.from_url(config.redis.url, socket_timeout=1)
         r.ping()
         return True, "Connected"
-    except Exception as e:
+    except (redis.RedisError, OSError, ValueError) as e:
         return False, str(e)
 
 def check_database():
@@ -60,7 +60,7 @@ def check_database():
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         return True, "Connected"
-    except Exception as e:
+    except (OSError, RuntimeError, ImportError) as e:
         return False, str(e)
 
 def run_doctor():

@@ -1,13 +1,32 @@
+"""Discord notification sender for DARKWIN.
+
+Uses httpx to POST messages to a Discord webhook URL.
+Raises APIError on failure so callers can handle it consistently.
+
+Author: ARYAN AHIRWAR (VIPHACKER.100)
+License: See LICENSE file
+"""
+
 import httpx
 from typing import Dict
-from integrations.api_utils import APIError
+
 from core.logging_system import get_logger
+from integrations.api_utils import APIError
 
 logger = get_logger("Discord.Notifications")
 
+
 def send_discord_notification(message: str, config: Dict) -> None:
-    """
-    Sends a notification to a Discord webhook with error handling and logging.
+    """Send a notification to a Discord webhook.
+
+    Args:
+        message: The message content to post.
+        config: Application configuration dict; must contain
+            ``notifications.discord_webhook``.
+
+    Raises:
+        APIError: If the webhook URL is missing, the request fails,
+            or the response status is unexpected.
     """
     webhook_url = config.get("notifications", {}).get("discord_webhook", "")
     if not webhook_url:
@@ -23,6 +42,6 @@ def send_discord_notification(message: str, config: Dict) -> None:
     except httpx.RequestError as e:
         logger.error(f"Discord notification request error: {e}")
         raise APIError(f"Discord notification request error: {e}")
-    except Exception as e:
-        logger.critical(f"Unexpected error sending Discord notification: {e}")
-        raise APIError(f"Unexpected error sending Discord notification: {e}")
+    except httpx.HTTPStatusError as e:
+        logger.critical(f"Unexpected HTTP error sending Discord notification: {e}")
+        raise APIError(f"Unexpected HTTP error sending Discord notification: {e}")

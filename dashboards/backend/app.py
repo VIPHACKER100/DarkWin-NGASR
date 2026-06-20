@@ -41,7 +41,7 @@ def create_app() -> tuple[Flask, SocketIO]:
         r.ping()
         socketio = SocketIO(app, cors_allowed_origins="*", message_queue=config.redis.url)
         logger.info("SocketIO initialized with Redis message queue.")
-    except Exception:
+    except (ImportError, OSError, RuntimeError):
         socketio = SocketIO(app, cors_allowed_origins="*")
         logger.warning("Redis unreachable. SocketIO initialized without message queue (Local mode).")
     
@@ -80,7 +80,7 @@ def create_app() -> tuple[Flask, SocketIO]:
             from sqlalchemy import text
             with get_engine().connect() as conn:
                 conn.execute(text("SELECT 1"))
-        except Exception:
+        except (OSError, RuntimeError, ImportError):
             status["services"]["database"] = "fail"
             status["status"] = "degraded"
 
@@ -90,7 +90,7 @@ def create_app() -> tuple[Flask, SocketIO]:
             if not global_cache.redis or not global_cache.redis.ping():
                 status["services"]["redis"] = "fail"
                 status["status"] = "degraded"
-        except Exception:
+        except (OSError, RuntimeError, AttributeError):
             status["services"]["redis"] = "error"
             status["status"] = "degraded"
 

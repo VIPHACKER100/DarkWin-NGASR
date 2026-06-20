@@ -1,3 +1,13 @@
+"""
+DARKWIN Censys API Integration with Security Hardening
+
+Provides rate-limited, error-handled access to the Censys host search API.
+Implements API key validation, timeout enforcement, and structured error responses.
+
+Author: ARYAN AHIRWAR (VIPHACKER.100)
+License: MIT
+"""
+
 import httpx
 from typing import Dict, Any
 from integrations.api_utils import APIError, RateLimiter, validate_api_key
@@ -10,7 +20,16 @@ rate_limiter = RateLimiter(api_name="Censys", max_requests=25, window_seconds=60
 
 def search_host(ip: str) -> Dict[str, Any]:
     """
-    Queries Censys for information about a specific IP address with error handling and rate limiting.
+    Queries Censys for information about a specific IP address.
+
+    Args:
+        ip: Target IPv4 address to search.
+
+    Returns:
+        Dict containing ip, ports list, and services count.
+
+    Raises:
+        APIError: On rate limit, HTTP errors, or network failures.
     """
     api_id = validate_api_key(config.integrations.get('censys_api_id'), "Censys")
     api_secret = validate_api_key(config.integrations.get('censys_api_secret'), "Censys")
@@ -43,6 +62,6 @@ def search_host(ip: str) -> Dict[str, Any]:
         raise APIError(f"Censys request error: {e}")
     except APIError as e:
         raise
-    except Exception as e:
+    except (ValueError, json.JSONDecodeError, KeyError) as e:
         logger.critical(f"Unexpected error in Censys search: {e}")
         raise APIError(f"Unexpected error in Censys search: {e}")

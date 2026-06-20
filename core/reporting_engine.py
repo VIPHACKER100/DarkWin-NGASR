@@ -27,7 +27,7 @@ logger = get_logger("ReportingEngine")
 class ReportingEngine:
     """Engine for generating multi-format security reports."""
     
-    def __init__(self, output_dir: str = "reports"):
+    def __init__(self, output_dir: str = "reports") -> None:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
         self.ai = AIAgentManager()
@@ -80,18 +80,17 @@ class ReportingEngine:
                     raise ValueError("python-docx library not installed. DOCX generation unavailable.")
             else:
                 raise ValueError(f"Unsupported format: {format}")
-            
+
             # 3. Save to File
             filename = f"report_{scan.target.domain}_{scan_id[:8]}.{format}"
             filepath = self.output_dir / filename
-            
+
             try:
                 filepath.write_text(content, encoding='utf-8')
-            except UnicodeEncodeError:
-                # Fallback for Windows charmap issues
+            except (UnicodeEncodeError, UnicodeDecodeError):
                 safe_content = content.encode('ascii', 'ignore').decode('ascii')
                 filepath.write_text(safe_content, encoding='utf-8')
-            
+
             # 4. Record in Database
             new_report = Report(
                 scan_id=scan_id,
@@ -100,8 +99,8 @@ class ReportingEngine:
             )
             db.add(new_report)
             db.commit()
-            
-            logger.info(f"✅ Report saved to: {filepath}")
+
+            logger.info(f"Report saved to: {filepath}")
             return str(filepath)
 
     def _generate_ai_summary(self, scan: Scan, findings: List[Finding]) -> str:
@@ -128,7 +127,7 @@ class ReportingEngine:
         
         try:
             return self.ai.ask_agent(prompt, system_prompt="You are a Senior Security Consultant.")
-        except Exception as e:
+        except (ValueError, ConnectionError, httpx.RequestError, httpx.TimeoutException) as e:
             logger.error(f"AI summary generation failed: {e}")
             return "AI summary generation failed. Please review detailed findings below."
 
@@ -288,17 +287,17 @@ class ReportingEngine:
         return str(filepath)
 
     def _colorize_severity(self, severity: str) -> str:
-        colors = {
-            "Critical": "🔴 **Critical**",
-            "High": "🟠 **High**",
-            "Medium": "🟡 **Medium**",
-            "Low": "🟢 **Low**",
-            "Info": "🔵 **Info**"
+        colors: Dict[str, str] = {
+            "Critical": "Critical",
+            "High": "High",
+            "Medium": "Medium",
+            "Low": "Low",
+            "Info": "Info"
         }
         return colors.get(severity, severity)
 
     def _get_severity_color(self, severity: str) -> str:
-        colors = {
+        colors: Dict[str, str] = {
             "Critical": "#dc3545",
             "High": "#fd7e14",
             "Medium": "#ffc107",

@@ -6,6 +6,7 @@ Author: ARYAN AHIRWAR (VIPHACKER.100)
 License: See LICENSE file
 """
 
+import httpx
 from typing import Optional
 from core.logging_system import get_logger
 from ai.ai_agent_manager import AIAgentManager
@@ -26,7 +27,7 @@ class ReasoningEngine:
         try:
             self.agent = AIAgentManager()
             logger.info("Reasoning engine initialized successfully")
-        except Exception as e:
+        except (APIError, ValueError) as e:
             logger.error(f"Failed to initialize reasoning engine: {e}")
             raise
 
@@ -103,7 +104,7 @@ class ReasoningEngine:
             response = self.agent.ask_agent(prompt, system_prompt=system_prompt)
             return response
 
-        except Exception as e:
+        except (APIError, ValueError, httpx.RequestError) as e:
             logger.error(f"Error in multi-step reasoning: {e}", exc_info=True)
             return f"Error generating reasoning plan: {str(e)}"
 

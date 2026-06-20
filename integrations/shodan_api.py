@@ -1,4 +1,4 @@
-"""DARKWIN Shodan API Integration with Security Hardening
+"""DARKWIN Shodan API Integration with Security Hardening.
 
 Provides secure Shodan API queries with rate limiting and timeout handling.
 
@@ -6,11 +6,14 @@ Author: ARYAN AHIRWAR (VIPHACKER.100)
 License: See LICENSE file
 """
 
+import threading
+from typing import Any, Dict, Optional
+
 import shodan
-from typing import Dict, Optional
+
 from core.config_manager import get_config
 from core.logging_system import get_logger
-from integrations.api_utils import RateLimiter, APIError, validate_api_key
+from integrations.api_utils import APIError, RateLimiter, validate_api_key
 
 logger = get_logger("Integrations.Shodan")
 config = get_config()
@@ -44,11 +47,11 @@ class ShodanAPI:
             # Note: Shodan client doesn't directly support timeout in constructor
             # We'll handle timeout in individual calls
             logger.info("Shodan API client initialized successfully")
-        except Exception as e:
+        except (shodan.APIError, ValueError) as e:
             logger.error(f"Failed to initialize Shodan client: {e}")
             raise
 
-    def search_host(self, ip: str) -> Dict[str, any]:
+    def search_host(self, ip: str) -> Dict[str, Any]:
         """Query Shodan for information about a specific IP address.
 
         Implements rate limiting, timeout handling, and secure error management.
@@ -60,37 +63,31 @@ class ShodanAPI:
             Dictionary containing host information, or error dict if failed
         """
         try:
-            # Validate IP format (basic check)
             if not self._validate_ip(ip):
                 logger.error(f"Invalid IP address format: {ip}")
                 return {"error": "Invalid IP address format"}
 
-            # Check rate limit
             if not self.limiter.check_rate_limit():
                 wait_time = self.limiter.handle_rate_limit()
                 logger.warning(f"Rate limited, waiting {wait_time}s")
                 return {"error": f"Rate limited. Try again in {wait_time} seconds"}
 
-            # Record the request
             self.limiter.record_request()
 
-            # Make API call with timeout handling
-            # Note: shodan-python doesn't have built-in timeout, so we use a wrapper
             host_data = self._api_call_with_timeout(
                 lambda: self.api.host(ip),
                 timeout=DEFAULT_TIMEOUT
             )
 
-            # Process and sanitize response
             result = {
-                "ip": host_data.get('ip_str', ip),
-                "organization": host_data.get('org', 'n/a'),
-                "os": host_data.get('os', 'n/a'),
-                "ports": host_data.get('ports', []),
-                "hostnames": host_data.get('hostnames', []),
-                "vulns": host_data.get('vulns', []),
-                "last_update": host_data.get('last_update'),
-                "country": host_data.get('country_name', 'n/a')
+                "ip": host_data.get("ip_str", ip),
+                "organization": host_data.get("org", "n/a"),
+                "os": host_data.get("os", "n/a"),
+                "ports": host_data.get("ports", []),
+                "hostnames": host_data.get("hostnames", []),
+                "vulns": host_data.get("vulns", []),
+                "last_update": host_data.get("last_update"),
+                "country": host_data.get("country_name", "n/a"),
             }
 
             logger.info(f"Successfully queried Shodan for IP: {ip}")
@@ -103,10 +100,9 @@ class ShodanAPI:
         except APIError as e:
             logger.error(f"API Error: {e.message}")
             return {"error": e.message}
-        except Exception as e:
-            error_msg = f"Unexpected error querying Shodan: {str(e)}"
-            logger.error(error_msg, exc_info=True)
-            return {"error": error_msg}
+        except TimeoutError as e:
+            logger.error(f"Shodan request timed out for IP {ip}: {e}")
+            return {"error": str(e)}
 
     def _validate_ip(self, ip: str) -> bool:
         """Basic IP address validation."""
@@ -124,37 +120,34 @@ class ShodanAPI:
 
     def _api_call_with_timeout(self, api_call, timeout: int = DEFAULT_TIMEOUT):
         """Execute API call with threading-based timeout handling (Cross-platform)."""
-        import threading
-        
         result = [None]
         exception = [None]
-        
+
         def target():
             try:
                 result[0] = api_call()
-            except Exception as e:
+            except (shodan.APIError, APIError, ValueError, TimeoutError) as e:
                 exception[0] = e
-        
+
         thread = threading.Thread(target=target, daemon=True)
         thread.start()
         thread.join(timeout=timeout)
-        
+
         if thread.is_alive():
             raise TimeoutError(f"Shodan API call timed out after {timeout}s")
-        
+
         if exception[0]:
             raise exception[0]
-            
+
         return result[0]
 
 
-
 # Legacy function for backward compatibility
-def search_host(ip: str) -> Dict[str, any]:
+def search_host(ip: str) -> Dict[str, Any]:
     """Legacy function - use ShodanAPI class instead."""
     try:
         api = ShodanAPI()
         return api.search_host(ip)
-    except Exception as e:
+    except (ValueError, APIError) as e:
         logger.error(f"Legacy search_host failed: {e}")
         return {"error": str(e)}

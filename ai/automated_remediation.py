@@ -6,6 +6,7 @@ Author: ARYAN AHIRWAR (VIPHACKER.100)
 License: See LICENSE file
 """
 
+import httpx
 from typing import Dict, Optional
 from core.logging_system import get_logger
 from ai.ai_agent_manager import AIAgentManager
@@ -67,7 +68,7 @@ def suggest_remediation(finding: Dict[str, str]) -> str:
         logger.info("Successfully generated secure remediation suggestion")
         return suggestion
 
-    except Exception as e:
+    except (APIError, ValueError, httpx.RequestError) as e:
         logger.error(f"Error generating remediation suggestion: {e}", exc_info=True)
         return f"Error generating remediation: {str(e)}"
 

@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+
 import yaml
 from typing import Optional
 from pydantic import BaseModel, Field
@@ -82,7 +84,7 @@ def load_config(config_path: str = "config.yaml", reload: bool = False) -> Darkw
     if _config and not reload:
         return _config
 
-    if os.path.exists(config_path):
+    if Path(config_path).exists():
         with open(config_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
             _config = DarkwinConfig(**data)

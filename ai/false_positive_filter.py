@@ -100,7 +100,7 @@ def is_false_positive(finding: Dict[str, str], request_response_pair: Dict[str, 
         logger.info(f"False positive analysis result: {is_false_positive_result}")
         return is_false_positive_result
 
-    except Exception as e:
+    except (APIError, ValueError, httpx.RequestError) as e:
         logger.error(f"Unexpected error in false positive filtering: {e}", exc_info=True)
         return False
 
@@ -151,6 +151,6 @@ def _sanitize_http_data(http_data: str, data_type: str) -> str:
         # Final sanitization
         return sanitize_prompt(sanitized) or "Data sanitization failed"
 
-    except Exception as e:
+    except (ValueError, OSError) as e:
         logger.warning(f"Error sanitizing HTTP {data_type} data: {e}")
         return f"Error sanitizing {data_type} data"

@@ -31,12 +31,12 @@ def init_db() -> None:
     try:
         engine = get_engine()
         Base.metadata.create_all(bind=engine)
-        logger.info("✅ Database tables created successfully.")
+        logger.info("Database tables created successfully.")
         logger.info(
             "Created tables: targets, scans, findings, screenshots, reports"
         )
-    except Exception as e:
-        logger.error(f"❌ Failed to initialize database: {e}", exc_info=True)
+    except (RuntimeError, OSError) as e:
+        logger.error(f"Failed to initialize database: {e}", exc_info=True)
         raise
 
 

@@ -44,10 +44,10 @@ def _load_beat_schedule() -> Dict[str, Any]:
     """Load periodic tasks from the local schedule file."""
     import os
     import json
-    schedule_file = "logs/schedule.json"
+    schedule_file = Path("logs/schedule.json")
     beat_schedule = {}
     
-    if os.path.exists(schedule_file):
+    if schedule_file.exists():
         try:
             with open(schedule_file, "r") as f:
                 tasks = json.load(f)
@@ -64,14 +64,14 @@ def _load_beat_schedule() -> Dict[str, Any]:
                             schedule = 3600.0
                         else:
                             try: schedule = float(freq)
-                            except: schedule = 86400.0
+                            except ValueError: schedule = 86400.0
                             
                         beat_schedule[f"scan_{t['id']}"] = {
                             "task": "darkwin.run_pipeline", # We'll need this task
                             "schedule": schedule,
                             "args": (t["target"], t["command"])
                         }
-        except Exception as e:
+        except (json.JSONDecodeError, OSError, FileNotFoundError) as e:
             logger.error(f"Failed to load beat schedule: {e}")
             
     return beat_schedule
@@ -139,8 +139,8 @@ def run_module_task(
             "target": target,
         }
         
-    except Exception as e:
-        logger.error(f"❌ Task {module_name} failed: {e}", exc_info=True)
+    except (ValueError, OSError, ImportError) as e:
+        logger.error(f"Task {module_name} failed: {e}", exc_info=True)
         
         # Retry with exponential backoff
         raise self.retry(exc=e, countdown=2 ** self.request.retries)
@@ -178,15 +178,15 @@ def _save_findings_to_db(
                     )
                     db.add(finding)
                     
-                except Exception as e:
+                except (ValueError, KeyError) as e:
                     logger.error(
                         f"Failed to persist finding for {scan_id}: {e}"
                     )
-            
+
             db.commit()
-            logger.info(f"💾 Persisted {len(findings_list)} findings")
-            
-    except Exception as e:
+            logger.info(f"Persisted {len(findings_list)} findings")
+
+    except (OSError, RuntimeError, ImportError) as e:
         logger.error(
             f"Failed to save findings to database: {e}", exc_info=True
         )
@@ -237,6 +237,6 @@ def run_pipeline_task(target: str, pipeline_type: str) -> str:
             
         return f"Completed {pipeline_type} on {target} (Scan ID: {scan_id})"
         
-    except Exception as e:
+    except (ValueError, OSError, ImportError, RuntimeError) as e:
         logger.error(f"Failed to execute pipeline {pipeline_type}: {e}", exc_info=True)
         return f"Error: {str(e)}"

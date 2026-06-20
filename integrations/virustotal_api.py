@@ -1,4 +1,4 @@
-"""DARKWIN VirusTotal API Integration with Security Hardening
+"""DARKWIN VirusTotal API Integration with Security Hardening.
 
 Provides secure VirusTotal domain and file analysis with rate limiting.
 
@@ -6,12 +6,17 @@ Author: ARYAN AHIRWAR (VIPHACKER.100)
 License: See LICENSE file
 """
 
-import httpx
-from typing import Dict, Optional
+import json
+import re
+from typing import Any, Dict, Optional
 from urllib.parse import quote
+
+import httpx
+
+from core.cache_manager import global_cache
 from core.config_manager import get_config
 from core.logging_system import get_logger
-from integrations.api_utils import RateLimiter, APIError, validate_api_key
+from integrations.api_utils import APIError, RateLimiter, validate_api_key
 
 logger = get_logger("Integrations.VirusTotal")
 config = get_config()
@@ -48,7 +53,7 @@ class VirusTotalAPI:
 
         logger.info("VirusTotal API client initialized successfully")
 
-    def get_domain_report(self, domain: str) -> Dict[str, any]:
+    def get_domain_report(self, domain: str) -> Dict[str, Any]:
         """Query VirusTotal for a domain report with security hardening and caching.
 
         Args:
@@ -58,37 +63,29 @@ class VirusTotalAPI:
             Domain analysis results, or error dict if failed
         """
         try:
-            # 1. Validate domain
             if not self._validate_domain(domain):
                 logger.error(f"Invalid domain format: {domain}")
                 return {"error": "Invalid domain format"}
 
-            # 2. Check Cache
-            from core.cache_manager import global_cache
             cache_key = f"vt:domain:{domain}"
             cached_data = global_cache.get(cache_key)
             if cached_data:
-                logger.info(f"💾 Returning cached VirusTotal report for {domain}")
+                logger.info(f"Returning cached VirusTotal report for {domain}")
                 return cached_data
 
-            # 3. Check rate limit
             if not self.limiter.check_rate_limit():
                 wait_time = self.limiter.handle_rate_limit()
                 logger.warning(f"Rate limited, waiting {wait_time}s")
                 return {"error": f"Rate limited. Try again in {wait_time} seconds"}
 
-            # 4. Record the request
             self.limiter.record_request()
 
-            # URL encode domain for safety
             encoded_domain = quote(domain)
             url = f"{VT_BASE_URL}/domains/{encoded_domain}"
 
-            # 5. Make request with timeout and SSL verification
             with httpx.Client(timeout=DEFAULT_TIMEOUT, verify=True) as client:
                 response = client.get(url, headers=self.headers)
 
-                # Handle rate limiting
                 if response.status_code == 429:
                     retry_after = int(response.headers.get("Retry-After", "60"))
                     logger.warning(f"VirusTotal rate limit exceeded, retry after {retry_after}s")
@@ -96,20 +93,18 @@ class VirusTotalAPI:
 
                 if response.status_code == 200:
                     data = response.json()
-                    attributes = data.get('data', {}).get('attributes', {})
+                    attributes = data.get("data", {}).get("attributes", {})
 
                     result = {
                         "domain": domain,
-                        "reputation": attributes.get('reputation', 0),
-                        "last_analysis_stats": attributes.get('last_analysis_stats', {}),
-                        "last_analysis_date": attributes.get('last_analysis_date'),
-                        "categories": attributes.get('categories', {}),
-                        "total_votes": attributes.get('total_votes', {})
+                        "reputation": attributes.get("reputation", 0),
+                        "last_analysis_stats": attributes.get("last_analysis_stats", {}),
+                        "last_analysis_date": attributes.get("last_analysis_date"),
+                        "categories": attributes.get("categories", {}),
+                        "total_votes": attributes.get("total_votes", {}),
                     }
 
-                    # Store in cache for 24 hours (86400 seconds)
                     global_cache.set(cache_key, result, ttl=86400)
-                    
                     logger.info(f"Successfully retrieved VirusTotal report for domain: {domain}")
                     return result
 
@@ -121,40 +116,33 @@ class VirusTotalAPI:
                     logger.error(error_msg)
                     return {"error": error_msg}
 
-
         except httpx.TimeoutException as e:
             logger.error(f"VirusTotal request timeout for domain {domain}: {e}")
             return {"error": "Request timeout"}
         except httpx.RequestError as e:
             logger.error(f"VirusTotal request error for domain {domain}: {e}")
             return {"error": "Network request failed"}
-        except ValueError as e:
-            logger.error(f"Invalid JSON response from VirusTotal: {e}")
+        except (ValueError, json.JSONDecodeError) as e:
+            logger.error(f"Invalid response from VirusTotal: {e}")
             return {"error": "Invalid response format"}
-        except Exception as e:
-            error_msg = f"Unexpected error querying VirusTotal: {str(e)}"
-            logger.error(error_msg, exc_info=True)
-            return {"error": error_msg}
 
     def _validate_domain(self, domain: str) -> bool:
         """Basic domain name validation."""
         if not domain or len(domain) > 253:
             return False
 
-        # Simple regex for domain validation
-        import re
         domain_pattern = re.compile(
-            r'^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$'
+            r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$"
         )
         return bool(domain_pattern.match(domain))
 
 
 # Legacy function for backward compatibility
-def get_domain_report(domain: str) -> Dict[str, any]:
+def get_domain_report(domain: str) -> Dict[str, Any]:
     """Legacy function - use VirusTotalAPI class instead."""
     try:
         api = VirusTotalAPI()
         return api.get_domain_report(domain)
-    except Exception as e:
+    except (ValueError, httpx.RequestError) as e:
         logger.error(f"Legacy get_domain_report failed: {e}")
         return {"error": str(e)}

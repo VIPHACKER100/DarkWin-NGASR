@@ -49,10 +49,12 @@ class VulnVerifier:
             async with httpx.AsyncClient(headers=self.ghost.get_headers()) as client:
                 resp = await client.get(endpoint, params={"q": payload}, timeout=10.0)
                 if payload in resp.text:
-                    logger.success(f"✅ XSS Verified at {endpoint}")
+                    logger.success(f"XSS Verified at {endpoint}")
                     return True
-        except Exception:
-            pass
+        except httpx.RequestError:
+            logger.debug(f"XSS verification connection error for {endpoint}")
+        except httpx.TimeoutException:
+            logger.debug(f"XSS verification timeout for {endpoint}")
         return False
 
     async def _verify_sqli(self, endpoint: str, payload: str) -> bool:
@@ -62,10 +64,12 @@ class VulnVerifier:
                 resp = await client.get(endpoint, params={"id": payload}, timeout=10.0)
                 errors = ["sql error", "mysql_fetch", "sqlite3.Error", "PostgreSQL query"]
                 if any(err in resp.text.lower() for err in errors):
-                    logger.success(f"✅ SQLi Verified (Error-based) at {endpoint}")
+                    logger.success(f"SQLi Verified (Error-based) at {endpoint}")
                     return True
-        except Exception:
-            pass
+        except httpx.RequestError:
+            logger.debug(f"SQLi verification connection error for {endpoint}")
+        except httpx.TimeoutException:
+            logger.debug(f"SQLi verification timeout for {endpoint}")
         return False
 
     async def _verify_lfi(self, endpoint: str, payload: str) -> bool:
@@ -75,9 +79,12 @@ class VulnVerifier:
                 resp = await client.get(endpoint, timeout=10.0)
                 indicators = ["root:x:", "[extensions]", "DB_NAME", "<?php"]
                 if any(ind in resp.text for ind in indicators):
-                    logger.success(f"✅ LFI Verified at {endpoint}")
+                    logger.success(f"LFI Verified at {endpoint}")
                     return True
-        except Exception: pass
+        except httpx.RequestError:
+            logger.debug(f"LFI verification connection error for {endpoint}")
+        except httpx.TimeoutException:
+            logger.debug(f"LFI verification timeout for {endpoint}")
         return False
 
     async def _verify_open_redirect(self, endpoint: str, payload: str) -> bool:
@@ -87,10 +94,13 @@ class VulnVerifier:
                 resp = await client.get(endpoint, timeout=10.0)
                 if resp.status_code in [301, 302, 307, 308]:
                     loc = resp.headers.get("Location", "")
-                    if "viphacker100.com" in loc or "google.com" in loc:
-                        logger.success(f"✅ Open Redirect Verified at {endpoint} -> {loc}")
+                    if "google.com" in loc:
+                        logger.success(f"Open Redirect Verified at {endpoint} -> {loc}")
                         return True
-        except Exception: pass
+        except httpx.RequestError:
+            logger.debug(f"Open redirect verification connection error for {endpoint}")
+        except httpx.TimeoutException:
+            logger.debug(f"Open redirect verification timeout for {endpoint}")
         return False
 
     async def _verify_ssrf(self, endpoint: str, payload: str) -> bool:
@@ -98,11 +108,13 @@ class VulnVerifier:
         try:
             async with httpx.AsyncClient(headers=self.ghost.get_headers()) as client:
                 resp = await client.get(endpoint, timeout=10.0)
-                # Look for common cloud metadata or internal headers
                 if "169.254.169.254" in resp.text or "instance-id" in resp.text.lower():
-                    logger.success(f"✅ SSRF Verified (Cloud Metadata) at {endpoint}")
+                    logger.success(f"SSRF Verified (Cloud Metadata) at {endpoint}")
                     return True
-        except Exception: pass
+        except httpx.RequestError:
+            logger.debug(f"SSRF verification connection error for {endpoint}")
+        except httpx.TimeoutException:
+            logger.debug(f"SSRF verification timeout for {endpoint}")
         return False
 
     async def _verify_info_disclosure(self, endpoint: str) -> bool:
@@ -111,23 +123,27 @@ class VulnVerifier:
             async with httpx.AsyncClient(headers=self.ghost.get_headers()) as client:
                 resp = await client.get(endpoint, timeout=10.0)
                 if "DB_PASSWORD" in resp.text or "AWS_SECRET_ACCESS_KEY" in resp.text:
-                    logger.success(f"✅ Info Disclosure Verified at {endpoint}")
+                    logger.success(f"Info Disclosure Verified at {endpoint}")
                     return True
-        except Exception: pass
+        except httpx.RequestError:
+            logger.debug(f"Info disclosure verification connection error for {endpoint}")
+        except httpx.TimeoutException:
+            logger.debug(f"Info disclosure verification timeout for {endpoint}")
         return False
 
     async def _ai_verify(self, vuln_type: str, endpoint: str, payload: str) -> bool:
         """Use AI to analyze the response for subtle vulnerability indicators."""
         from ai.ai_agent_manager import AIAgentManager
         ai = AIAgentManager()
-        
+
         try:
             async with httpx.AsyncClient(headers=self.ghost.get_headers()) as client:
                 resp = await client.get(endpoint, timeout=10.0)
-                content = resp.text[:2000] # Limit context
-                
+                content = resp.text[:2000]
+
                 prompt = f"Analyze if this HTTP response indicates a {vuln_type} vulnerability.\nPayload: {payload}\nResponse:\n{content}\n\nRespond with ONLY 'TRUE' or 'FALSE'."
                 answer = ai.ask_agent(prompt)
                 return "TRUE" in answer.upper()
-        except Exception:
+        except (httpx.RequestError, httpx.TimeoutException):
+            logger.debug(f"AI verification request failed for {endpoint}")
             return False

@@ -78,11 +78,11 @@ def list_modules() -> Table:
             except ImportError as e:
                 logger.warning(f"Failed to import module {module_name}: {e}")
                 continue
-            except Exception as e:
+            except (AttributeError, KeyError, ModuleNotFoundError) as e:
                 logger.error(f"Error loading module {module_name}: {e}")
                 continue
 
-    except Exception as e:
+    except (OSError, ImportError, AttributeError) as e:
         logger.error(f"Error discovering modules: {e}", exc_info=True)
         table.add_row("[red]Error[/red]", "Failed to discover modules", str(e), "N/A")
         return table
@@ -119,7 +119,7 @@ def get_module(name: str) -> Any:
             _verify_module(module)
             _module_registry[name] = module
             return module
-        except Exception as e:
+        except (ImportError, AttributeError, ModuleNotFoundError) as e:
             logger.error(f"Failed to load module by path '{name}': {e}")
 
     logger.error(f"Module not found: {name}")
@@ -151,14 +151,14 @@ def _load_registry():
                 # Also index by import path
                 _module_registry[module_name] = module
                 
-            except Exception as e:
+            except (ImportError, AttributeError, ModuleNotFoundError, KeyError) as e:
                 logger.debug(f"Skipping module {module_name} during registry load: {e}")
                 continue
-                
+
         _registry_loaded = True
         logger.info(f"Registry loaded with {len(_module_registry)} module mappings.")
-        
-    except Exception as e:
+
+    except (OSError, ImportError) as e:
         logger.error(f"Error building module registry: {e}")
 
 

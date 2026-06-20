@@ -60,21 +60,19 @@ def _try_primary(primary_url: str) -> Optional[Engine]:
             conn.execute(text("SELECT 1"))
         logger.info("[SUCCESS] Connected to primary database.")
         return eng
-    except Exception as e:
+    except (OSError, RuntimeError, ImportError) as e:
         err = str(e)
         if "password authentication failed" in err:
-            logger.critical("[ERROR] Database Authentication Failed!")
+            logger.critical("[CRITICAL] Database Authentication Failed!")
             logger.info("[HINT] Fix: align config.yaml password with docker-compose.yml")
-            logger.info("   👉 Current url: " + primary_url.split('@')[-1])
-            logger.info("   👉 Try: docker-compose exec postgres psql -U postgres -c \"ALTER USER darkwin WITH PASSWORD 'darkwin_pass';\"")
         elif "does not exist" in err:
-            logger.critical("[ERROR] Database / role does not exist!")
-            logger.info("   👉 Try: docker-compose up -d postgres")
+            logger.critical("[CRITICAL] Database / role does not exist!")
+            logger.info("   Try: docker-compose up -d postgres")
         elif "Connection refused" in err or "could not connect" in err.lower():
             logger.warning("[WARN] PostgreSQL server is offline.")
-            logger.info("   👉 Try: docker-compose up -d postgres")
+            logger.info("   Try: docker-compose up -d postgres")
         else:
-            logger.warning(f"⚠️  Primary database unreachable: {err[:200]}")
+            logger.warning(f"Primary database unreachable: {err[:200]}")
         return None
 
 
@@ -94,18 +92,17 @@ def _try_sqlite(fallback_url: str) -> Optional[Engine]:
             import core.models  # noqa: F401 — registers models with Base.metadata
             Base.metadata.create_all(bind=eng)
             logger.info("[SUCCESS] SQLite database initialized with schema.")
-        except Exception as schema_err:
-            logger.error(f"⚠️  Could not create SQLite schema: {schema_err}")
+        except (OSError, RuntimeError, ImportError) as schema_err:
+            logger.error(f"Could not create SQLite schema: {schema_err}")
         return eng
     except (ModuleNotFoundError, ImportError) as e:
         if "_sqlite3" in str(e):
-            logger.critical("[ERROR] Python _sqlite3 module is missing!")
-            logger.info("💡 Fix 1 (SQLite): sudo apt update && sudo apt install -y libsqlite3-dev")
-            logger.info("💡 Fix 2 (Recommended): Start PostgreSQL via docker-compose up -d postgres")
+            logger.critical("[CRITICAL] Python _sqlite3 module is missing!")
+            logger.info("Fix: sudo apt update && sudo apt install -y libsqlite3-dev")
         else:
-            logger.critical(f"❌ SQLite import error: {e}")
+            logger.critical(f"SQLite import error: {e}")
         return None
-    except Exception as e:
+    except (OSError, RuntimeError) as e:
         logger.error(f"[ERROR] SQLite fallback failed: {e}")
         return None
 
@@ -196,7 +193,7 @@ def get_db() -> Generator[Session, None, None]:
     db: Session = get_session()()
     try:
         yield db
-    except Exception as e:
+    except (OSError, RuntimeError, ValueError) as e:
         db.rollback()
         logger.error(f"Database session error: {e}", exc_info=True)
         raise

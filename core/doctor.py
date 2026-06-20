@@ -30,7 +30,7 @@ def check_pydantic_health() -> Tuple[bool, str]:
         return True, "Healthy"
     except ImportError as e:
         return False, str(e)
-    except Exception as e:
+    except AttributeError as e:
         return False, str(e)
 
 import sys
@@ -46,8 +46,8 @@ console: Console = Console(force_terminal=True, legacy_windows=False)
 
 # Fix module resolution when run directly
 if __name__ == "__main__" or __name__ == "core.doctor":
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    parent_dir = os.path.dirname(current_dir)
+    current_dir = str(Path(__file__).resolve().parent)
+    parent_dir = str(Path(current_dir).parent)
     if parent_dir not in sys.path:
         sys.path.append(parent_dir)
 
@@ -64,8 +64,8 @@ def check_pip_dependencies() -> List[Tuple[str, bool]]:
     """Check if all required pip packages are installed."""
     results = []
     from importlib.metadata import version, PackageNotFoundError
-    requirements_path = "requirements.txt"
-    if not os.path.exists(requirements_path):
+    requirements_path = Path("requirements.txt")
+    if not requirements_path.exists():
         return [("requirements.txt not found", False)]
     
     with open(requirements_path, "r") as f:
@@ -118,7 +118,7 @@ def check_database() -> Tuple[bool, str]:
         with eng.connect() as conn:
             conn.execute(text("SELECT 1"))
         return True, "Connected"
-    except Exception as e:
+    except (OSError, RuntimeError, ImportError) as e:
         return False, str(e)
 
 def check_redis() -> Tuple[bool, str]:
@@ -131,23 +131,23 @@ def check_redis() -> Tuple[bool, str]:
         return True, "Connected"
     except ImportError:
         return False, "redis-py not installed"
-    except Exception as e:
+    except (OSError, redis.RedisError) as e:
         return False, str(e)
 
 def check_node_version() -> Tuple[bool, str]:
     """Check if Node.js is installed (required for dashboard)."""
     try:
-        res = subprocess.run(["node", "--version"], capture_output=True, text=True)
+        res = subprocess.run(["node", "--version"], capture_output=True, text=True, check=False)
         return True, res.stdout.strip()
-    except Exception:
+    except (subprocess.SubprocessError, FileNotFoundError):
         return False, "Not Found"
 
 def check_docker() -> Tuple[bool, str]:
     """Check if Docker is installed (required for orchestration)."""
     try:
-        res = subprocess.run(["docker", "--version"], capture_output=True, text=True)
+        res = subprocess.run(["docker", "--version"], capture_output=True, text=True, check=False)
         return True, res.stdout.strip()
-    except Exception:
+    except (subprocess.SubprocessError, FileNotFoundError):
         return False, "Not Found"
 
 def check_log_permissions() -> Tuple[bool, str]:
@@ -156,7 +156,7 @@ def check_log_permissions() -> Tuple[bool, str]:
     if not log_dir.exists():
         try:
             log_dir.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
+        except OSError as e:
             return False, f"Cannot create logs directory: {e}"
     
     if os.access(log_dir, os.W_OK):
@@ -230,7 +230,7 @@ def run_doctor(fix: bool = False) -> None:
 
         if missing_pip:
             console.print(f"Installing missing Python packages: {', '.join(missing_pip)}...")
-            subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+            subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"], check=False)
 
         # Proactive Service Fixes (v1.2.0)
         if not db_ok or not redis_ok:
@@ -238,10 +238,10 @@ def run_doctor(fix: bool = False) -> None:
                 console.print("[bold cyan]🚀 Attempting to start Postgres and Redis via Docker...[/bold cyan]")
                 try:
                     # Try 'docker compose' (V2) first, then 'docker-compose'
-                    res = subprocess.run(["docker", "compose", "up", "-d", "postgres", "redis"], capture_output=True)
+                    res = subprocess.run(["docker", "compose", "up", "-d", "postgres", "redis"], capture_output=True, check=False)
                     if res.returncode != 0:
-                        subprocess.run(["docker-compose", "up", "-d", "postgres", "redis"], capture_output=False)
-                except Exception:
+                        subprocess.run(["docker-compose", "up", "-d", "postgres", "redis"], capture_output=False, check=False)
+                except subprocess.SubprocessError:
                     pass
             else:
                 console.print("[bold yellow]⚠ Docker not found. Cannot start services automatically.[/bold yellow]")
@@ -267,8 +267,8 @@ def run_doctor(fix: bool = False) -> None:
                     if t in tool_map:
                         console.print(f"  Installing [green]{t}[/green]...")
                         subprocess.run(["go", "install", tool_map[t]], check=False)
-            except Exception:
-                console.print("[bold yellow]⚠ Go (golang) not found. Skipping tool installation.[/bold yellow]")
+            except (subprocess.SubprocessError, FileNotFoundError):
+                console.print("[bold yellow]Go (golang) not found. Skipping tool installation.[/bold yellow]")
 
         console.print("[bold green]Fixes attempted. Restart your terminal or activate your venv and run doctor again.[/bold green]")
 
