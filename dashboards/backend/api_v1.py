@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, jsonify, request, send_file, send_from_directory
 from core.database import SessionLocal
 from core.models import Scan, Target, Finding, Report
 from core.reporting_engine import ReportingEngine
@@ -176,4 +176,4 @@ def generate_report():
 @api_bp.route("/reports/download/<path:filename>", methods=["GET"])
 def download_report(filename):
     report_dir = os.path.abspath("reports")
-    return send_file(os.path.join(report_dir, filename), as_attachment=True)
+    return send_from_directory(report_dir, filename, as_attachment=True)
