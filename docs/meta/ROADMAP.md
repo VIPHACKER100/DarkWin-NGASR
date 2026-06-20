@@ -7,9 +7,12 @@ This roadmap outlines the future direction of DARKWIN-NGASR. Note that timelines
 
 ## 📅 2026 Q2: The Stability Era (Current)
 - [x] **v2.0.0 (Apex)**: Unified CLI, Pydantic-based configuration, and phase-based pipelines.
+- [x] **v2.0.1 (Zenith)**: CLI bug fixes, `darkwin reports` command, Windows encoding stabilization.
+- [x] **v2.0.2**: CORS fix, Windows charmap hardening, AI backend resilience.
 - [x] **Self-Healing Engine**: Implementation of `darkwin doctor --fix`.
 - [x] **Verification 2.0**: Enhanced automated vulnerability validation for zero false positives.
-- [ ] **Native Windows Support**: Full parity for PowerShell without WSL dependency (In Progress).
+- [x] **Native Windows Support**: Full parity for PowerShell without WSL dependency.
+- [ ] **Performance Benchmarking**: Automated CI performance regression testing.
 
 ---
 

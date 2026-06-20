@@ -1,11 +1,61 @@
 # DARKWIN Upgrade & Fix Report
-**Date:** May 10, 2026
-**Version:** 2.0.0 (Apex Stability Release)
+**Date:** June 20, 2026
+**Version:** 2.0.2 (Interactivity & Resilience Overhaul)
 **Status:** ✅ STABLE & PRODUCTION READY
 
 ---
 
 ---
+
+## v2.0.2 - Interactivity & Resilience Overhaul ✓ COMPLETED
+
+### 1. **Dashboard Interactivity** ✓ COMPLETED
+**Fix:** Resolved CORS Policy Blocks by explicitly configuring permissive cross-origin headers in the Flask backend.
+**Impact:** Seamless communication between the Next.js frontend and the API.
+**Additional:** Improved Report Generation Feedback with loading states, error handling, and direct browser-based download links.
+
+### 2. **Windows Runtime Hardening** ✓ COMPLETED
+**Fix:** Fixed terminal-wide 'charmap' encoding crashes by enforcing UTF-8 rendering in the Rich console across the CLI, diagnostic tool, and reporting engine.
+**Impact:** Full Windows 10/11 support without WSL dependency.
+**Additional:** Implemented Encoding Fallback for AI report synthesis — if complex content cannot be saved as UTF-8, automatically falls back to ASCII-safe sanitized version.
+
+### 3. **AI Backend Resilience** ✓ COMPLETED
+**Fix:** Hardened the AIAgentManager against WinError 10061 (Connection Refused) by implementing graceful detection and descriptive recovery hints when local LLMs (Ollama) are offline.
+**Impact:** Non-blocking failure when AI backends are unavailable.
+
+### 4. **Data Persistence** ✓ COMPLETED
+**Fix:** Improved Vulnerability Finding Capture with defensive type checking to prevent pipeline crashes when modules return non-standard discovery data.
+**Impact:** Zero pipeline crashes from malformed module output.
+
+## v2.0.1 - Zenith Stabilization & Reporting Overhaul ✓ COMPLETED
+
+### 1. **CLI Bug Fixes** ✓ COMPLETED
+**Fix:** Corrected import paths in `darkwin fuzz` and `darkwin watch` commands.
+**Impact:** All CLI commands fully functional.
+
+### 2. **Testing Infrastructure** ✓ COMPLETED
+**Fix:** Implemented missing `run_tests()` entry point in `core/tests/test_core.py`.
+**Fix:** Fixed sync-async execution mismatch in `tests/vuln_suite/test_scanners.py`.
+**Impact:** CLI-based testing (`darkwin test`) now works reliably.
+
+### 3. **Windows Error Handling** ✓ COMPLETED
+**Fix:** Added cross-platform permission detection in `logging_system.py` with Administrator advice for Windows.
+**Fix:** Integrated Log Permission Check into the `darkwin doctor` diagnostic suite.
+**Fix:** Fixed `UnicodeEncodeError` during AI report generation on Windows by enforcing UTF-8 encoding for Markdown and HTML exports.
+**Impact:** First-class Windows support.
+
+### 4. **Pipeline Stability** ✓ COMPLETED
+**Fix:** Fixed `KeyError: 'vuln_type'` in `pipeline_engine.py` during NO-PERSISTENCE mode saving.
+**Fix:** Suppressed internal SocketIO connection spam with 1-second Redis readiness check.
+**Impact:** Crash-free pipeline execution.
+
+### 5. **New Feature: `darkwin reports`** ✓ COMPLETED
+**Enhancement:** New command to visually list and manage all generated scan reports.
+**Impact:** Streamlined report management workflow.
+
+### 6. **Logging Cleanup** ✓ COMPLETED
+**Fix:** Fixed duplicate Pipeline logs by disabling logger propagation to the root.
+**Impact:** Clean, deduplicated log output.
 
 ## v2.0.0 - Apex Architecture Hardening ✓ COMPLETED
 

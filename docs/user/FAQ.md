@@ -6,7 +6,7 @@
 ### 🚀 General Questions
 
 #### What is DARKWIN-NGASR?
-DARKWIN-NGASR is an autonomous security research platform that uses AI (LLMs) to automate the entire penetration testing lifecycle, from reconnaissance to reporting.
+DARKWIN-NGASR is an autonomous security research platform that uses AI (LLMs) to automate the entire penetration testing lifecycle, from reconnaissance to reporting. Current version: **2.0.2 (Zenith)**.
 
 #### Is it free to use?
 Yes, the core platform is open-source under the MIT license. However, you will need your own API keys for external services like OpenAI, Shodan, etc.
@@ -19,7 +19,7 @@ The platform was developed by **ARYAN AHIRWAR (VIPHACKER.100)**.
 ### 🛠️ Setup & Technical
 
 #### Does it work on Windows?
-Yes! DARKWIN-NGASR is fully compatible with Windows 10/11. We recommend using PowerShell with our `setup.ps1` script or WSL2 for the best experience.
+Yes! Since v2.0.1, DARKWIN-NGASR has full native Windows 10/11 support. Use PowerShell with our `setup.ps1` script — no WSL required. The `darkwin doctor` command includes Windows-specific permission detection and fixes.
 
 #### Why do I need Docker?
 Docker is used to orchestrate the database (PostgreSQL), the caching layer (Redis), and the Next.js dashboard. It ensures a consistent environment for these critical services.
@@ -52,6 +52,9 @@ Please open an issue on the GitHub repository or follow the steps in our [Securi
 
 #### How can I contribute a new module?
 Check our [Module Development Guide](../dev/MODULES.md) for step-by-step instructions.
+
+#### What changed in v2.0.1 and v2.0.2?
+v2.0.1 (Zenith Stabilization) fixed CLI bugs, added the `darkwin reports` command, and hardened Windows encoding. v2.0.2 resolved CORS issues for the dashboard, improved Windows `charmap` handling, and added AI backend resilience for offline local models. See the [Changelog](../meta/CHANGELOG.md) for details.
 
 ---
 <div align="center">

@@ -1,7 +1,7 @@
 # DARKWIN API Documentation
 ## Developed by ARYAN AHIRWAR (VIPHACKER.100)
 
-### Version: 2.0.0
+### Version: 2.0.1
 
 The DARKWIN Dashboard Backend provides a RESTful API to manage scans and findings.
 

@@ -1,7 +1,7 @@
 # 🧠 DARKWIN Memory Map (Master Source of Truth)
 **Developer**: ARYAN AHIRWAR (VIPHACKER.100)
 **Project**: DARKWIN — Next-Gen Automated Security Research Platform
-**Version**: 2.0.0 (Zenith Production Release)
+**Version**: 2.0.1 (Zenith Stabilization Release)
 
 ---
 
@@ -61,12 +61,14 @@
 ---
 
 ## 🛠️ Current Development Focus
-**Current Status**: Production Stable (v2.0.0).
+**Current Status**: Production Stable (v2.0.1).
 **Recent Updates**:
 1. Implemented **Dynamic AI Registry Injection** for zero-hallucination task planning.
 2. Switched to **NVIDIA NIM (Gemma-3)** for superior security reasoning.
 3. Added **DOCX Report Generation** support for professional documentation.
 4. Stabilized **Logging & Permission** handling for multi-user environments.
+5. **v2.0.1**: Fixed CLI bugs (`fuzz`, `watch`), added `darkwin reports` command, Windows encoding fixes.
+6. **v2.0.2**: CORS fix for dashboard, Windows charmap/encoding hardening, AI backend resilience.
 
 ---
 

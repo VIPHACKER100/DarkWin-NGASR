@@ -186,6 +186,10 @@ darkwin hunt example.com --proxy --stealth
 
 ---
 
+> For a complete Docker deployment guide (production scaling, volume management, troubleshooting), see [Docker Deployment Guide](DOCKER.md).
+> For detailed dashboard setup and feature walkthrough, see [Dashboard Guide](DASHBOARD.md).
+> For common hunting patterns and recipes, see [Hunting Workflows](WORKFLOWS.md).
+
 ## 🌐 Distributed Mesh Setup
 
 DARKWIN can scale horizontally across multiple servers.

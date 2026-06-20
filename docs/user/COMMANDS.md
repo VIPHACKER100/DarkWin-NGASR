@@ -501,7 +501,7 @@ The platform is modular. You can add your own scanning logic by creating a Pytho
 - Must implement `async def run(url, scan_id, config)`.
 - Must return a list of finding dictionaries.
 
-See **[MODULE_GUIDE.md](file:///c:/Users/vipha/Desktop/New%20folder/DARKWIN/MODULE_GUIDE.md)** for the full specification.
+See **[Module Development Guide](../../docs/dev/MODULES.md)** for the full specification.
 
 ---
 <div align="center">

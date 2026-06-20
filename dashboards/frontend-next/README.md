@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DARKWIN Dashboard (Next.js 16)
 
-## Getting Started
+Real-time security research dashboard with 3D neural attack surface visualization.
 
-First, run the development server:
+## Architecture
 
+- **Framework**: Next.js 16 (App Router)
+- **Visualization**: Three.js + react-force-graph-3d
+- **Real-time**: Socket.IO client for live log streaming
+- **Styling**: Tailwind CSS 4
+- **Charts**: Recharts for analytics
+
+## Quick Start
+
+### Development
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Opens at http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Production (Docker)
+```bash
+docker-compose up -d
+# Dashboard at http://localhost:3000
+# API at http://localhost:5000
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a `.env.local`:
 
-## Learn More
+| Variable | Default | Description |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | `http://localhost:5000` | Flask backend URL |
+| `NEXT_PUBLIC_SOCKET_URL` | `http://localhost:5000` | Socket.IO server URL |
 
-To learn more about Next.js, take a look at the following resources:
+## Key Components
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Component | Path | Purpose |
+|---|---|---|
+| AttackSurfaceGraph | `src/components/AttackSurfaceGraph.tsx` | 3D neural map visualization |
+| NewScanModal | `src/components/NewScanModal.tsx` | Scan configuration dialog |
+| API Client | `src/lib/api.ts` | Backend API communication |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Agent Architecture
 
-## Deploy on Vercel
+The dashboard visualizes DARKWIN's 5-agent orchestration system defined in [AGENTS.md](./AGENTS.md):
+- **Strategist** — AI reasoning loop decisions
+- **Watchtower** — Mesh node health
+- **Cartographer** — 3D attack surface mapping
+- **Ghost** — Stealth engine status
+- **Sentinel** — Vulnerability verification results
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Related
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Flask Backend](../../dashboards/backend/)
+- [Docker Deployment](../../docs/user/DOCKER.md)
+- [Full API Reference](../../docs/dev/API.md)

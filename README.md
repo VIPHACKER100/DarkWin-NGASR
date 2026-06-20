@@ -3,7 +3,7 @@
 # 🛡️ DARKWIN-NGASR
 ### Next Gen Autonomous Security Researcher
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blueviolet?style=for-the-badge)](https://github.com/VIPHACKER100/DarkWin-NGASR)
+[![Version](https://img.shields.io/badge/version-2.0.1-blueviolet?style=for-the-badge)](https://github.com/VIPHACKER100/DarkWin-NGASR)
 [![Python](https://img.shields.io/badge/python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Kali%20%7C%20Debian%20%7C%20Ubuntu-red?style=for-the-badge&logo=linux&logoColor=white)](https://kali.org)
@@ -96,12 +96,19 @@
 - **[Getting Started Guide](docs/user/README.md)** — Installation and basic usage.
 - **[Command Reference](docs/user/COMMANDS.md)** — Full list of CLI commands and flags.
 - **[Advanced Optimization](docs/user/ADVANCED.md)** — Stealth tuning and mesh scaling.
+- **[Docker Deployment](docs/user/DOCKER.md)** — Containerized setup and production deployment.
+- **[Dashboard Guide](docs/user/DASHBOARD.md)** — Web interface setup and features.
+- **[Hunting Workflows](docs/user/WORKFLOWS.md)** — Common scanning patterns and recipes.
 - **[Troubleshooting](docs/user/TROUBLESHOOTING.md)** — Solutions for common issues.
 - **[FAQ](docs/user/FAQ.md)** — Frequently Asked Questions.
 
 ### 💻 Developer Resources
 - **[Architecture Guide](docs/dev/README.md)** — Core engine design and components.
 - **[Module Development](docs/dev/MODULES.md)** — How to build custom scan modules.
+- **[Pipeline Architecture](docs/dev/PIPELINES.md)** — Pipeline engine and custom pipeline creation.
+- **[AI Agent System](docs/dev/AI_AGENTS.md)** — Agentic loop, reasoning backends, and tuning.
+- **[Integration Development](docs/dev/INTEGRATIONS.md)** — Adding external API integrations.
+- **[Testing Guide](docs/dev/TESTING.md)** — Test suites, writing tests, and CI.
 - **[API Reference](docs/dev/API.md)** — Backend REST API documentation.
 
 ### 🏛️ Project Governance
@@ -148,6 +155,7 @@ darkwin shell
 docker-compose up -d --build
 # Access http://localhost:3000
 ```
+> See the [Docker Deployment Guide](docs/user/DOCKER.md) for production scaling and troubleshooting.
 
 ---
 
@@ -160,7 +168,11 @@ darkwin [COMMAND] [OPTIONS]
 | Command | Options | Description |
 |---|---|---|
 | `hunt` | `<target>` `--max-steps N` | Start autonomous AI-driven research loop |
+| `recon` | `<target>` | Run reconnaissance-only pipeline |
+| `scan` | `<target>` | Run vulnerability assessment pipeline |
+| `fuzz` | `<target>` | Run specialized fuzzing modules |
 | `shell` | — | Interactive REPL with auto-completion |
+| `dashboard` | — | Launch the Next.js web dashboard |
 | `targets` | `--add` / `--remove` | Add, remove, or list the target scope |
 | `history` | `--limit N` | View recent scan history with status |
 | `wordlists` | — | Manage and download security wordlists |
@@ -170,6 +182,7 @@ darkwin [COMMAND] [OPTIONS]
 | `proxy` | — | View proxy pool |
 | `modules` | — | List all available scan modules |
 | `report` | `<scan_id>` `--format` | Generate AI-synthesized reports (pdf/html/md) |
+| `reports` | `--open` | List and manage generated scan reports |
 | `schedule` | `--add` / `--list` | Manage periodic security scan tasks |
 | `logs` | `--tail` / `--search` | View and search system logs |
 | `troubleshoot` | — | Interactive guide for common issues |
@@ -185,7 +198,7 @@ darkwin [COMMAND] [OPTIONS]
 
 ## 🖥️ Next-Gen Security Dashboard
 
-The platform includes a premium, real-time dashboard built with **Next.js 15**, **Tailwind CSS 4**, and **Three.js**.
+The platform includes a premium, real-time dashboard built with **Next.js 16**, **Tailwind CSS 4**, and **Three.js**.
 
 ### Features:
 - **3D Neural Map**: Interactive 3D visualization of the neural attack surface.
@@ -196,6 +209,8 @@ The platform includes a premium, real-time dashboard built with **Next.js 15**, 
 1. Start the Flask Backend: `python dashboards/backend/app.py`
 2. Start the Frontend: `cd dashboards/frontend-next && npm run dev`
 3. View at: `http://localhost:3000`
+
+> See the [Dashboard Guide](docs/user/DASHBOARD.md) for full feature walkthrough.
 
 ---
 graph TD
@@ -301,10 +316,10 @@ See [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md) for con
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
-**Latest:** v2.0.0 (Apex) — Stability overhaul, unified versioning, phase-based pipelines, hardened AI reasoning core  
-**Previous:** v1.2.0 — Bug Bounty One-Liner Integration, Async Vuln Engines, 10+ New specialized modules  
-**Previous:** v1.0.6 — `history` & `targets` CLI commands, CHANGELOG updated  
-**Previous:** v1.0.5 — Fixed `IndentationError`, venv-based setup, Pydantic isolation
+**Latest:** v2.0.2 (Zenith) — Interactivity & Resilience Overhaul: CORS fix, Windows encoding hardening, AI backend resilience  
+**Previous:** v2.0.1 — Zenith Stabilization: CLI bug fixes, reports command, Windows error handling  
+**Previous:** v2.0.0 (Apex) — Stability overhaul, unified versioning, phase-based pipelines, hardened AI reasoning core  
+**Previous:** v1.2.0 — Bug Bounty One-Liner Integration, Async Vuln Engines, 10+ New specialized modules
 
 ---
 

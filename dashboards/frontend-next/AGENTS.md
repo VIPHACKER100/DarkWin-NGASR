@@ -36,3 +36,6 @@ Keep your agents up to date with the latest tactical definitions:
 ```bash
 python core/darkwin.py update
 ```
+
+## Deep Dive
+See the full **[AI Agent System Guide](../../docs/dev/AI_AGENTS.md)** for detailed documentation on the agentic loop, reasoning backends (OpenAI/NVIDIA/Ollama), prompt engineering, and tuning parameters.

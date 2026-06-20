@@ -21,7 +21,7 @@ This guide is intended for developers who wish to understand the inner workings 
 
 DARKWIN follows a **Modular Monolith** architecture with distributed worker capabilities.
 
-- **Frontend**: Next.js 14+ (Dashboard)
+- **Frontend**: Next.js 16 (Dashboard)
 - **Backend API**: Flask (Socket.io for real-time logs)
 - **Core Engine**: Python 3.11+ (Asyncio-driven)
 - **Data Layer**: PostgreSQL (Scan data) + Redis (Task queue & Mesh registry)
@@ -94,6 +94,12 @@ DARKWIN uses Redis as a central "Heartbeat" and "Task Queue" system.
 - **Global Rate Limiting**: `rate_limiter.py` ensures that the total request volume across all nodes does not exceed the target's threshold.
 
 ---
+
+> **Related in-depth guides:**
+> - [Pipeline Architecture](PIPELINES.md) — Pipeline engine, phases, context sharing, custom pipelines
+> - [AI Agent System](AI_AGENTS.md) — Agentic loop, reasoning backends, prompt engineering, tuning
+> - [Integration Development](INTEGRATIONS.md) — Adding Shodan/Censys/VT and custom integrations
+> - [Testing Guide](TESTING.md) — Test suite structure, writing tests, mocking, CI
 
 ## 👻 Stealth & Evasion Engineering (`core/stealth.py`)
 

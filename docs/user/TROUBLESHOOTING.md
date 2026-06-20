@@ -1,6 +1,6 @@
 # 🛠️ DARKWIN-NGASR Troubleshooting Guide
 
-**Version:** 1.0.7 | **Author:** ARYAN AHIRWAR (VIPHACKER.100)
+**Version:** 2.0.1 | **Author:** ARYAN AHIRWAR (VIPHACKER.100)
 
 This guide covers every known issue during setup and operation of the DARKWIN-NGASR platform.
 
@@ -257,6 +257,6 @@ darkwin doctor
 ---
 
 <div align="center">
-<b>DARKWIN-NGASR v1.0.7 | Autonomous · Distributed · Stealthy</b><br/>
+<b>DARKWIN-NGASR v2.0.1 | Autonomous · Distributed · Stealthy</b><br/>
 <i>Built by ARYAN AHIRWAR (VIPHACKER.100)</i>
 </div>
