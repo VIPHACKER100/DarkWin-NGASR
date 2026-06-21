@@ -72,7 +72,12 @@ source .venv/bin/activate
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 4. Verify Installation
+### 4. Install Package (Required for `darkwin` command)
+```bash
+pip install -e .
+```
+
+### 5. Verify Installation
 Run the "doctor" utility to check if your environment is healthy.
 ```bash
 darkwin doctor

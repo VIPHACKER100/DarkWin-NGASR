@@ -41,6 +41,11 @@ find . -name "__pycache__" -type d -exec rm -rf {} +
 darkwin --help
 ```
 
+### `ValueError: I/O operation on closed file` on Windows (Fixed in v2.0.3+)
+**Cause:** Python's stdout wrapper in `core/darkwin.py` closed the underlying buffer, breaking Rich console output.
+**Status:** **Resolved** — The wrapper was removed. Rich's `Console(force_terminal=True, legacy_windows=False)` handles UTF-8 natively on Python 3.11+.
+**Fix:** Update to v2.0.3+ or remove lines 23-28 in `core/darkwin.py` (the `sys.stdout = io.TextIOWrapper...` block).
+
 ### `darkwin: command not found`
 **Cause:** Package entry point not installed.
 ```bash

@@ -56,7 +56,7 @@ The entire 142-file Python codebase has been systematically modernized:
 - **`subprocess.run(..., check=True/False)`** — explicit failure behavior on every external tool call
 - **PEP 257 docstrings** — every module, function, and class has Args/Returns/Raises documentation
 - **142/142 files compile clean** — verified by `python -m py_compile`
-- **11/11 tests pass** — unit, integration, vulnerability, and robustness suites
+- **6/6 tests pass** — unit, integration, vulnerability, and robustness suites
 
 ---
 
@@ -151,12 +151,17 @@ cd DarkWin-NGASR
 .\setup.ps1; .\.venv\Scripts\Activate.ps1
 ```
 
-### 2. Verify
+### 2. Install Package (Required for `darkwin` command)
+```bash
+pip install -e .
+```
+
+### 3. Verify
 ```bash
 darkwin doctor --fix
 ```
 
-### 3. Launch
+### 4. Launch
 ```bash
 # Start an autonomous hunt
 darkwin hunt example.com
@@ -165,7 +170,7 @@ darkwin hunt example.com
 darkwin shell
 ```
 
-### 4. Dashboard (Docker)
+### 5. Dashboard (Docker)
 ```bash
 docker-compose up -d --build
 # Access http://localhost:3000

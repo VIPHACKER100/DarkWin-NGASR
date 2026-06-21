@@ -19,13 +19,7 @@ root_dir = str(Path(__file__).resolve().parent.parent)
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
-# Initialize Windows UTF-8 console if needed
-if sys.platform == "win32":
-    try:
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-    except (AttributeError, OSError):
-        pass
+# Windows UTF-8 handled by Rich Console(force_terminal=True, legacy_windows=False)
 
 
 from rich.console import Console
